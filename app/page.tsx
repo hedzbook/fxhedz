@@ -16,12 +16,12 @@ const PAIRS = [
   "USDCAD"
 ]
 
-// 🔑 IMPORTANT
-// Use the script.google.com URL — NOT googleusercontent
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbyY5Ku5nk6gZRMxffgfseVnYCUywlQYQM8qEfFzZjLLYEpV-g7cdCjrH6a3sK8IGnGt/exec?key=HEDZ2026"
+// 👇 YOUR GAS URL
+const SIGNAL_API =
+    "https://script.google.com/macros/s/AKfycbyY5Ku5nk6gZRMxffgfseVnYCUywlQYQM8qEfFzZjLLYEpV-g7cdCjrH6a3sK8IGnGt/exec?key=HEDZ2026"
 
 export default function Page() {
+
   const [openPair, setOpenPair] = useState<string | null>(null)
   const [signals, setSignals] = useState<any>({})
 
@@ -33,15 +33,16 @@ export default function Page() {
       tg.expand()
       tg.disableVerticalSwipes()
       document.body.style.backgroundColor =
-        tg.themeParams?.bg_color || "#000"
+        tg.themeParams.bg_color || "#000"
     }
   }, [])
 
-  // ✅ Load signals from Apps Script
+  // 🚀 LIVE SIGNAL REFRESH
   useEffect(() => {
+
     async function loadSignals() {
       try {
-        const res = await fetch(API_URL)
+        const res = await fetch(SIGNAL_API)
         const json = await res.json()
         setSignals(json)
       } catch (err) {
@@ -50,23 +51,35 @@ export default function Page() {
     }
 
     loadSignals()
+
+    // 🔥 auto refresh every 10 seconds
+    const interval = setInterval(loadSignals, 10000)
+
+    return () => clearInterval(interval)
+
   }, [])
 
   return (
     <main className="min-h-screen bg-black text-white p-4 space-y-3">
       <h1 className="text-xl font-bold">FxTrilogy Signals</h1>
 
-      {PAIRS.map(pair => (
-        <PairCard
-          key={pair}
-          pair={pair}
-          direction={signals[pair]?.direction}
-          open={openPair === pair}
-          onToggle={() =>
-            setOpenPair(openPair === pair ? null : pair)
-          }
-        />
-      ))}
+      {PAIRS.map(pair => {
+
+        const signal = signals[pair]
+
+        return (
+          <PairCard
+            key={pair}
+            pair={pair}
+            open={openPair === pair}
+            direction={signal?.direction}
+            signal={signal}
+            onToggle={() =>
+              setOpenPair(openPair === pair ? null : pair)
+            }
+          />
+        )
+      })}
     </main>
   )
 }

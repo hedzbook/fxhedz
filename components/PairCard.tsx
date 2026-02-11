@@ -5,23 +5,18 @@ type Props = {
   open: boolean
   onToggle: () => void
   direction?: "BUY" | "SELL"
+  signal?: any
 }
 
 export default function PairCard({
   pair,
   open,
   onToggle,
-  direction
+  direction,
+  signal
 }: Props) {
-  // 🔥 direction styling
-  const directionColor =
-    direction === "BUY"
-      ? "text-green-400"
-      : direction === "SELL"
-      ? "text-red-400"
-      : "text-neutral-400"
 
-  const directionText = direction || "--"
+  const dir = direction || "--"
 
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
@@ -41,9 +36,14 @@ export default function PairCard({
           </div>
         </div>
 
-        {/* LIVE DIRECTION */}
-        <div className={`font-bold ${directionColor}`}>
-          {directionText}
+        <div className={`font-bold ${
+          dir === "BUY"
+            ? "text-green-400"
+            : dir === "SELL"
+            ? "text-red-400"
+            : "text-neutral-500"
+        }`}>
+          {dir}
         </div>
       </div>
 
@@ -55,10 +55,10 @@ export default function PairCard({
           <div>
             <div className="text-sm text-neutral-400">Latest Signal</div>
             <div className="font-bold text-lg">
-              {direction ? `${direction} 2418.20` : "--"}
+              {signal?.direction || "--"} {signal?.entry || ""}
             </div>
             <div className="text-sm text-neutral-400">
-              SL 2409.80 · TP 2442.00
+              SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export default function PairCard({
             <div>ADX Buy</div>
           </div>
 
-          {/* News */}
+          {/* Notes */}
           <div>
             <div className="text-sm text-neutral-400">Market Notes</div>
             <ul className="text-sm space-y-1 mt-1">
