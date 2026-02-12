@@ -17,7 +17,7 @@ const PAIRS = [
 ]
 
 const SIGNAL_API =
-  "https://script.google.com/macros/s/AKfycbyY5Ku5nk6gZRMxffgfseVnYCUywlQYQM8qEfFzZjLLYEpV-g7cdCjrH6a3sK8IGnGt/exec?key=HEDZ2026"
+  "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec?key=HEDZ2026"
 
 export default function Page() {
 
