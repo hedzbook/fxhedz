@@ -16,8 +16,7 @@ const PAIRS = [
   "USDCAD"
 ]
 
-const SIGNAL_API =
-  "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec?key=HEDZ2026"
+const SIGNAL_API = "/api/signals"
 
 export default function Page() {
 
