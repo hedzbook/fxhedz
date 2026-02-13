@@ -31,7 +31,7 @@ export default function Page() {
 
     if (tg && tg.initDataUnsafe?.user?.id) {
       tg.ready()
-      tg.expand()
+      // tg.expand()
       tg.disableVerticalSwipes()
       document.body.style.backgroundColor =
         tg.themeParams.bg_color || "#000"
