@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
+
 type Props = {
   pair: string
   open?: boolean
@@ -17,7 +19,12 @@ export default function PairCard({
 }: Props) {
 
   const dir = direction || "--"
+  const [tab, setTab] = useState<"market" | "history" | "performance">("market")
 
+  useEffect(() => {
+    setTab("market")
+  }, [pair])
+  
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
 
@@ -58,20 +65,60 @@ export default function PairCard({
       </div>
 
       {open && (
-        <div className="border-t border-neutral-800 max-h-[60vh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
+        <div className="border-t border-neutral-800 p-0">
 
-          <div className="w-full h-48 bg-neutral-800 rounded-lg flex items-center justify-center text-neutral-500">
-            Chart will render here
+          {/* =======================
+        HORIZONTAL MENU
+    ======================== */}
+          <div className="flex w-full border-b border-neutral-800 text-sm">
+
+            <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
+            <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
+            <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
+
           </div>
 
-          <div>
-            <div className="text-sm text-neutral-400">Latest Signal</div>
-            <div className="font-bold text-lg">
-              {signal?.direction || "--"} {signal?.entry || ""}
-            </div>
-            <div className="text-sm text-neutral-400">
-              SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
-            </div>
+          {/* =======================
+        TAB CONTENT AREA
+        🔑 FIXED HEIGHT + SCROLL
+    ======================== */}
+          <div className="h-[58vh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
+
+            {tab === "market" && (
+              <>
+                <div className="w-full h-48 bg-neutral-800 rounded-lg flex items-center justify-center text-neutral-500">
+                  Chart will render here
+                </div>
+
+                <div>
+                  <div className="text-sm text-neutral-400">Latest Signal</div>
+                  <div className="font-bold text-lg">
+                    {signal?.direction || "--"} {signal?.entry || ""}
+                  </div>
+                  <div className="text-sm text-neutral-400">
+                    SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
+                  </div>
+                </div>
+
+                {/* MARKET NOTES (ChatGPT hourly feed placeholder) */}
+                <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300">
+                  Market notes will appear here
+                </div>
+              </>
+            )}
+
+            {tab === "history" && (
+              <div className="text-neutral-400 text-sm">
+                Order history will load here
+              </div>
+            )}
+
+            {tab === "performance" && (
+              <div className="text-neutral-400 text-sm">
+                Performance stats and graphs here
+              </div>
+            )}
+
           </div>
 
         </div>
@@ -247,5 +294,29 @@ function TradeBar({
       `}</style>
 
     </div>
+  )
+}
+function TabBtn({
+  label,
+  active,
+  onClick
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+      className={`flex-1 py-3 text-center transition-all duration-200 ${active
+          ? "text-white border-b-2 border-white bg-neutral-900"
+          : "text-neutral-500 hover:text-neutral-300"
+        }`}
+    >
+      {label}
+    </button>
   )
 }
