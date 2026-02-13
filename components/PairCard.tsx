@@ -108,16 +108,18 @@ function TradeBar({
 const leftRange = Math.abs(entry - sl)
 const rightRange = Math.abs(tp - entry)
 
-const totalRange = leftRange + rightRange
-if (!totalRange) return null
+// 🔥 ENTRY MUST ALWAYS BE CENTERED
+const entryPercent = 50
 
-// entry always centered
-const entryPercent = (leftRange / totalRange) * 100
+let pricePercent = 50
 
-let pricePercent =
-  price < entry
-    ? entryPercent - ((entry - price) / leftRange) * entryPercent
-    : entryPercent + ((price - entry) / rightRange) * (100 - entryPercent)
+if (price < entry && leftRange > 0) {
+  pricePercent = 50 - ((entry - price) / leftRange) * 50
+}
+
+if (price > entry && rightRange > 0) {
+  pricePercent = 50 + ((price - entry) / rightRange) * 50
+}
 
 // clamp
 pricePercent = Math.max(0, Math.min(100, pricePercent))
