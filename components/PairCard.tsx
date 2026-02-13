@@ -3,7 +3,7 @@
 type Props = {
   pair: string
   open?: boolean
-  direction?: "BUY" | "SELL"
+  direction?: "BUY" | "SELL" | "EXIT"
   signal?: any
   onToggle: () => void
 }
@@ -47,8 +47,12 @@ export default function PairCard({
             </div>
           </div>
 
-          {signal?.entry && signal?.sl && signal?.tp && (
-            <TradeBar signal={signal} direction={dir} />
+          {/* 🔥 TRADE BAR ONLY FOR ACTIVE TRADES */}
+          {dir !== "EXIT" &&
+            signal?.entry &&
+            signal?.sl &&
+            signal?.tp && (
+              <TradeBar signal={signal} direction={dir} />
           )}
 
         </div>
@@ -86,7 +90,7 @@ function TradeBar({
   direction
 }: {
   signal: any
-  direction?: "BUY" | "SELL" | "--"
+  direction?: "BUY" | "SELL" | "EXIT" | "--"
 }) {
 
   const sl = Number(signal?.sl)
@@ -94,11 +98,10 @@ function TradeBar({
   const entry = Number(signal?.entry)
   const price = Number(signal?.price || entry)
 
-  if (!sl || !tp || !entry) return null
+  // 🚫 DO NOT RENDER ON EXIT STATE
+  if (direction === "EXIT") return null
 
-  // 🔥 ONE CONSISTENT COORDINATE SYSTEM
-  // LEFT = SL
-  // RIGHT = TP
+  if (!sl || !tp || !entry) return null
 
   const range = tp - sl
   if (!range) return null
@@ -106,10 +109,8 @@ function TradeBar({
   const entryPercent = ((entry - sl) / range) * 100
   let pricePercent = ((price - sl) / range) * 100
 
-  // clamp inside bar
   pricePercent = Math.max(0, Math.min(100, pricePercent))
 
-  // 🔥 PROFIT SIDE LOGIC
   const isTPside =
     direction === "BUY"
       ? price >= entry
@@ -118,11 +119,22 @@ function TradeBar({
   return (
     <div className="mt-3 select-none">
 
-      {/* LABELS */}
-      <div className="flex justify-between text-[10px] text-neutral-400 mb-1">
-        <span>SL / HEDZ</span>
-        <span>ENTRY</span>
-        <span>TP</span>
+      {/* 🔥 PERFECTLY ALIGNED LABELS */}
+      <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
+
+        <span className="absolute left-0">SL / HEDZ</span>
+
+        <span
+          className="absolute"
+          style={{
+            left: `${entryPercent}%`,
+            transform: "translateX(-50%)"
+          }}
+        >
+          ENTRY
+        </span>
+
+        <span className="absolute right-0">TP</span>
       </div>
 
       <div className="relative h-6 flex items-center overflow-visible">
@@ -148,7 +160,7 @@ function TradeBar({
           }}
         />
 
-        {/* HOLLOW DOTS */}
+        {/* FIXED HOLLOW DOTS */}
         <div className="absolute left-0 w-3 h-3 rounded-full border border-neutral-400" />
 
         <div
@@ -161,7 +173,7 @@ function TradeBar({
 
         <div className="absolute right-0 w-3 h-3 rounded-full border border-neutral-400" />
 
-        {/* 🔥 LIVE PRICE DOT */}
+        {/* 🔥 LIVE PRICE DOT (ONLY BUY/SELL) */}
         <div
           className="absolute"
           style={{
@@ -170,14 +182,12 @@ function TradeBar({
             willChange: "transform"
           }}
         >
-          {/* glow trail */}
           <div
             className={`absolute -inset-2 rounded-full blur-md ${
               isTPside ? "bg-green-500/30" : "bg-red-500/30"
             }`}
           />
 
-          {/* core */}
           <div
             className={`w-3 h-3 rounded-full ${
               isTPside ? "bg-green-400" : "bg-red-400"
