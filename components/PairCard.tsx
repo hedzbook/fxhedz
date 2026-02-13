@@ -18,13 +18,13 @@ export default function PairCard({
   signal
 }: Props) {
 
-  const dir = direction || "--"
+  const dir = direction ?? "--"
   const [tab, setTab] = useState<"market" | "history" | "performance">("market")
 
-  useEffect(() => {
-    setTab("market")
-  }, [pair])
-  
+useEffect(() => {
+  if (open) setTab("market")
+}, [open])
+
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
 
@@ -82,7 +82,7 @@ export default function PairCard({
         TAB CONTENT AREA
         🔑 FIXED HEIGHT + SCROLL
     ======================== */}
-          <div className="h-[58vh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
+          <div className="h-[60dvh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
 
             {tab === "market" && (
               <>
