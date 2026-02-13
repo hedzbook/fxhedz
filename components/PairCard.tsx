@@ -3,12 +3,12 @@
 import React from "react"
 import { useState, useEffect } from "react"
 
-type TradeDirection = "BUY" | "SELL" | "EXIT" | "--"
+type TradeDirection = "BUY" | "SELL" | "HEDGED" | "EXIT" | "--"
 
 type Props = {
   pair: string
   open?: boolean
-  direction?: "BUY" | "SELL" | "EXIT"
+  direction?: TradeDirection
   signal?: any
   history?: any[]
   performance?: any
@@ -44,6 +44,7 @@ function PairCard({
 
     if (!signal) return
     if (liveDir === "EXIT") return
+    if (liveDir === "HEDGED") return
 
     const price = Number(signal?.price)
     const tp = Number(signal?.tp)
@@ -92,8 +93,9 @@ function PairCard({
                 ? "text-green-400"
                 : liveDir === "SELL"
                   ? "text-red-400"
-                  : "text-neutral-500"
-                }`}
+                  : liveDir === "HEDGED"
+                    ? "text-sky-400"
+                    : "text-neutral-500"}`}
             >
               {liveDir}
             </div>
@@ -236,7 +238,7 @@ function TradeBar({
   direction
 }: {
   signal: any
-  direction?: "BUY" | "SELL" | "EXIT" | "--"
+  direction?: "BUY" | "SELL" | "HEDGED" | "EXIT" | "--"
 }) {
 
   const sl = Number(signal?.sl)
@@ -281,6 +283,59 @@ function TradeBar({
       pricePercent = 50 + ((entry - price) / leftRange) * 50
     }
   }
+
+  if (direction === "HEDGED") {
+  return (
+    <div className="mt-3 select-none">
+
+      <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
+        <span className="absolute left-0 text-sky-400">HEDZ</span>
+        <span
+          className="absolute text-sky-400"
+          style={{ left: "50%", transform: "translateX(-50%)" }}
+        >
+          ENTRY
+        </span>
+        <span className="absolute right-0 text-sky-400">HEDZ</span>
+      </div>
+
+      <div className="relative h-6 flex items-center">
+
+        {/* BLUE LEFT */}
+        <div
+          className="absolute h-[2px] bg-sky-400/60"
+          style={{ width: "50%" }}
+        />
+
+        {/* BLUE RIGHT */}
+        <div
+          className="absolute h-[2px] bg-sky-400/60"
+          style={{ left: "50%", width: "50%" }}
+        />
+
+        {/* CENTER DOT */}
+        <div
+          className="absolute"
+          style={{ left: "50%", transform: "translateX(-50%)" }}
+        >
+          <div className="absolute -inset-2 rounded-full blur-md bg-sky-400/30" />
+          <div
+            className="w-3 h-3 rounded-full bg-sky-400"
+            style={{ boxShadow: "0 0 18px rgba(56,189,248,0.9)" }}
+          />
+        </div>
+
+      </div>
+
+      <div className="flex justify-between text-[11px] text-sky-400 mt-1">
+        <span>{signal?.entry}</span>
+        <span>{signal?.entry}</span>
+        <span>{signal?.entry}</span>
+      </div>
+
+    </div>
+  )
+}
 
   // clamp
   pricePercent = Math.max(0, Math.min(100, pricePercent))
