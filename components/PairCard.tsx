@@ -103,11 +103,24 @@ function TradeBar({
 
   if (!sl || !tp || !entry) return null
 
-  const range = tp - sl
-  if (!range) return null
+// --- ENTRY-CENTERED COORDINATE SYSTEM
 
-  const entryPercent = ((entry - sl) / range) * 100
-  let pricePercent = ((price - sl) / range) * 100
+const leftRange = Math.abs(entry - sl)
+const rightRange = Math.abs(tp - entry)
+
+const totalRange = leftRange + rightRange
+if (!totalRange) return null
+
+// entry always centered
+const entryPercent = (leftRange / totalRange) * 100
+
+let pricePercent =
+  price < entry
+    ? entryPercent - ((entry - price) / leftRange) * entryPercent
+    : entryPercent + ((price - entry) / rightRange) * (100 - entryPercent)
+
+// clamp
+pricePercent = Math.max(0, Math.min(100, pricePercent))
 
   pricePercent = Math.max(0, Math.min(100, pricePercent))
 
