@@ -1,12 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
+type TradeDirection = "BUY" | "SELL" | "EXIT" | "--"
 
 type Props = {
   pair: string
   open?: boolean
   direction?: "BUY" | "SELL" | "EXIT"
   signal?: any
+  history?: any[]
+  performance?: any
+  notes?: string
   onToggle: () => void
 }
 
@@ -15,15 +19,55 @@ export default function PairCard({
   open,
   onToggle,
   direction,
-  signal
+  signal,
+  history,
+  performance,
+  notes
 }: Props) {
 
-  const dir = direction ?? "--"
+  const dir: TradeDirection = direction ?? "--"
+  const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
+
   const [tab, setTab] = useState<"market" | "history" | "performance">("market")
 
-useEffect(() => {
-  if (open) setTab("market")
-}, [open])
+  useEffect(() => {
+    if (open) setTab("market")
+  }, [open])
+
+  useEffect(() => {
+    setLiveDir(dir)
+  }, [dir])
+
+  useEffect(() => {
+
+    if (!signal) return
+    if (liveDir === "EXIT") return
+
+    const price = Number(signal?.price)
+    const tp = Number(signal?.tp)
+    const sl = Number(signal?.sl)
+
+    if (!price || !tp || !sl) return
+
+    // BUY lifecycle
+    if (liveDir === "BUY") {
+
+      if (price >= tp || price <= sl) {
+        setLiveDir("EXIT")
+      }
+
+    }
+
+    // SELL lifecycle
+    if (liveDir === "SELL") {
+
+      if (price <= tp || price >= sl) {
+        setLiveDir("EXIT")
+      }
+
+    }
+
+  }, [signal, liveDir])
 
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
@@ -42,23 +86,23 @@ useEffect(() => {
             <div className="font-semibold">{pair}</div>
 
             <div
-              className={`font-bold ${dir === "BUY"
+              className={`font-bold ${liveDir === "BUY"
                 ? "text-green-400"
-                : dir === "SELL"
+                : liveDir === "SELL"
                   ? "text-red-400"
                   : "text-neutral-500"
                 }`}
             >
-              {dir}
+              {liveDir}
             </div>
           </div>
 
           {/* 🔥 TRADE BAR ONLY FOR ACTIVE TRADES */}
-          {dir !== "EXIT" &&
+          {liveDir !== "EXIT" &&
             signal?.entry &&
             signal?.sl &&
             signal?.tp && (
-              <TradeBar signal={signal} direction={dir} />
+              <TradeBar signal={signal} direction={liveDir} />
             )}
 
         </div>
@@ -101,21 +145,42 @@ useEffect(() => {
                 </div>
 
                 {/* MARKET NOTES (ChatGPT hourly feed placeholder) */}
-                <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300">
-                  Market notes will appear here
+                <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300 leading-relaxed">
+                  {notes || "No market notes yet"}
                 </div>
               </>
             )}
 
             {tab === "history" && (
-              <div className="text-neutral-400 text-sm">
-                Order history will load here
+              <div className="space-y-2">
+                {history?.length ? history.map((h, i) => (
+                  <div key={i} className="bg-neutral-800 p-3 rounded-lg text-sm flex justify-between">
+                    <div>
+                      <div className="font-semibold">{h.direction}</div>
+                      <div className="text-neutral-400 text-xs">
+                        {h.entry} → {h.exit}
+                      </div>
+                    </div>
+                    <div className={h.pnl >= 0 ? "text-green-400" : "text-red-400"}>
+                      {h.pnl}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-neutral-500 text-sm">No history yet</div>
+                )}
               </div>
             )}
 
             {tab === "performance" && (
-              <div className="text-neutral-400 text-sm">
-                Performance stats and graphs here
+              <div className="space-y-3 text-sm">
+
+                <Stat label="Total Trades" value={performance?.trades} />
+                <Stat label="Wins" value={performance?.wins} />
+                <Stat label="Losses" value={performance?.losses} />
+                <Stat label="Win Rate" value={performance?.winRate + "%"} />
+                <Stat label="Total PnL" value={performance?.pnlTotal} />
+                <Stat label="Profit Factor" value={performance?.profitFactor} />
+
               </div>
             )}
 
@@ -312,11 +377,19 @@ function TabBtn({
         onClick()
       }}
       className={`flex-1 py-3 text-center transition-all duration-200 ${active
-          ? "text-white border-b-2 border-white bg-neutral-900"
-          : "text-neutral-500 hover:text-neutral-300"
+        ? "text-white border-b-2 border-white bg-neutral-900"
+        : "text-neutral-500 hover:text-neutral-300"
         }`}
     >
       {label}
     </button>
+  )
+}
+function Stat({ label, value }: { label: string, value: any }) {
+  return (
+    <div className="flex justify-between bg-neutral-800 rounded-lg p-3">
+      <span className="text-neutral-400">{label}</span>
+      <span className="font-semibold">{value ?? "--"}</span>
+    </div>
   )
 }
