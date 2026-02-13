@@ -72,7 +72,7 @@ useEffect(() => {
     }
 
     loadSignals()
-    const interval = setInterval(loadSignals, 10000)
+    const interval = setInterval(loadSignals, 3000)
 
     return () => clearInterval(interval)
 
