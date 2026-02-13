@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FXHEDZ Signals",
-  description: "Live Trading Signals Panel",
+  title: "FXHEDZ",
+  description: "Live Forex & Crypto Trading Dashboard",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased tracking-tight`}
       >
         {/* ✅ Telegram Mini App SDK */}
         <Script
