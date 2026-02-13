@@ -155,7 +155,7 @@ const isTPside =
           style={{
             width: `${entryPercent}%`,
             background:
-              "linear-gradient(90deg, rgba(220,38,38,0.15), rgba(248,113,113,0.8))"
+              "linear-gradient(90deg, rgba(74,222,128,0.6), rgba(34,197,94,0.05))"
           }}
         />
 
