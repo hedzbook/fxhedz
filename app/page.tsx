@@ -25,24 +25,36 @@ export default function Page() {
   const [authorized, setAuthorized] = useState(false)
 
   // ✅ Telegram Mini App + Access Guard
-  useEffect(() => {
+useEffect(() => {
 
-    const tg = (window as any)?.Telegram?.WebApp
+  const tg = (window as any)?.Telegram?.WebApp
 
-    if (tg && tg.initDataUnsafe?.user?.id) {
-      tg.ready()
-      tg.expand()
-      tg.disableVerticalSwipes()
-      document.body.style.backgroundColor =
-        tg.themeParams.bg_color || "#000"
+  if (tg && tg.initDataUnsafe?.user?.id) {
 
-      setAuthorized(true)
-    } else {
-      console.log("Blocked: Not opened via Telegram")
-      setAuthorized(false)
-    }
+    tg.ready()
 
-  }, [])
+    // force full-height mode
+    tg.expand()
+
+    // prevent half-drag minimized state
+    tg.disableVerticalSwipes()
+
+    // match Telegram container color
+    tg.setBackgroundColor("#000000")
+    tg.setHeaderColor("#000000")
+
+    // optional but helps remove extra space feeling
+    document.documentElement.style.height = "100%"
+    document.body.style.minHeight = "100vh"
+
+    setAuthorized(true)
+
+  } else {
+    console.log("Blocked: Not opened via Telegram")
+    setAuthorized(false)
+  }
+
+}, [])
 
   // 🚀 LIVE SIGNAL REFRESH
   useEffect(() => {
