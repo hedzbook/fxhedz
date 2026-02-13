@@ -69,7 +69,7 @@ function PairCard({
 
     }
 
-  }, [signal?.price, signal?.tp, signal?.sl, liveDir])
+  }, [signal?.price])
 
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">

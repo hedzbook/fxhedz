@@ -44,6 +44,7 @@ export default function Page() {
       document.body.style.minHeight = "100vh"
       document.body.style.overscrollBehavior = "none"
       document.body.style.touchAction = "pan-y"
+      document.body.style.position = "fixed"
       setAuthorized(true)
 
     } else {
@@ -94,6 +95,49 @@ export default function Page() {
   }, [authorized])
 
   // ======================================================
+  // 🔥 OPEN PAIR REFRESH LOOP (history + performance + notes)
+  // ======================================================
+  useEffect(() => {
+
+    if (!authorized || !openPair) return
+
+    const pairKey = openPair // 🔥 safely narrowed to string
+
+    let cancelled = false
+
+    async function refreshOpenPair() {
+
+      try {
+
+        const res = await fetch(`/api/signals?pair=${pairKey}`)
+        const json = await res.json()
+
+        if (cancelled) return
+
+        setPairData((prev: any) => ({
+          ...prev,
+          [pairKey]: json
+        }))
+
+      } catch (err) {
+        console.log("Refresh pair error", err)
+      }
+    }
+
+    // 🔥 initial load
+    refreshOpenPair()
+
+    // 🔥 live refresh loop
+    const interval = setInterval(refreshOpenPair, 6000)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+
+  }, [authorized, openPair])
+
+  // ======================================================
   // LAZY LOAD PAIR DATA (history + performance + notes)
   // ======================================================
   async function loadPair(pair: string) {
@@ -125,7 +169,11 @@ export default function Page() {
       const next = prev === pair ? null : pair
 
       if (next) {
-        requestIdleCallback(() => loadPair(next))
+        if ("requestIdleCallback" in window) {
+          (window as any).requestIdleCallback(() => loadPair(next))
+        } else {
+          setTimeout(() => loadPair(next), 0)
+        }
       }
 
       return next
