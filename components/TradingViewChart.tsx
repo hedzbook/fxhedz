@@ -17,19 +17,37 @@ export default function TradingViewChart({ symbol }: { symbol: string }) {
     script.type = "text/javascript"
     script.async = true
 
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: "OANDA:" + symbol, // 🔥 safest universal feed
-      interval: "15",
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      locale: "en",
-      hide_top_toolbar: true,
-      hide_legend: true,
-      save_image: false,
-      container_id: "tv_" + symbol
-    })
+script.innerHTML = JSON.stringify({
+  autosize: true,
+  symbol: "OANDA:" + symbol,
+  interval: "15",
+  timezone: "Etc/UTC",
+  theme: "dark",
+  style: "1",
+  hide_top_toolbar: true,
+  hide_side_toolbar: true,
+  hide_legend: true,
+  allow_symbol_change: false,
+
+  studies: ["Volume@tv-basicstudies"],
+
+  overrides: {
+    "paneProperties.background": "#1E1E1E",
+    "paneProperties.vertGridProperties.color": "rgba(0,0,0,0)",
+    "paneProperties.horzGridProperties.color": "rgba(0,0,0,0)",
+
+    "mainSeriesProperties.candleStyle.upColor": "#DCDCDC",
+    "mainSeriesProperties.candleStyle.downColor": "#DCDCDC",
+    "mainSeriesProperties.candleStyle.borderUpColor": "#DCDCDC",
+    "mainSeriesProperties.candleStyle.borderDownColor": "#DCDCDC",
+    "mainSeriesProperties.candleStyle.wickUpColor": "#DCDCDC",
+    "mainSeriesProperties.candleStyle.wickDownColor": "#DCDCDC",
+
+    "volumePaneSize": "medium",
+    "volume.volume.color.0": "#FFD700",
+    "volume.volume.color.1": "#FFD700"
+  }
+})
 
     container.current.appendChild(script)
 
