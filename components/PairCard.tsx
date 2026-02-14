@@ -159,32 +159,34 @@ ${liveDir === "EXIT"
     ======================== */}
           <div className="h-[60dvh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
 
-            {tab === "market" && (
-              <>
+            {/* 🔥 GLOBAL CHART MOUNT POINT (ALWAYS MOUNTED — NEVER REMOVE) */}
+            <div
+              id={`chart_mount_${pair}`}
+              className={`w-full h-[280px] rounded-lg bg-neutral-900 ${tab === "market" ? "block" : "hidden"
+                }`}
+            />
 
-                {/* 🔥 GLOBAL CHART MOUNT POINT */}
-                <div
-                  id={`chart_mount_${pair}`}
-                  className="w-full h-[280px] rounded-lg bg-neutral-900"
-                />
+            {/* =======================
+   MARKET TAB CONTENT
+======================= */}
+            <div className={tab === "market" ? "block" : "hidden"}>
 
-                <div>
-                  <div className="text-sm text-neutral-400">Latest Signal</div>
-                  <div className="font-bold text-lg">
-                    {signal?.direction || "--"} {signal?.entry || ""}
-                  </div>
-                  <div className="text-sm text-neutral-400">
-                    SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
-                  </div>
+              <div>
+                <div className="text-sm text-neutral-400">Latest Signal</div>
+                <div className="font-bold text-lg">
+                  {signal?.direction || "--"} {signal?.entry || ""}
                 </div>
-
-                {/* MARKET NOTES */}
-                <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300 leading-relaxed">
-                  {notes || "No market notes yet"}
+                <div className="text-sm text-neutral-400">
+                  SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
                 </div>
+              </div>
 
-              </>
-            )}
+              {/* MARKET NOTES */}
+              <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300 leading-relaxed">
+                {notes || "No market notes yet"}
+              </div>
+
+            </div>
 
             {tab === "history" && (
               <div className="space-y-2">
