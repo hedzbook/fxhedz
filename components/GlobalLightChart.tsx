@@ -111,9 +111,10 @@ export default function GlobalLightChart({
 
         if (!data.length) return
 
+        // 🔥 ALWAYS REFRESH LAST CANDLE (even on EXIT)
         series.setData(data)
 
-    }, [signal?.candles])
+    }, [signal?.candles, signal?.price])
 
     // ======================================================
     // 🔥 ULTRA-PRO OVERLAY ENGINE
