@@ -24,11 +24,13 @@ export default function LightChart({
   const containerRef = useRef<HTMLDivElement>(null)
 
   // =====================================================
-  // CREATE CHART
+  // CREATE CHART ONLY WHEN PRICE EXISTS
   // =====================================================
   useEffect(() => {
 
+    // 🚨 PREVENT CRASH
     if (!containerRef.current) return
+    if (!price || price <= 0) return
 
     const chart = createChart(containerRef.current, {
 
@@ -59,27 +61,28 @@ export default function LightChart({
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
+
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderUpColor: "#22c55e",
       borderDownColor: "#ef4444",
       wickUpColor: "#22c55e",
       wickDownColor: "#ef4444"
+
     })
 
     chartRef.current = chart
     seriesRef.current = candleSeries
 
-    // ✅ FIXED TIME TYPE
     const now = Math.floor(Date.now() / 1000) as UTCTimestamp
 
     candleSeries.setData([
       {
         time: now,
-        open: price || 0,
-        high: price || 0,
-        low: price || 0,
-        close: price || 0
+        open: price,
+        high: price,
+        low: price,
+        close: price
       }
     ])
 
@@ -101,16 +104,16 @@ export default function LightChart({
       seriesRef.current = null
     }
 
-  }, [])
+  }, [price]) // 🔥 important dependency
 
   // =====================================================
-  // LIVE PRICE UPDATE
+  // LIVE UPDATE
   // =====================================================
   useEffect(() => {
 
-    if (!seriesRef.current || !price) return
+    if (!seriesRef.current) return
+    if (!price || price <= 0) return
 
-    // ✅ UTCTimestamp REQUIRED
     const candleTime =
       (Math.floor(Date.now() / 60000) * 60) as UTCTimestamp
 
