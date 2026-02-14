@@ -61,7 +61,7 @@ export default function GlobalLightChart({
                 borderColor: "rgba(255,255,255,0.08)",
                 timeVisible: true,
                 secondsVisible: false,
-                rightOffset: 15,
+                rightOffset: 10,
                 barSpacing: 8,
                 fixRightEdge: false
             }
@@ -120,7 +120,7 @@ export default function GlobalLightChart({
         // 🔥 FIRST LOAD = SET HISTORY ONCE
         if (!historyLoadedRef.current) {
             series.setData(data)
-            chartRef.current?.timeScale().scrollToPosition(15, false)
+            chartRef.current?.timeScale().scrollToPosition(10, false)
             historyLoadedRef.current = true
             return
         }
