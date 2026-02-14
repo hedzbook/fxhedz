@@ -100,10 +100,12 @@ function PairCard({
         const entry = Number(o.entry)
         if (!entry) return
 
+        const lots = Number(o.lots || 1)
+
         let pnl = 0
 
-        if (o.direction === "BUY") pnl = price - entry
-        if (o.direction === "SELL") pnl = entry - price
+        if (o.direction === "BUY") pnl = (price - entry) * lots
+        if (o.direction === "SELL") pnl = (entry - price) * lots
 
         next[key] = pnl
 
@@ -250,18 +252,9 @@ ${liveDir === "EXIT"
               <div className="space-y-2">
                 {liveOrders?.length ? liveOrders.map((o, i) => {
 
-                  const price = Number(signal?.price)
-                  const entry = Number(o.entry)
-
-                  let pnl = 0
-
-                  if (price && entry) {
-                    if (o.direction === "BUY") {
-                      pnl = price - entry
-                    } else if (o.direction === "SELL") {
-                      pnl = entry - price
-                    }
-                  }
+                  const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+                  const pnl = pnlCache[key] ?? 0
+                  const prev = pnlCache[key] ?? pnl
 
                   const pnlColor =
                     pnl > 0
@@ -269,9 +262,6 @@ ${liveDir === "EXIT"
                       : pnl < 0
                         ? "text-red-400"
                         : "text-neutral-400"
-
-                  const key = o.id || `${o.direction}_${o.entry}_${o.time}`
-                  const prev = pnlCache[key] ?? pnl
 
                   let pulseClass = ""
                   if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
@@ -287,15 +277,14 @@ ${liveDir === "EXIT"
 
                         <div className="flex gap-2 items-center">
                           <span className={`font-semibold ${o.direction === "BUY"
-                            ? "text-green-400"
-                            : o.direction === "SELL"
-                              ? "text-red-400"
-                              : "text-sky-400"
+                              ? "text-green-400"
+                              : o.direction === "SELL"
+                                ? "text-red-400"
+                                : "text-sky-400"
                             }`}>
                             {o.hedged
                               ? `${o.direction} (HEDGED)`
                               : o.direction}
-
                           </span>
 
                           <span className="text-neutral-500 text-xs">
@@ -314,7 +303,6 @@ ${liveDir === "EXIT"
                           {o.lots ?? "--"}
                         </div>
 
-                        {/* 🔥 LIVE FLOATING */}
                         <div className={`font-semibold ${pnlColor}`}>
                           {pnl ? pnl.toFixed(2) : "--"}
                         </div>
