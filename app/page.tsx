@@ -94,18 +94,49 @@ export default function Page() {
 
   }, [authorized])
 
-  // ======================================================
-  // 🔥 TICK STABILIZER (UI SMOOTHING)
-  // ======================================================
-  useEffect(() => {
+// ======================================================
+// DYNAMIC TICK STABILIZER (ADAPTIVE SMOOTHING - SAFE)
+// ======================================================
+useEffect(() => {
 
-    const timer = setTimeout(() => {
-      setUiSignals(signals)
-    }, 120) // institutional sweet spot
+  let delay = 80
 
-    return () => clearTimeout(timer)
+  try {
 
-  }, [signals])
+    let totalMove = 0
+    let count = 0
+
+    PAIRS.forEach(pair => {
+
+      const newPrice = Number(signals?.[pair]?.price)
+      const oldPrice = Number(uiSignals?.[pair]?.price)
+
+      if (newPrice && oldPrice) {
+        totalMove += Math.abs(newPrice - oldPrice)
+        count++
+      }
+
+    })
+
+    const avgMove = count ? totalMove / count : 0
+
+    if (avgMove > 1) delay = 160
+    else if (avgMove > 0.2) delay = 120
+    else delay = 70
+
+  } catch {}
+
+  const timer = setTimeout(() => {
+    setUiSignals(prev => {
+      // 🔥 prevent useless updates
+      if (JSON.stringify(prev) === JSON.stringify(signals)) return prev
+      return signals
+    })
+  }, delay)
+
+  return () => clearTimeout(timer)
+
+}, [signals]) 
 
   // ======================================================
   // 🔥 OPEN PAIR REFRESH LOOP
