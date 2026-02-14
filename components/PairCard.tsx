@@ -35,7 +35,7 @@ function PairCard({
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
   const [tab, setTab] = useState<"market" | "orders" | "history" | "performance">("market")
   const [liveOrders, setLiveOrders] = useState<any[]>(orders ?? [])
-  const [pnlCache, setPnlCache] = useState<Record<number, number>>({})
+  const [pnlCache, setPnlCache] = useState<Record<string, number>>({})
 
   useEffect(() => {
     if (open) setTab("market")
@@ -92,7 +92,10 @@ function PairCard({
 
       const next = { ...prev }
 
-      liveOrders.forEach((o, i) => {
+      liveOrders.forEach((o) => {
+
+        const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+
 
         const entry = Number(o.entry)
         if (!entry) return
@@ -102,7 +105,8 @@ function PairCard({
         if (o.direction === "BUY") pnl = price - entry
         if (o.direction === "SELL") pnl = entry - price
 
-        next[i] = pnl
+        next[key] = pnl
+
       })
 
       return next
@@ -114,7 +118,7 @@ function PairCard({
     <div
       className={`border border-neutral-800 rounded-xl overflow-hidden transition-all active:scale-[0.99]
 ${liveDir === "EXIT"
-  ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-80 saturate-75 border-neutral-800/60"
+          ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-80 saturate-75 border-neutral-800/60"
           : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"}
 `}
     >
@@ -266,14 +270,16 @@ ${liveDir === "EXIT"
                         ? "text-red-400"
                         : "text-neutral-400"
 
-                  const prev = pnlCache[i] ?? pnl
+                  const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+                  const prev = pnlCache[key] ?? pnl
+
                   let pulseClass = ""
                   if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
                   if (pnl < prev) pulseClass = "ring-1 ring-red-400/40"
 
                   return (
                     <div
-                      key={i}
+                      key={o.id || `${o.direction}_${o.entry}_${o.time}_${i}`}
                       className={`bg-neutral-800 p-3 rounded-lg text-sm flex justify-between transition-all duration-300 ${pulseClass}`}
                     >
 
