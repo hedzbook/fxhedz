@@ -63,7 +63,7 @@ export default function GlobalLightChart({
                 secondsVisible: false,
                 rightOffset: 25,
                 barSpacing: 8,
-                fixRightEdge: true
+                fixRightEdge: false
             }
         })
 
