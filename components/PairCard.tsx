@@ -4,7 +4,7 @@
 
 import React from "react"
 import { useState, useEffect } from "react"
-import TradingViewChart from "./TradingViewChart"
+import LightChart from "./LightChart"
 
 type TradeDirection = "BUY" | "SELL" | "HEDGED" | "EXIT" | "--"
 
@@ -98,7 +98,11 @@ ${liveDir === "EXIT"
         }}
         className="p-4 cursor-pointer"
       >
-        <div className="w-full">
+<div className="w-full">
+  <LightChart
+    symbol={pair}
+    price={Number(signal?.price)}
+  />
 
           <div className="flex justify-between items-center">
             <div className="font-semibold">{pair}</div>
@@ -162,7 +166,11 @@ ${liveDir === "EXIT"
 
             {tab === "market" && (
               <>
-                <TradingViewChart symbol={pair} />
+                <LightChart
+  symbol={pair}
+  price={Number(signal?.price)}
+/>
+
 
                 <div>
                   <div className="text-sm text-neutral-400">Latest Signal</div>
