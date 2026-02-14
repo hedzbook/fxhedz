@@ -31,6 +31,7 @@ export default function Page() {
   const [netState, setNetState] = useState("FLAT")
   const [netIntensity, setNetIntensity] = useState(0)
   const [liquidityPulse, setLiquidityPulse] = useState(0)
+  const [marketMode, setMarketMode] = useState<"CALM" | "ACTIVE" | "VOLATILE">("CALM")
 
   // ======================================================
   // TELEGRAM MINIAPP GUARD
@@ -141,6 +142,38 @@ export default function Page() {
     return () => clearTimeout(timer)
 
   }, [signals])
+
+  // ======================================================
+  // GLOBAL MARKET MODE DETECTOR
+  // ======================================================
+  useEffect(() => {
+
+    let totalMove = 0
+    let count = 0
+
+    PAIRS.forEach(pair => {
+
+      const newPrice = Number(signals?.[pair]?.price)
+      const oldPrice = Number(uiSignals?.[pair]?.price)
+
+      if (newPrice && oldPrice) {
+        totalMove += Math.abs(newPrice - oldPrice)
+        count++
+      }
+
+    })
+
+    const avgMove = count ? totalMove / count : 0
+
+    if (avgMove > 2) {
+      setMarketMode("VOLATILE")
+    } else if (avgMove > 0.4) {
+      setMarketMode("ACTIVE")
+    } else {
+      setMarketMode("CALM")
+    }
+
+  }, [signals, uiSignals])
 
   // ======================================================
   // 🔥 OPEN PAIR REFRESH LOOP
@@ -267,12 +300,13 @@ export default function Page() {
     <main
       className="min-h-screen text-white p-4 space-y-3 transition-all duration-700"
       style={{
-        boxShadow:
-          netState === "NET BUY"
-            ? `inset 0 0 ${10 + liquidityPulse * 26}px rgba(34,197,94,0.06)`
-            : netState === "NET SELL"
-              ? `inset 0 0 ${10 + liquidityPulse * 26}px rgba(248,113,113,0.06)`
-              : `inset 0 0 ${8 + liquidityPulse * 16}px rgba(255,255,255,0.025)`,
+        transition:
+          marketMode === "VOLATILE"
+            ? "all 320ms cubic-bezier(0.22,1,0.36,1)"
+            : "all 700ms ease",
+
+        boxShadow: `inset 0 0 ${12 + liquidityPulse * 18}px rgba(255,255,255,0.03)`,
+
         background:
           netState === "NET BUY"
             ? `radial-gradient(circle at top, rgba(34,197,94,${0.04 + netIntensity * 0.12}), #000000)`
@@ -290,7 +324,14 @@ export default function Page() {
         onStateChange={(state: string, intensity: number, pulse: number) => {
           setNetState(state)
           setNetIntensity(intensity)
-          setLiquidityPulse(pulse)
+          setLiquidityPulse(
+            marketMode === "VOLATILE"
+              ? pulse * 1.4
+              : marketMode === "ACTIVE"
+                ? pulse
+                : pulse * 0.6
+          )
+
         }}
       />
 
