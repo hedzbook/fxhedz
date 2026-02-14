@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
 
@@ -26,6 +26,7 @@ export default function Page() {
   const [openPair, setOpenPair] = useState<string | null>(null)
   const [authorized, setAuthorized] = useState(false)
   const [uiSignals, setUiSignals] = useState<any>({})
+  const [netState, setNetState] = useState("FLAT")
 
   // ======================================================
   // TELEGRAM MINIAPP GUARD
@@ -208,9 +209,11 @@ export default function Page() {
   // ======================================================
   // 🔥 BUILD GLOBAL PAIRS DATA (FOR ACCOUNT STRIP)
   // ======================================================
-  const pairsData = PAIRS.map((pair) => {
+const pairsData = useMemo(() => {
 
-    const signal = signals?.[pair]
+  return PAIRS.map((pair) => {
+
+    const signal = uiSignals?.[pair]
     const extra = pairData?.[pair] || {}
 
     return {
@@ -220,14 +223,26 @@ export default function Page() {
     }
   })
 
+}, [uiSignals, pairData])
+
   // ======================================================
   // MAIN UI
   // ======================================================
   return (
-    <main className="min-h-screen bg-black text-white p-4 space-y-3">
+    <main
+      className={`min-h-screen text-white p-4 space-y-3 transition-colors duration-500
+    ${netState === "NET BUY" ? "bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.08),#000000)]" : ""}
+    ${netState === "NET SELL" ? "bg-[radial-gradient(circle_at_top,rgba(248,113,113,0.08),#000000)]" : ""}
+    ${netState === "HEDGED" ? "bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.06),#000000)]" : ""}
+    ${netState === "FLAT" ? "bg-black" : ""}
+  `}
+    >
 
       {/* 🔥 GLOBAL ACCOUNT RISK STRIP */}
-      <AccountStrip pairs={pairsData} />
+      <AccountStrip
+        pairs={pairsData}
+        onStateChange={setNetState}
+      />
 
       {PAIRS.map((pair) => {
 
