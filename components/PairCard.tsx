@@ -1,3 +1,5 @@
+// components/PairCard.tsx
+
 "use client"
 
 import React from "react"
@@ -111,8 +113,8 @@ function PairCard({
   return (
     <div
       className={`border border-neutral-800 rounded-xl overflow-hidden transition-all active:scale-[0.99]
-  ${liveDir === "EXIT"
-          ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-80"
+${liveDir === "EXIT"
+  ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-80 saturate-75 border-neutral-800/60"
           : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"}
 `}
     >

@@ -1,3 +1,5 @@
+//app/page.tsx
+
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
@@ -223,7 +225,7 @@ export default function Page() {
     })
   }
 
-    // ======================================================
+  // ======================================================
   // 🔥 BUILD GLOBAL PAIRS DATA (FOR ACCOUNT STRIP)
   // ======================================================
   const pairsData = useMemo(() => {
@@ -265,7 +267,12 @@ export default function Page() {
     <main
       className="min-h-screen text-white p-4 space-y-3 transition-all duration-700"
       style={{
-        boxShadow: `inset 0 0 ${12 + liquidityPulse * 18}px rgba(255,255,255,0.03)`,
+        boxShadow:
+          netState === "NET BUY"
+            ? `inset 0 0 ${10 + liquidityPulse * 26}px rgba(34,197,94,0.06)`
+            : netState === "NET SELL"
+              ? `inset 0 0 ${10 + liquidityPulse * 26}px rgba(248,113,113,0.06)`
+              : `inset 0 0 ${8 + liquidityPulse * 16}px rgba(255,255,255,0.025)`,
         background:
           netState === "NET BUY"
             ? `radial-gradient(circle at top, rgba(34,197,94,${0.04 + netIntensity * 0.12}), #000000)`
