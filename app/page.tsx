@@ -5,6 +5,7 @@
 import { useEffect, useState, useMemo } from "react"
 import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
+import GlobalLightChart from "@/components/GlobalLightChart"
 
 const PAIRS = [
   "XAUUSD",
@@ -335,6 +336,12 @@ export default function Page() {
         }}
       />
 
+<GlobalLightChart
+  symbol={openPair || ""}
+  price={Number(uiSignals?.[openPair || ""]?.price)}
+  mountId={openPair ? `chart_mount_${openPair}` : undefined}
+/>
+
       {PAIRS.map((pair) => {
 
         const signal = uiSignals?.[pair]
@@ -348,7 +355,7 @@ export default function Page() {
             direction={signal?.direction}
             signal={signal}
             history={extra?.history}
-            orders={extra?.orders}   // ✅ ADDED
+            orders={extra?.orders}
             performance={extra?.performance}
             notes={extra?.notes}
             onToggle={() => togglePair(pair)}

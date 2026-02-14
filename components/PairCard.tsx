@@ -4,7 +4,6 @@
 
 import React from "react"
 import { useState, useEffect } from "react"
-import LightChart from "./LightChart"
 
 type TradeDirection = "BUY" | "SELL" | "HEDGED" | "EXIT" | "--"
 
@@ -98,11 +97,7 @@ ${liveDir === "EXIT"
         }}
         className="p-4 cursor-pointer"
       >
-<div className="w-full">
-  <LightChart
-    symbol={pair}
-    price={Number(signal?.price)}
-  />
+        <div className="w-full">
 
           <div className="flex justify-between items-center">
             <div className="font-semibold">{pair}</div>
@@ -166,11 +161,12 @@ ${liveDir === "EXIT"
 
             {tab === "market" && (
               <>
-                <LightChart
-  symbol={pair}
-  price={Number(signal?.price)}
-/>
 
+                {/* 🔥 GLOBAL CHART MOUNT POINT */}
+                <div
+                  id={`chart_mount_${pair}`}
+                  className="w-full h-[280px] rounded-lg bg-neutral-900"
+                />
 
                 <div>
                   <div className="text-sm text-neutral-400">Latest Signal</div>
@@ -182,10 +178,11 @@ ${liveDir === "EXIT"
                   </div>
                 </div>
 
-                {/* MARKET NOTES (ChatGPT hourly feed placeholder) */}
+                {/* MARKET NOTES */}
                 <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300 leading-relaxed">
                   {notes || "No market notes yet"}
                 </div>
+
               </>
             )}
 
@@ -249,10 +246,10 @@ ${liveDir === "EXIT"
 
                         <div className="flex gap-2 items-center">
                           <span className={`font-semibold ${o.direction === "BUY"
-                              ? "text-green-400"
-                              : o.direction === "SELL"
-                                ? "text-red-400"
-                                : "text-sky-400"
+                            ? "text-green-400"
+                            : o.direction === "SELL"
+                              ? "text-red-400"
+                              : "text-sky-400"
                             }`}>
                             {o.hedged
                               ? `${o.direction} (HEDGED)`
