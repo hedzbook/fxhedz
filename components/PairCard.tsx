@@ -43,8 +43,7 @@ function PairCard({
   useEffect(() => {
 
     if (!signal) return
-    if (liveDir === "EXIT") return
-    if (liveDir === "HEDGED") return
+    if (dir === "HEDGED") return
 
     const price = Number(signal?.price)
     const tp = Number(signal?.tp)
@@ -52,25 +51,19 @@ function PairCard({
 
     if (!price || !tp || !sl) return
 
-    // BUY lifecycle
     if (liveDir === "BUY") {
-
       if (price >= tp || price <= sl) {
         setLiveDir("EXIT")
       }
-
     }
 
-    // SELL lifecycle
     if (liveDir === "SELL") {
-
       if (price <= tp || price >= sl) {
         setLiveDir("EXIT")
       }
-
     }
 
-  }, [signal?.price])
+  }, [signal?.price, dir, liveDir])
 
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
@@ -103,9 +96,7 @@ function PairCard({
 
           {/* 🔥 TRADE BAR ONLY FOR ACTIVE TRADES */}
           {liveDir !== "EXIT" &&
-            signal?.entry &&
-            signal?.sl &&
-            signal?.tp && (
+            (liveDir === "HEDGED" || (signal?.entry && signal?.sl && signal?.tp)) && (
               <TradeBar signal={signal} direction={liveDir} />
             )}
 
@@ -285,57 +276,57 @@ function TradeBar({
   }
 
   if (direction === "HEDGED") {
-  return (
-    <div className="mt-3 select-none">
+    return (
+      <div className="mt-3 select-none">
 
-      <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
-        <span className="absolute left-0 text-sky-400">HEDZ</span>
-        <span
-          className="absolute text-sky-400"
-          style={{ left: "50%", transform: "translateX(-50%)" }}
-        >
-          ENTRY
-        </span>
-        <span className="absolute right-0 text-sky-400">HEDZ</span>
-      </div>
+        <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
+          <span className="absolute left-0 text-sky-400">HEDZ</span>
+          <span
+            className="absolute text-sky-400"
+            style={{ left: "50%", transform: "translateX(-50%)" }}
+          >
+            ENTRY
+          </span>
+          <span className="absolute right-0 text-sky-400">HEDZ</span>
+        </div>
 
-      <div className="relative h-6 flex items-center">
+        <div className="relative h-6 flex items-center">
 
-        {/* BLUE LEFT */}
-        <div
-          className="absolute h-[2px] bg-sky-400/60"
-          style={{ width: "50%" }}
-        />
-
-        {/* BLUE RIGHT */}
-        <div
-          className="absolute h-[2px] bg-sky-400/60"
-          style={{ left: "50%", width: "50%" }}
-        />
-
-        {/* CENTER DOT */}
-        <div
-          className="absolute"
-          style={{ left: "50%", transform: "translateX(-50%)" }}
-        >
-          <div className="absolute -inset-2 rounded-full blur-md bg-sky-400/30" />
+          {/* BLUE LEFT */}
           <div
-            className="w-3 h-3 rounded-full bg-sky-400"
-            style={{ boxShadow: "0 0 18px rgba(56,189,248,0.9)" }}
+            className="absolute h-[2px] bg-sky-400/60"
+            style={{ width: "50%" }}
           />
+
+          {/* BLUE RIGHT */}
+          <div
+            className="absolute h-[2px] bg-sky-400/60"
+            style={{ left: "50%", width: "50%" }}
+          />
+
+          {/* CENTER DOT */}
+          <div
+            className="absolute"
+            style={{ left: "50%", transform: "translateX(-50%)" }}
+          >
+            <div className="absolute -inset-2 rounded-full blur-md bg-sky-400/30" />
+            <div
+              className="w-3 h-3 rounded-full bg-sky-400"
+              style={{ boxShadow: "0 0 18px rgba(56,189,248,0.9)" }}
+            />
+          </div>
+
+        </div>
+
+        <div className="flex justify-between text-[11px] text-sky-400 mt-1">
+          <span>{signal?.entry}</span>
+          <span>{signal?.entry}</span>
+          <span>{signal?.entry}</span>
         </div>
 
       </div>
-
-      <div className="flex justify-between text-[11px] text-sky-400 mt-1">
-        <span>{signal?.entry}</span>
-        <span>{signal?.entry}</span>
-        <span>{signal?.entry}</span>
-      </div>
-
-    </div>
-  )
-}
+    )
+  }
 
   // clamp
   pricePercent = Math.max(0, Math.min(100, pricePercent))
