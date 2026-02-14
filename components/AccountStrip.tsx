@@ -66,7 +66,7 @@ export default function AccountStrip({
     }, [netState, intensity, pulse])
 
     return (
-        <div className="bg-neutral-900 border-b border-neutral-800 p-3 flex justify-between text-sm">
+        <div className="bg-neutral-900 border-b border-neutral-800 p-3 flex justify-between text-sm shadow-[0_6px_18px_rgba(0,0,0,0.45)]">
 
             <div className="space-x-4">
                 <span className="text-neutral-400">LOTS</span>
