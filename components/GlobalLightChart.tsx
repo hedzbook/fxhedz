@@ -120,6 +120,7 @@ export default function GlobalLightChart({
         // 🔥 FIRST LOAD = SET HISTORY ONCE
         if (!historyLoadedRef.current) {
             series.setData(data)
+            chartRef.current?.timeScale().scrollToPosition(12, false)
             historyLoadedRef.current = true
             return
         }
