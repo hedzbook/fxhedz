@@ -11,6 +11,7 @@ type Props = {
   direction?: TradeDirection
   signal?: any
   history?: any[]
+  orders?: any[]
   performance?: any
   notes?: string
   onToggle: () => void
@@ -23,6 +24,7 @@ function PairCard({
   direction,
   signal,
   history,
+  orders,
   performance,
   notes
 }: Props) {
@@ -30,7 +32,7 @@ function PairCard({
   const dir: TradeDirection = direction ?? "--"
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
 
-  const [tab, setTab] = useState<"market" | "history" | "performance">("market")
+  const [tab, setTab] = useState<"market" | "orders" | "history" | "performance">("market")
 
   useEffect(() => {
     if (open) setTab("market")
@@ -126,6 +128,7 @@ function PairCard({
           <div className="flex w-full border-b border-neutral-800 text-sm">
 
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
+            <TabBtn label="Orders" active={tab === "orders"} onClick={() => setTab("orders")} />
             <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
             <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
 
@@ -187,6 +190,45 @@ function PairCard({
                   </div>
                 )) : (
                   <div className="text-neutral-500 text-sm">No history yet</div>
+                )}
+              </div>
+            )}
+
+            {tab === "orders" && (
+              <div className="space-y-2">
+                {orders?.length ? orders.map((o, i) => (
+                  <div key={i} className="bg-neutral-800 p-3 rounded-lg text-sm flex justify-between">
+
+                    <div className="space-y-1">
+
+                      <div className="flex gap-2 items-center">
+                        <span className={`font-semibold ${o.direction === "BUY"
+                          ? "text-green-400"
+                          : o.direction === "SELL"
+                            ? "text-red-400"
+                            : "text-sky-400"
+                          }`}>
+                          {o.direction}
+                        </span>
+
+                        <span className="text-neutral-500 text-xs">
+                          {o.time}
+                        </span>
+                      </div>
+
+                      <div className="text-neutral-400 text-xs">
+                        ENTRY {o.entry}
+                      </div>
+
+                    </div>
+
+                    <div className="text-neutral-400">
+                      {o.lots ?? "--"}
+                    </div>
+
+                  </div>
+                )) : (
+                  <div className="text-neutral-500 text-sm">No open orders</div>
                 )}
               </div>
             )}
