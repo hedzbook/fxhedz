@@ -7,7 +7,7 @@ export default function AccountStrip({
     onStateChange
 }: {
     pairs: any[]
-    onStateChange?: (state: string) => void
+    onStateChange?: (state: string, intensity: number) => void
 }) {
 
     let totalFloating = 0
@@ -51,10 +51,14 @@ export default function AccountStrip({
                     ? "NET BUY"
                     : "NET SELL"
 
-    // 🔥 ADD EXACTLY HERE
+    // exposure intensity 0 → 1
+    const imbalance = Math.abs(buyVol - sellVol)
+    const totalVol = buyVol + sellVol || 1
+    const intensity = Math.min(1, imbalance / totalVol)
+
     useEffect(() => {
-        onStateChange?.(netState)
-    }, [netState])
+        onStateChange?.(netState, intensity)
+    }, [netState, intensity])
 
     return (
         <div className="bg-neutral-900 border-b border-neutral-800 p-3 flex justify-between text-sm">

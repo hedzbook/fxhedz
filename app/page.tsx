@@ -27,6 +27,7 @@ export default function Page() {
   const [authorized, setAuthorized] = useState(false)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
+  const [netIntensity, setNetIntensity] = useState(0)
 
   // ======================================================
   // TELEGRAM MINIAPP GUARD
@@ -94,49 +95,49 @@ export default function Page() {
 
   }, [authorized])
 
-// ======================================================
-// DYNAMIC TICK STABILIZER (ADAPTIVE SMOOTHING - SAFE)
-// ======================================================
-useEffect(() => {
+  // ======================================================
+  // DYNAMIC TICK STABILIZER (ADAPTIVE SMOOTHING - SAFE)
+  // ======================================================
+  useEffect(() => {
 
-  let delay = 80
+    let delay = 80
 
-  try {
+    try {
 
-    let totalMove = 0
-    let count = 0
+      let totalMove = 0
+      let count = 0
 
-    PAIRS.forEach(pair => {
+      PAIRS.forEach(pair => {
 
-      const newPrice = Number(signals?.[pair]?.price)
-      const oldPrice = Number(uiSignals?.[pair]?.price)
+        const newPrice = Number(signals?.[pair]?.price)
+        const oldPrice = Number(uiSignals?.[pair]?.price)
 
-      if (newPrice && oldPrice) {
-        totalMove += Math.abs(newPrice - oldPrice)
-        count++
-      }
+        if (newPrice && oldPrice) {
+          totalMove += Math.abs(newPrice - oldPrice)
+          count++
+        }
 
-    })
+      })
 
-    const avgMove = count ? totalMove / count : 0
+      const avgMove = count ? totalMove / count : 0
 
-    if (avgMove > 1) delay = 160
-    else if (avgMove > 0.2) delay = 120
-    else delay = 70
+      if (avgMove > 1) delay = 160
+      else if (avgMove > 0.2) delay = 120
+      else delay = 70
 
-  } catch {}
+    } catch { }
 
-  const timer = setTimeout(() => {
-    setUiSignals(prev => {
-      // 🔥 prevent useless updates
-      if (JSON.stringify(prev) === JSON.stringify(signals)) return prev
-      return signals
-    })
-  }, delay)
+    const timer = setTimeout(() => {
+      setUiSignals((prev: any) => {
+        // 🔥 prevent useless updates
+        if (JSON.stringify(prev) === JSON.stringify(signals)) return prev
+        return signals
+      })
+    }, delay)
 
-  return () => clearTimeout(timer)
+    return () => clearTimeout(timer)
 
-}, [signals]) 
+  }, [signals])
 
   // ======================================================
   // 🔥 OPEN PAIR REFRESH LOOP
@@ -240,39 +241,47 @@ useEffect(() => {
   // ======================================================
   // 🔥 BUILD GLOBAL PAIRS DATA (FOR ACCOUNT STRIP)
   // ======================================================
-const pairsData = useMemo(() => {
+  const pairsData = useMemo(() => {
 
-  return PAIRS.map((pair) => {
+    return PAIRS.map((pair) => {
 
-    const signal = uiSignals?.[pair]
-    const extra = pairData?.[pair] || {}
+      const signal = uiSignals?.[pair]
+      const extra = pairData?.[pair] || {}
 
-    return {
-      pair,
-      signal,
-      orders: extra?.orders || []
-    }
-  })
+      return {
+        pair,
+        signal,
+        orders: extra?.orders || []
+      }
+    })
 
-}, [uiSignals, pairData])
+  }, [uiSignals, pairData])
 
   // ======================================================
   // MAIN UI
   // ======================================================
   return (
     <main
-      className={`min-h-screen text-white p-4 space-y-3 transition-colors duration-500
-    ${netState === "NET BUY" ? "bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.08),#000000)]" : ""}
-    ${netState === "NET SELL" ? "bg-[radial-gradient(circle_at_top,rgba(248,113,113,0.08),#000000)]" : ""}
-    ${netState === "HEDGED" ? "bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.06),#000000)]" : ""}
-    ${netState === "FLAT" ? "bg-black" : ""}
-  `}
+      className="min-h-screen text-white p-4 space-y-3 transition-colors duration-500"
+      style={{
+        background:
+          netState === "NET BUY"
+            ? `radial-gradient(circle at top, rgba(34,197,94,${0.04 + netIntensity * 0.12}), #000000)`
+            : netState === "NET SELL"
+              ? `radial-gradient(circle at top, rgba(248,113,113,${0.04 + netIntensity * 0.12}), #000000)`
+              : netState === "HEDGED"
+                ? `radial-gradient(circle at top, rgba(56,189,248,${0.03 + netIntensity * 0.08}), #000000)`
+                : "#000000"
+      }}
     >
 
       {/* 🔥 GLOBAL ACCOUNT RISK STRIP */}
       <AccountStrip
         pairs={pairsData}
-        onStateChange={setNetState}
+        onStateChange={(state: string, intensity: number) => {
+          setNetState(state)
+          setNetIntensity(intensity)
+        }}
       />
 
       {PAIRS.map((pair) => {
