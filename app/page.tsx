@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import PairCard from "@/components/PairCard"
+import AccountStrip from "@/components/AccountStrip"
 
 const PAIRS = [
   "XAUUSD",
@@ -24,6 +25,7 @@ export default function Page() {
   const [pairData, setPairData] = useState<any>({})
   const [openPair, setOpenPair] = useState<string | null>(null)
   const [authorized, setAuthorized] = useState(false)
+  const [uiSignals, setUiSignals] = useState<any>({})
 
   // ======================================================
   // TELEGRAM MINIAPP GUARD
@@ -67,12 +69,10 @@ export default function Page() {
         const res = await fetch(SIGNAL_API)
         const json = await res.json()
 
-        // supports both {signals:{}} OR direct object
         const incoming = json?.signals ? json.signals : json
 
         setSignals((prev: any) => {
 
-          // 🔥 shallow compare to avoid useless renders
           if (JSON.stringify(prev) === JSON.stringify(incoming)) {
             return prev
           }
@@ -94,13 +94,26 @@ export default function Page() {
   }, [authorized])
 
   // ======================================================
-  // 🔥 OPEN PAIR REFRESH LOOP (history + performance + notes)
+  // 🔥 TICK STABILIZER (UI SMOOTHING)
+  // ======================================================
+  useEffect(() => {
+
+    const timer = setTimeout(() => {
+      setUiSignals(signals)
+    }, 120) // institutional sweet spot
+
+    return () => clearTimeout(timer)
+
+  }, [signals])
+
+  // ======================================================
+  // 🔥 OPEN PAIR REFRESH LOOP
   // ======================================================
   useEffect(() => {
 
     if (!authorized || !openPair) return
 
-    const pairKey = openPair // 🔥 safely narrowed to string
+    const pairKey = openPair
 
     let cancelled = false
 
@@ -123,10 +136,8 @@ export default function Page() {
       }
     }
 
-    // 🔥 initial load
     refreshOpenPair()
 
-    // 🔥 live refresh loop
     const interval = setInterval(refreshOpenPair, 6000)
 
     return () => {
@@ -137,11 +148,10 @@ export default function Page() {
   }, [authorized, openPair])
 
   // ======================================================
-  // LAZY LOAD PAIR DATA (history + performance + notes)
+  // LAZY LOAD PAIR DATA
   // ======================================================
   async function loadPair(pair: string) {
 
-    // already loaded
     if (pairData[pair]) return
 
     try {
@@ -196,14 +206,32 @@ export default function Page() {
   }
 
   // ======================================================
+  // 🔥 BUILD GLOBAL PAIRS DATA (FOR ACCOUNT STRIP)
+  // ======================================================
+  const pairsData = PAIRS.map((pair) => {
+
+    const signal = signals?.[pair]
+    const extra = pairData?.[pair] || {}
+
+    return {
+      pair,
+      signal,
+      orders: extra?.orders || []
+    }
+  })
+
+  // ======================================================
   // MAIN UI
   // ======================================================
   return (
     <main className="min-h-screen bg-black text-white p-4 space-y-3">
 
+      {/* 🔥 GLOBAL ACCOUNT RISK STRIP */}
+      <AccountStrip pairs={pairsData} />
+
       {PAIRS.map((pair) => {
 
-        const signal = signals?.[pair]
+        const signal = uiSignals?.[pair]
         const extra = pairData?.[pair] || {}
 
         return (
@@ -214,6 +242,7 @@ export default function Page() {
             direction={signal?.direction}
             signal={signal}
             history={extra?.history}
+            orders={extra?.orders}   // ✅ ADDED
             performance={extra?.performance}
             notes={extra?.notes}
             onToggle={() => togglePair(pair)}

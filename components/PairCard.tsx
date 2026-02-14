@@ -31,8 +31,9 @@ function PairCard({
 
   const dir: TradeDirection = direction ?? "--"
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
-
   const [tab, setTab] = useState<"market" | "orders" | "history" | "performance">("market")
+  const [liveOrders, setLiveOrders] = useState<any[]>(orders ?? [])
+  const [pnlCache, setPnlCache] = useState<Record<number, number>>({})
 
   useEffect(() => {
     if (open) setTab("market")
@@ -66,6 +67,46 @@ function PairCard({
     }
 
   }, [signal?.price, dir, liveDir])
+
+  useEffect(() => {
+    setLiveOrders(orders ?? [])
+  }, [orders])
+
+  useEffect(() => {
+    // 🔥 HARD SYNC WITH TRADE STATE
+    if (liveDir === "EXIT") {
+      setLiveOrders([])
+    }
+  }, [liveDir])
+
+  useEffect(() => {
+
+    if (!liveOrders?.length) return
+
+    const price = Number(signal?.price)
+    if (!price) return
+
+    setPnlCache(prev => {
+
+      const next = { ...prev }
+
+      liveOrders.forEach((o, i) => {
+
+        const entry = Number(o.entry)
+        if (!entry) return
+
+        let pnl = 0
+
+        if (o.direction === "BUY") pnl = price - entry
+        if (o.direction === "SELL") pnl = entry - price
+
+        next[i] = pnl
+      })
+
+      return next
+    })
+
+  }, [signal?.price, liveOrders])
 
   return (
     <div className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900 transition-all active:scale-[0.99]">
@@ -196,38 +237,76 @@ function PairCard({
 
             {tab === "orders" && (
               <div className="space-y-2">
-                {orders?.length ? orders.map((o, i) => (
-                  <div key={i} className="bg-neutral-800 p-3 rounded-lg text-sm flex justify-between">
+                {liveOrders?.length ? liveOrders.map((o, i) => {
 
-                    <div className="space-y-1">
+                  const price = Number(signal?.price)
+                  const entry = Number(o.entry)
 
-                      <div className="flex gap-2 items-center">
-                        <span className={`font-semibold ${o.direction === "BUY"
-                          ? "text-green-400"
-                          : o.direction === "SELL"
-                            ? "text-red-400"
-                            : "text-sky-400"
-                          }`}>
-                          {o.direction}
-                        </span>
+                  let pnl = 0
 
-                        <span className="text-neutral-500 text-xs">
-                          {o.time}
-                        </span>
+                  if (price && entry) {
+                    if (o.direction === "BUY") {
+                      pnl = price - entry
+                    } else if (o.direction === "SELL") {
+                      pnl = entry - price
+                    }
+                  }
+
+                  const pnlColor =
+                    pnl > 0
+                      ? "text-green-400"
+                      : pnl < 0
+                        ? "text-red-400"
+                        : "text-neutral-400"
+
+                  const prev = pnlCache[i] ?? pnl
+                  let pulseClass = ""
+                  if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
+                  if (pnl < prev) pulseClass = "ring-1 ring-red-400/40"
+
+                  return (
+                    <div
+                      key={i}
+                      className={`bg-neutral-800 p-3 rounded-lg text-sm flex justify-between transition-all duration-300 ${pulseClass}`}
+                    >
+
+                      <div className="space-y-1">
+
+                        <div className="flex gap-2 items-center">
+                          <span className={`font-semibold ${o.direction === "BUY"
+                            ? "text-green-400"
+                            : o.direction === "SELL"
+                              ? "text-red-400"
+                              : "text-sky-400"
+                            }`}>
+                            {o.direction}
+                          </span>
+
+                          <span className="text-neutral-500 text-xs">
+                            {o.time}
+                          </span>
+                        </div>
+
+                        <div className="text-neutral-400 text-xs">
+                          ENTRY {o.entry}
+                        </div>
+
                       </div>
 
-                      <div className="text-neutral-400 text-xs">
-                        ENTRY {o.entry}
+                      <div className="text-right">
+                        <div className="text-neutral-400 text-xs">
+                          {o.lots ?? "--"}
+                        </div>
+
+                        {/* 🔥 LIVE FLOATING */}
+                        <div className={`font-semibold ${pnlColor}`}>
+                          {pnl ? pnl.toFixed(2) : "--"}
+                        </div>
                       </div>
 
                     </div>
-
-                    <div className="text-neutral-400">
-                      {o.lots ?? "--"}
-                    </div>
-
-                  </div>
-                )) : (
+                  )
+                }) : (
                   <div className="text-neutral-500 text-sm">No open orders</div>
                 )}
               </div>
