@@ -31,7 +31,7 @@ export default function GlobalLightChart({
     const slLineRef = useRef<any>(null)
     const tpLineRef = useRef<any>(null)
 
-    const candleRef = useRef<any>(null)
+    const historyLoadedRef = useRef(false)
 
     // ======================================================
     // CREATE GLOBAL CHART
@@ -60,7 +60,7 @@ export default function GlobalLightChart({
             timeScale: {
                 borderColor: "rgba(255,255,255,0.08)",
                 timeVisible: true,
-                secondsVisible: true
+                secondsVisible: false
             }
         })
 
@@ -76,6 +76,9 @@ export default function GlobalLightChart({
         chartRef.current = chart
         candleSeriesRef.current = candleSeries
 
+        // 🔥 reset history when pair changes
+        historyLoadedRef.current = false
+
         const resizeObserver = new ResizeObserver(() => {
             chart.applyOptions({
                 width: container.clientWidth,
@@ -86,46 +89,59 @@ export default function GlobalLightChart({
         resizeObserver.observe(container)
 
         return () => {
-            chart.remove()
             resizeObserver.disconnect()
+            chart.remove()
         }
 
     }, [mountId, symbol])
 
     // ======================================================
-    // LIVE M15 CANDLE BUILDER
+    // LOAD REAL MT5 HISTORY (50 candles)
     // ======================================================
     useEffect(() => {
 
-        if (!candleSeriesRef.current || price === undefined) return
+        const series = candleSeriesRef.current
+        if (!series) return
+        if (!signal?.candles) return
+        if (historyLoadedRef.current) return
 
-        const candleTime =
-            Math.floor(Date.now() / (15 * 60 * 1000)) * 900
+        const data = signal.candles.map((c:any) => ({
+            time: Number(c.time),
+            open: Number(c.open),
+            high: Number(c.high),
+            low: Number(c.low),
+            close: Number(c.close)
+        }))
 
-        let candle = candleRef.current
+        if (!data.length) return
 
-        if (!candle || candle.time !== candleTime) {
+        series.setData(data)
+        historyLoadedRef.current = true
 
-            candle = {
-                time: candleTime,
-                open: price,
-                high: price,
-                low: price,
-                close: price
-            }
+    }, [signal?.candles])
 
-            candleRef.current = candle
+    // ======================================================
+    // LIVE LAST CANDLE UPDATE (MT5 SYNC)
+    // ======================================================
+    useEffect(() => {
 
-        } else {
+        const series = candleSeriesRef.current
+        if (!series) return
+        if (!signal?.candles) return
+        if (!historyLoadedRef.current) return
 
-            candle.high = Math.max(candle.high, price)
-            candle.low = Math.min(candle.low, price)
-            candle.close = price
-        }
+        const last = signal.candles[signal.candles.length - 1]
+        if (!last) return
 
-        candleSeriesRef.current.update(candle)
+        series.update({
+            time: Number(last.time),
+            open: Number(last.open),
+            high: Number(last.high),
+            low: Number(last.low),
+            close: Number(last.close)
+        })
 
-    }, [price])
+    }, [signal?.price, signal?.candles])
 
     // ======================================================
     // 🔥 ULTRA-PRO OVERLAY ENGINE
@@ -143,17 +159,14 @@ export default function GlobalLightChart({
         const sl = Number(signal?.sl)
         const tp = Number(signal?.tp)
 
-        // ----------------------------
-        // CLEAR EVERYTHING FIRST
-        // ----------------------------
-        const clearSeries = (ref: any) => {
+        const clearSeries = (ref:any) => {
             if (ref.current) {
                 chart.removeSeries(ref.current)
                 ref.current = null
             }
         }
 
-        const clearLine = (ref: any) => {
+        const clearLine = (ref:any) => {
             if (ref.current) {
                 candleSeries.removePriceLine(ref.current)
                 ref.current = null
@@ -168,9 +181,9 @@ export default function GlobalLightChart({
         clearLine(slLineRef)
         clearLine(tpLineRef)
 
-        // ==================================================
-        // HEDGED MODE (buyVol == sellVol)
-        // ==================================================
+        // ==============================
+        // HEDGED MODE
+        // ==============================
         if (dir === "HEDGED" && entry) {
 
             const hedgeBand = chart.addSeries(LineSeries, {
@@ -195,14 +208,9 @@ export default function GlobalLightChart({
             return
         }
 
-        // EXIT = nothing
         if (dir === "EXIT") return
-
         if (!entry || !sl || !tp) return
 
-        // ==================================================
-        // ENTRY GLOW LINE
-        // ==================================================
         entryLineRef.current = candleSeries.createPriceLine({
             price: entry,
             color: "#ffffff",
@@ -210,9 +218,6 @@ export default function GlobalLightChart({
             title: "ENTRY"
         })
 
-        // ==================================================
-        // STOP LINE
-        // ==================================================
         slLineRef.current = candleSeries.createPriceLine({
             price: sl,
             color: "#ef4444",
@@ -220,9 +225,6 @@ export default function GlobalLightChart({
             title: "STOP"
         })
 
-        // ==================================================
-        // TP LINE
-        // ==================================================
         tpLineRef.current = candleSeries.createPriceLine({
             price: tp,
             color: "#22c55e",
@@ -230,9 +232,6 @@ export default function GlobalLightChart({
             title: "TP"
         })
 
-        // ==================================================
-        // 🔵 TP RISK ZONE (Institutional Band)
-        // ==================================================
         const tpZone = chart.addSeries(LineSeries, {
             color: "rgba(56,189,248,0.01)",
             lineWidth: 1,
@@ -253,9 +252,6 @@ export default function GlobalLightChart({
 
         tpZoneRef.current = tpZone
 
-        // ==================================================
-        // 🔴 SL RISK ZONE
-        // ==================================================
         const slZone = chart.addSeries(LineSeries, {
             color: "rgba(239,68,68,0.01)",
             lineWidth: 1,
