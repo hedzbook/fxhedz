@@ -89,21 +89,22 @@ export default function LightChart({
   // ====================================
   // LIVE PRICE UPDATE (REAL-TIME MOVE)
   // ====================================
-  useEffect(() => {
+useEffect(() => {
 
-    if (!seriesRef.current || !price) return
+  if (!seriesRef.current || !price) return
 
-    const time = Math.floor(Date.now() / 1000)
+  const candleTime =
+    Math.floor(Date.now() / 60000) * 60 // 1-minute candle
 
-    seriesRef.current.update({
-      time,
-      open: price,
-      high: price,
-      low: price,
-      close: price
-    })
+  seriesRef.current.update({
+    time: candleTime,
+    open: price,
+    high: price,
+    low: price,
+    close: price
+  })
 
-  }, [price])
+}, [price])
 
   return (
     <div
