@@ -81,41 +81,6 @@ function PairCard({
     }
   }, [liveDir])
 
-  useEffect(() => {
-
-    if (!liveOrders?.length) return
-
-    const price = Number(signal?.price)
-    if (!price) return
-
-    setPnlCache(prev => {
-
-      const next = { ...prev }
-
-      liveOrders.forEach((o) => {
-
-        const key = o.id || `${o.direction}_${o.entry}_${o.time}`
-
-
-        const entry = Number(o.entry)
-        if (!entry) return
-
-        const lots = Number(o.lots || 1)
-
-        let pnl = 0
-
-        if (o.direction === "BUY") pnl = (price - entry) * lots
-        if (o.direction === "SELL") pnl = (entry - price) * lots
-
-        next[key] = pnl
-
-      })
-
-      return next
-    })
-
-  }, [signal?.price, liveOrders])
-
   return (
     <div
       className={`border border-neutral-800 rounded-xl overflow-hidden transition-all active:scale-[0.99]
@@ -253,7 +218,7 @@ ${liveDir === "EXIT"
                 {liveOrders?.length ? liveOrders.map((o, i) => {
 
                   const key = o.id || `${o.direction}_${o.entry}_${o.time}`
-                  const pnl = pnlCache[key] ?? 0
+                  const pnl = Number(o.profit ?? 0)
                   const prev = pnlCache[key] ?? pnl
 
                   const pnlColor =
@@ -304,7 +269,7 @@ ${liveDir === "EXIT"
                         </div>
 
                         <div className={`font-semibold ${pnlColor}`}>
-                          {pnl ? pnl.toFixed(2) : "--"}
+                          {pnl.toFixed(2)}
                         </div>
                       </div>
 
