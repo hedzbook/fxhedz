@@ -6,8 +6,7 @@ import { useEffect, useRef } from "react"
 import {
     createChart,
     ColorType,
-    CandlestickSeries,
-    LineSeries
+    CandlestickSeries
 } from "lightweight-charts"
 
 export default function GlobalLightChart({
@@ -24,14 +23,8 @@ export default function GlobalLightChart({
 
     const chartRef = useRef<any>(null)
     const candleSeriesRef = useRef<any>(null)
-
-    const tpZoneRef = useRef<any>(null)
-    const slZoneRef = useRef<any>(null)
-    const hedgeBandRef = useRef<any>(null)
-
-    const entryLineRef = useRef<any>(null)
-    const slLineRef = useRef<any>(null)
-    const tpLineRef = useRef<any>(null)
+    const dynamicLinesRef = useRef<any[]>([])
+    const historyLoadedRef = useRef(false)
 
     // ======================================================
     // CREATE GLOBAL CHART
@@ -42,9 +35,11 @@ export default function GlobalLightChart({
 
         const container = document.getElementById(mountId)
         if (!container) return
+
         while (container.firstChild) {
             container.removeChild(container.firstChild)
         }
+
         const chart = createChart(container, {
             layout: {
                 background: { type: ColorType.Solid, color: "#1E1E1E" },
@@ -97,10 +92,8 @@ export default function GlobalLightChart({
     }, [mountId, symbol])
 
     // ======================================================
-    // 🔥 LIVE CANDLE STREAM (ALWAYS MOVING)
+    // 🔥 LIVE CANDLE STREAM
     // ======================================================
-    const historyLoadedRef = useRef(false)
-
     useEffect(() => {
 
         const series = candleSeriesRef.current
@@ -117,7 +110,6 @@ export default function GlobalLightChart({
 
         if (!data.length) return
 
-        // 🔥 FIRST LOAD = SET HISTORY ONCE
         if (!historyLoadedRef.current) {
             series.setData(data)
             chartRef.current?.timeScale().scrollToPosition(10, false)
@@ -125,112 +117,95 @@ export default function GlobalLightChart({
             return
         }
 
-        // 🔥 AFTER THAT = STREAM ONLY LAST BAR
         const last = data[data.length - 1]
-
         series.update(last)
 
     }, [signal?.candles, signal?.price])
 
     // ======================================================
-    // 🔥 ULTRA-PRO OVERLAY ENGINE
+    // 🔥 OVERLAY ENGINE (NO DUPLICATES)
     // ======================================================
     useEffect(() => {
 
-        const chart = chartRef.current
         const candleSeries = candleSeriesRef.current
-
-        if (!chart || !candleSeries) return
+        if (!candleSeries) return
         if (!signal) return
 
-        const dir = signal?.direction
-        const entry = Number(signal?.entry)
-        const sl = Number(signal?.sl)
-        const tp = Number(signal?.tp)
+        // 🔴 CLEAR OLD LINES FIRST
+        dynamicLinesRef.current.forEach((l:any)=>{
+            candleSeries.removePriceLine(l)
+        })
+        dynamicLinesRef.current = []
 
-        const clearSeries = (ref: any) => {
-            if (ref.current) {
-                chart.removeSeries(ref.current)
-                ref.current = null
-            }
-        }
-
-        const clearLine = (ref: any) => {
-            if (ref.current) {
-                candleSeries.removePriceLine(ref.current)
-                ref.current = null
-            }
-        }
-
-        clearSeries(tpZoneRef)
-        clearSeries(slZoneRef)
-        clearSeries(hedgeBandRef)
-
-        clearLine(entryLineRef)
-        clearLine(slLineRef)
-        clearLine(tpLineRef)
-
-        // ==============================
-        // HEDGED MODE
-        // ==============================
         const orders = signal?.orders || []
-
         if (!orders.length) return
 
-        orders.forEach((o: any, index: number) => {
+        orders.forEach((o:any,index:number)=>{
 
             const entry = Number(o.entry)
-            if (!entry) return
+            if(!entry) return
+
+            const isLatest = index === orders.length - 1
 
             const color =
                 o.direction === "BUY"
                     ? "#22c55e"
-                    : o.direction === "SELL"
-                        ? "#ef4444"
-                        : "#38bdf8"
+                    : "#ef4444"
 
             // --------------------------------------------------
-            // ALWAYS DRAW ENTRY LINE (for all open positions)
+            // PREVIOUS / HEDGED POSITIONS
+            // Thin line ONLY (no label / no price box)
             // --------------------------------------------------
-            candleSeries.createPriceLine({
+            if(!isLatest){
+                const line = candleSeries.createPriceLine({
+                    price: entry,
+                    color,
+                    lineWidth: 1,
+                    axisLabelVisible:false,
+                    title:""
+                })
+                dynamicLinesRef.current.push(line)
+                return
+            }
+
+            // --------------------------------------------------
+            // MAIN ACTIVE POSITION
+            // ENTRY LABEL
+            // --------------------------------------------------
+            const entryLine = candleSeries.createPriceLine({
                 price: entry,
-                color,
-                lineWidth: 2,
-                title: o.direction
+                color:"#ffffff",
+                lineWidth:2,
+                title:"ENTRY"
             })
+            dynamicLinesRef.current.push(entryLine)
 
-            // --------------------------------------------------
-            // ONLY DRAW TP/SL FOR MAIN ACTIVE SIGNAL
-            // (not for hedged or previous trades)
-            // --------------------------------------------------
+            const sl = Number(signal?.sl)
+            const tp = Number(signal?.tp)
 
-            if (index === orders.length - 1) {
+            if(sl){
+                const slLine = candleSeries.createPriceLine({
+                    price: sl,
+                    color:"#ef4444",
+                    lineWidth:1,
+                    title:"STOP"
+                })
+                dynamicLinesRef.current.push(slLine)
+            }
 
-                const sl = Number(signal?.sl)
-                const tp = Number(signal?.tp)
-
-                if (sl) {
-                    candleSeries.createPriceLine({
-                        price: sl,
-                        color: "#ef4444",
-                        lineWidth: 1,
-                        title: "STOP"
-                    })
-                }
-
-                if (tp) {
-                    candleSeries.createPriceLine({
-                        price: tp,
-                        color: "#22c55e",
-                        lineWidth: 1,
-                        title: "TP"
-                    })
-                }
+            if(tp){
+                const tpLine = candleSeries.createPriceLine({
+                    price: tp,
+                    color:"#22c55e",
+                    lineWidth:1,
+                    title:"TP"
+                })
+                dynamicLinesRef.current.push(tpLine)
             }
 
         })
 
-    }, [signal])
+    },[signal])
 
     return null
 }
