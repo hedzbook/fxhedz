@@ -42,9 +42,9 @@ export default function GlobalLightChart({
 
         const container = document.getElementById(mountId)
         if (!container) return
-
-        container.innerHTML = ""
-
+        while (container.firstChild) {
+            container.removeChild(container.firstChild)
+        }
         const chart = createChart(container, {
             layout: {
                 background: { type: ColorType.Solid, color: "#1E1E1E" },
