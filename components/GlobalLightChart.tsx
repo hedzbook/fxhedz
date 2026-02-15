@@ -141,77 +141,79 @@ export default function GlobalLightChart({
 
         const isHedged = signal?.direction === "HEDGED"
 
-orders.forEach((o: any, index: number) => {
+        orders.forEach((o: any, index: number) => {
 
-    const entry = Number(o.entry)
-    if (!entry) return
+            const entry = Number(o.entry)
+            if (!entry) return
 
-    const isLatest = index === orders.length - 1
-    const isHedged = signal?.direction === "HEDGED"
+            const isLatest = index === orders.length - 1
+            const isHedged = signal?.direction === "HEDGED"
 
-    // ----------------------------------
-    // COLOR LOGIC
-    // ----------------------------------
-    const activeColor =
-        o.direction === "BUY"
-            ? "#22c55e"
-            : "#ef4444"
+            const activeColor =
+                o.direction === "BUY"
+                    ? "#22c55e"
+                    : "#ef4444"
 
-    const inactiveColor = "rgba(180,180,180,0.35)"
+            // Better muted colors (visible but secondary)
+            const mutedColor =
+                o.direction === "BUY"
+                    ? "rgba(34,197,94,0.45)"
+                    : "rgba(239,68,68,0.45)"
 
-    const color = isLatest && !isHedged
-        ? activeColor
-        : inactiveColor
+            const color =
+                isLatest && !isHedged
+                    ? activeColor
+                    : mutedColor
 
-    const entryLine = candleSeries.createPriceLine({
-        price: entry,
-        color,
-        lineWidth: isLatest && !isHedged ? 2 : 1,
-        axisLabelVisible: isLatest && !isHedged,
-        title: isLatest && !isHedged ? (o.label || "") : ""
-    })
+            const entryLine = candleSeries.createPriceLine({
+                price: entry,
+                color,
+                lineWidth: isLatest && !isHedged ? 2 : 2, // keep thickness consistent
+                axisLabelVisible: isLatest && !isHedged,
+                title: isLatest && !isHedged ? (o.label || "") : ""
+            })
 
-    dynamicLinesRef.current.push(entryLine)
+            dynamicLinesRef.current.push(entryLine)
 
-    // -------------------------------
-    // STOP IF HEDGED
-    // -------------------------------
-    if (isHedged) return
+            // -------------------------------
+            // STOP IF HEDGED
+            // -------------------------------
+            if (isHedged) return
 
-    // Only latest non-hedged gets SL/TP
-    if (!isLatest) return
+            // Only latest non-hedged gets SL/TP
+            if (!isLatest) return
 
-    const sl = Number(signal?.sl)
-    const tp = Number(signal?.tp)
+            const sl = Number(signal?.sl)
+            const tp = Number(signal?.tp)
 
-    if (sl) {
-        const hedgeLabel =
-            o.direction === "BUY"
-                ? "SS"
-                : "BS"
+            if (sl) {
+                const hedgeLabel =
+                    o.direction === "BUY"
+                        ? "SS"
+                        : "BS"
 
-        const slLine = candleSeries.createPriceLine({
-            price: sl,
-            color: "#ef4444",
-            lineWidth: 1,
-            title: hedgeLabel
+                const slLine = candleSeries.createPriceLine({
+                    price: sl,
+                    color: "#ef4444",
+                    lineWidth: 1,
+                    title: hedgeLabel
+                })
+
+                dynamicLinesRef.current.push(slLine)
+            }
+
+            if (tp) {
+                const tpLine = candleSeries.createPriceLine({
+                    price: tp,
+                    color: "#22c55e",
+                    lineWidth: 1,
+                    title: "TP"
+                })
+
+                dynamicLinesRef.current.push(tpLine)
+            }
+
         })
-
-        dynamicLinesRef.current.push(slLine)
-    }
-
-    if (tp) {
-        const tpLine = candleSeries.createPriceLine({
-            price: tp,
-            color: "#22c55e",
-            lineWidth: 1,
-            title: "TP"
-        })
-
-        dynamicLinesRef.current.push(tpLine)
-    }
-
-})
 
     }, [signal])
 
