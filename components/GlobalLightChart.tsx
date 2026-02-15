@@ -1,5 +1,3 @@
-// components/GlobalLightChart.tsx
-
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -22,9 +20,9 @@ export default function GlobalLightChart({
     const dynamicLinesRef = useRef<any[]>([])
     const historyLoadedRef = useRef(false)
 
-    // ======================================================
+    // ==========================================
     // CREATE CHART
-    // ======================================================
+    // ==========================================
     useEffect(() => {
 
         if (!mountId) return
@@ -32,7 +30,6 @@ export default function GlobalLightChart({
         const container = document.getElementById(mountId)
         if (!container) return
 
-        // Clear previous
         while (container.firstChild) {
             container.removeChild(container.firstChild)
         }
@@ -87,15 +84,44 @@ export default function GlobalLightChart({
 
     }, [mountId])
 
-    // ======================================================
-    // CANDLE STREAM (50 M15 candles)
-    // ======================================================
+    // ==========================================
+    // CANDLE STREAM (IMPORTANT — RESTORED)
+    // ==========================================
+    useEffect(() => {
+
+        const series = candleSeriesRef.current
+        if (!series) return
+        if (!signal?.candles) return
+
+        const data = signal.candles.map((c: any) => ({
+            time: Number(c.time),
+            open: Number(c.open),
+            high: Number(c.high),
+            low: Number(c.low),
+            close: Number(c.close)
+        }))
+
+        if (!data.length) return
+
+        if (!historyLoadedRef.current) {
+            series.setData(data)
+            historyLoadedRef.current = true
+            return
+        }
+
+        const last = data[data.length - 1]
+        series.update(last)
+
+    }, [signal?.candles])
+
+    // ==========================================
+    // OVERLAY ENGINE
+    // ==========================================
     useEffect(() => {
 
         const candleSeries = candleSeriesRef.current
         if (!candleSeries || !signal) return
 
-        // Clear old lines
         dynamicLinesRef.current.forEach((l: any) => {
             candleSeries.removePriceLine(l)
         })
@@ -127,7 +153,6 @@ export default function GlobalLightChart({
 
             const isLatest = index === orders.length - 1
 
-            // ENTRY lines always drawn
             const entryLine = candleSeries.createPriceLine({
                 price: entry,
                 color,
@@ -138,10 +163,7 @@ export default function GlobalLightChart({
 
             dynamicLinesRef.current.push(entryLine)
 
-            // 🔥 STOP HERE if hedged
             if (isHedged) return
-
-            // Only latest non-hedged order gets SL/TP
             if (!isLatest) return
 
             const sl = Number(signal?.sl)
