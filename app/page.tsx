@@ -336,15 +336,18 @@ export default function Page() {
         }}
       />
 
-      {openPair && (
-        <GlobalLightChart
-          key={openPair}
-          symbol={openPair}
-          price={uiSignals?.[openPair]?.price}
-          mountId={`chart_mount_${openPair}`}
-          signal={uiSignals?.[openPair]}
-        />
-      )}
+{openPair && (
+  <div
+    id={`chart_mount_${openPair}`}
+    className="w-full h-72"
+  >
+    <GlobalLightChart
+      key={openPair}
+      mountId={`chart_mount_${openPair}`}
+      signal={uiSignals?.[openPair]}
+    />
+  </div>
+)}
       {PAIRS.map((pair) => {
 
         const signal = uiSignals?.[pair]
