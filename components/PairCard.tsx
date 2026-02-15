@@ -153,7 +153,7 @@ ${liveDir === "EXIT"
           </div>
 
           {/* ======================= TAB CONTENT AREA 🔑 FIXED HEIGHT + SCROLL ======================== */}
-          <div className="h-[75dvh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
+          <div className="h-[70dvh] overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-4">
 
             {/* 🔥 GLOBAL CHART MOUNT POINT (ALWAYS MOUNTED — NEVER REMOVE) */}
             <div
