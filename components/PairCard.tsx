@@ -34,7 +34,7 @@ function PairCard({
 
   const dir: TradeDirection = direction ?? "--"
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
-  const [tab, setTab] = useState<"market" | "orders" | "history" | "performance">("market")
+  const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
   const [liveOrders, setLiveOrders] = useState<any[]>(orders ?? [])
   const [pnlCache, setPnlCache] = useState<Record<string, number>>({})
 
@@ -148,7 +148,7 @@ ${liveDir === "EXIT"
           <div className="flex w-full border-b border-neutral-800 text-sm">
 
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
-            <TabBtn label="Orders" active={tab === "orders"} onClick={() => setTab("orders")} />
+            <TabBtn label="News" active={tab === "news"} onClick={() => setTab("news")} />
             <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
             <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
 
@@ -166,12 +166,12 @@ ${liveDir === "EXIT"
               className={`w-full h-[280px] rounded-lg bg-neutral-900 ${tab === "market" ? "block" : "hidden"
                 }`}
             />
-{tab === "market" && (
-  <GlobalLightChart
-    mountId={`chart_mount_${pair}`}
-    signal={signal}
-  />
-)}
+            {tab === "market" && (
+              <GlobalLightChart
+                mountId={`chart_mount_${pair}`}
+                signal={signal}
+              />
+            )}
 
             {/* =======================
    MARKET TAB CONTENT
@@ -190,11 +190,88 @@ ${liveDir === "EXIT"
 
               {/* MARKET NOTES */}
               <div className="bg-neutral-800 rounded-lg p-3 text-sm text-neutral-300 leading-relaxed">
-                {notes || "No market notes yet"}
+                {/* ACTIVE ORDERS */}
+                <div>
+                  <div className="text-sm text-neutral-400 mb-2">Active Orders</div>
+
+                  <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1">
+                    {liveOrders?.length ? liveOrders.map((o, i) => {
+
+                      const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+                      const pnl = Number(o.profit ?? 0)
+                      const prev = pnlCache[key] ?? pnl
+
+                      const pnlColor =
+                        pnl > 0
+                          ? "text-green-400"
+                          : pnl < 0
+                            ? "text-red-400"
+                            : "text-neutral-400"
+
+                      let pulseClass = ""
+                      if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
+                      if (pnl < prev) pulseClass = "ring-1 ring-red-400/40"
+
+                      return (
+                        <div
+                          key={key}
+                          className={`bg-neutral-800 p-3 rounded-lg text-sm flex justify-between transition-all duration-300 ${pulseClass}`}
+                        >
+
+                          <div className="space-y-1">
+                            <div className="flex gap-2 items-center">
+                              <span className={`font-semibold ${o.direction === "BUY"
+                                ? "text-green-400"
+                                : o.direction === "SELL"
+                                  ? "text-red-400"
+                                  : "text-sky-400"
+                                }`}>
+                                {o.hedged ? `${o.direction} (HEDGED)` : o.direction}
+                              </span>
+
+                              <span className="text-neutral-500 text-xs">
+                                {o.time}
+                              </span>
+                            </div>
+
+                            <div className="text-neutral-400 text-xs">
+                              ENTRY {o.entry}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-neutral-400 text-xs">
+                              {o.lots ?? "--"}
+                            </div>
+
+                            <div className={`font-semibold ${pnlColor}`}>
+                              {pnl.toFixed(2)}
+                            </div>
+                          </div>
+
+                        </div>
+                      )
+                    }) : (
+                      <div className="text-neutral-500 text-sm">No open orders</div>
+                    )}
+                  </div>
+                </div>
               </div>
 
             </div>
+            {tab === "news" && (
+              <div className="space-y-3">
 
+                <div className="text-sm text-neutral-400">
+                  Market Commentary
+                </div>
+
+                <div className="bg-neutral-800 rounded-lg p-4 text-sm text-neutral-300 leading-relaxed">
+                  {notes || "No market commentary available"}
+                </div>
+
+              </div>
+            )}
             {tab === "history" && (
               <div className="space-y-2">
                 {history?.length ? history.map((h, i) => (
@@ -222,74 +299,6 @@ ${liveDir === "EXIT"
                   </div>
                 )) : (
                   <div className="text-neutral-500 text-sm">No history yet</div>
-                )}
-              </div>
-            )}
-
-            {tab === "orders" && (
-              <div className="space-y-2">
-                {liveOrders?.length ? liveOrders.map((o, i) => {
-
-                  const key = o.id || `${o.direction}_${o.entry}_${o.time}`
-                  const pnl = Number(o.profit ?? 0)
-                  const prev = pnlCache[key] ?? pnl
-
-                  const pnlColor =
-                    pnl > 0
-                      ? "text-green-400"
-                      : pnl < 0
-                        ? "text-red-400"
-                        : "text-neutral-400"
-
-                  let pulseClass = ""
-                  if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
-                  if (pnl < prev) pulseClass = "ring-1 ring-red-400/40"
-
-                  return (
-                    <div
-                      key={o.id || `${o.direction}_${o.entry}_${o.time}_${i}`}
-                      className={`bg-neutral-800 p-3 rounded-lg text-sm flex justify-between transition-all duration-300 ${pulseClass}`}
-                    >
-
-                      <div className="space-y-1">
-
-                        <div className="flex gap-2 items-center">
-                          <span className={`font-semibold ${o.direction === "BUY"
-                            ? "text-green-400"
-                            : o.direction === "SELL"
-                              ? "text-red-400"
-                              : "text-sky-400"
-                            }`}>
-                            {o.hedged
-                              ? `${o.direction} (HEDGED)`
-                              : o.direction}
-                          </span>
-
-                          <span className="text-neutral-500 text-xs">
-                            {o.time}
-                          </span>
-                        </div>
-
-                        <div className="text-neutral-400 text-xs">
-                          ENTRY {o.entry}
-                        </div>
-
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-neutral-400 text-xs">
-                          {o.lots ?? "--"}
-                        </div>
-
-                        <div className={`font-semibold ${pnlColor}`}>
-                          {pnl.toFixed(2)}
-                        </div>
-                      </div>
-
-                    </div>
-                  )
-                }) : (
-                  <div className="text-neutral-500 text-sm">No open orders</div>
                 )}
               </div>
             )}
