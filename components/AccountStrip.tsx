@@ -55,15 +55,18 @@ export default function AccountStrip({
 return (
   <div className="bg-gradient-to-b from-neutral-900 to-neutral-950 border-b border-neutral-800 shadow-[0_10px_24px_rgba(0,0,0,0.6)] backdrop-blur">
 
-    <div className="h-10 px-6 flex items-center justify-between text-sm">
+    <div className="h-10 px-6 flex items-center text-sm">
 
-      {/* LEFT */}
-      <div className="flex items-center gap-6">
+      {/* LEFT COLUMN */}
+      <div className="flex-1 flex items-center">
         <div className="flex items-center gap-2">
           <span className="text-neutral-400">LOTS</span>
           <span className="font-semibold">{totalLots.toFixed(2)}</span>
         </div>
+      </div>
 
+      {/* CENTER COLUMN */}
+      <div className="flex-1 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <span className="text-neutral-400">~PnL</span>
           <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
@@ -72,13 +75,16 @@ return (
         </div>
       </div>
 
-      {/* RIGHT */}
-      <div className="font-semibold text-sky-400">
-        {netState}
+      {/* RIGHT COLUMN */}
+      <div className="flex-1 flex items-center justify-end">
+        <div className="font-semibold text-sky-400">
+          {netState}
+        </div>
       </div>
 
     </div>
 
   </div>
 )
+
 }
