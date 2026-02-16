@@ -46,15 +46,36 @@ function PairCard({
   useEffect(() => setLiveOrders(orders ?? []), [orders])
   useEffect(() => { if (expanded) setTab("market") }, [expanded])
 
-  // =========================================================
-  // ======================= RENDER ===========================
-  // =========================================================
+  // EXIT auto sync
+  useEffect(() => {
+    if (!signal) return
+    if (dir === "HEDGED") return
+
+    const price = Number(signal?.price)
+    const tp = Number(signal?.tp)
+    const sl = Number(signal?.sl)
+
+    if (!price || !tp || !sl) return
+
+    if (liveDir === "BUY") {
+      if (price >= tp || price <= sl) setLiveDir("EXIT")
+    }
+
+    if (liveDir === "SELL") {
+      if (price <= tp || price >= sl) setLiveDir("EXIT")
+    }
+
+  }, [signal?.price, dir, liveDir])
+
+  useEffect(() => {
+    if (liveDir === "EXIT") setLiveOrders([])
+  }, [liveDir])
 
   return (
     <div
       className={`border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300
       ${liveDir === "EXIT"
-        ? "bg-gradient-to-b from-neutral-900 to-neutral-950"
+        ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-100 border-neutral-800/60"
         : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
       }`}
     >
@@ -68,7 +89,7 @@ function PairCard({
         }}
       >
 
-        {/* ================= MIN MODE ================= */}
+        {/* ================= MIN MODE (FINAL — UNTOUCHED) ================= */}
         {isMin && signal ? (
           <div className="flex items-center justify-between">
 
@@ -110,7 +131,9 @@ function PairCard({
 
           </div>
         ) : (
+
           /* ================= MID / MAX HEADER ================= */
+
           <div className="w-full">
 
             <div className="flex justify-between items-center">
@@ -153,10 +176,11 @@ function PairCard({
 
       </div>
 
-      {/* ================= MAX EXPANDED CONTENT ================= */}
+      {/* ================= EXPANDED CONTENT ================= */}
       {!isMin && expanded && (
         <div className="border-t border-neutral-800">
 
+          {/* TABS */}
           <div className="flex w-full border-b border-neutral-800 text-sm">
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
             <TabBtn label="News" active={tab === "news"} onClick={() => setTab("news")} />
@@ -164,30 +188,193 @@ function PairCard({
             <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
           </div>
 
-          <div className="h-[70dvh] overflow-y-auto p-4 space-y-4">
+          <div className="h-[70dvh] overflow-y-auto overscroll-contain p-4 space-y-4">
 
-            <div
-              id={`chart_mount_${pair}`}
-              className={`w-full h-[280px] rounded-lg bg-neutral-900 ${
-                tab === "market" ? "block" : "hidden"
-              }`}
-            />
-
+            {/* ================= MARKET ================= */}
             {tab === "market" && (
-              <GlobalLightChart
-                mountId={`chart_mount_${pair}`}
-                signal={signal}
-              />
+              <>
+                <div
+                  id={`chart_mount_${pair}`}
+                  className="w-full h-[280px] rounded-lg bg-neutral-900"
+                />
+                <GlobalLightChart
+                  mountId={`chart_mount_${pair}`}
+                  signal={signal}
+                />
+
+                <div>
+                  <div className="text-sm text-neutral-400">Latest Signal</div>
+                  <div className="font-bold text-lg">
+                    {signal?.direction || "--"} {signal?.entry || ""}
+                  </div>
+                  <div className="text-sm text-neutral-400">
+                    SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
+                  </div>
+                </div>
+
+                <div className="bg-neutral-800 rounded-lg p-2 text-sm text-neutral-300">
+                  <div className="text-sm text-neutral-400 mb-2">Active Orders</div>
+
+                  <div className="max-h-[170px] overflow-y-auto space-y-1">
+                    {liveOrders?.length ? liveOrders.map((o, i) => {
+
+                      const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+                      const pnl = Number(o.profit ?? 0)
+                      const prev = pnlCache[key] ?? pnl
+
+                      const pnlColor =
+                        pnl > 0
+                          ? "text-green-400"
+                          : pnl < 0
+                            ? "text-red-400"
+                            : "text-neutral-400"
+
+                      let pulseClass = ""
+                      if (pnl > prev) pulseClass = "ring-1 ring-green-400/40"
+                      if (pnl < prev) pulseClass = "ring-1 ring-red-400/40"
+
+                      return (
+                        <div
+                          key={key}
+                          className={`bg-neutral-900 p-2 rounded-md text-xs flex justify-between transition-all duration-300 ${pulseClass}`}
+                        >
+                          <div>
+                            <div className={`font-semibold ${
+                              o.direction === "BUY"
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}>
+                              {o.direction}
+                            </div>
+                            <div className="text-neutral-400">
+                              ENTRY {o.entry}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-neutral-400">
+                              {o.lots}
+                            </div>
+                            <div className={pnlColor}>
+                              {pnl.toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+
+                    }) : (
+                      <div className="text-neutral-500 text-sm">
+                        No open orders
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ================= NEWS ================= */}
+            {tab === "news" && (
+              <div className="space-y-3">
+                <div className="text-sm text-neutral-400">
+                  Market Commentary
+                </div>
+                <div className="bg-neutral-800 rounded-lg p-4 text-sm text-neutral-300">
+                  {notes || "Coming Soon"}
+                </div>
+              </div>
+            )}
+
+            {/* ================= HISTORY ================= */}
+            {tab === "history" && (
+              <div className="space-y-2">
+                {history?.length ? history.map((h, i) => (
+                  <div key={i} className="bg-neutral-800 p-3 rounded-lg text-sm flex justify-between">
+                    <div>
+                      <div className={`font-semibold ${
+                        h.direction === "BUY" ? "text-green-400" : "text-red-400"
+                      }`}>
+                        {h.direction}
+                      </div>
+                      <div className="text-neutral-400 text-xs">
+                        {h.entry} → {h.exit}
+                      </div>
+                    </div>
+                    <div className={h.pnl >= 0 ? "text-green-400" : "text-red-400"}>
+                      {h.pnl}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-neutral-500 text-sm">
+                    No history yet
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ================= PERFORMANCE ================= */}
+            {tab === "performance" && (
+              <div className="space-y-4">
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <Metric label="Win Rate"
+                    value={performance?.winRate !== undefined ? performance.winRate + "%" : "--"} />
+                  <Metric label="Profit Factor"
+                    value={performance?.profitFactor ?? "--"} />
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <Stat label="Total Trades" value={performance?.trades} />
+                  <Stat label="Wins" value={performance?.wins} />
+                  <Stat label="Losses" value={performance?.losses} />
+                  <Stat label="Total PnL" value={performance?.pnlTotal} />
+                </div>
+
+              </div>
             )}
 
           </div>
-
         </div>
       )}
 
     </div>
   )
 }
+
+/* ====================================================== */
+
+function TabBtn({ label, active, onClick }: any) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      className={`flex-1 py-3 text-center transition-all duration-200 ${
+        active
+          ? "text-white border-b-2 border-white bg-neutral-900"
+          : "text-neutral-500 hover:text-neutral-300"
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function Stat({ label, value }: any) {
+  return (
+    <div className="flex justify-between bg-neutral-800 rounded-lg p-3">
+      <span className="text-neutral-400">{label}</span>
+      <span className="font-semibold">{value ?? "--"}</span>
+    </div>
+  )
+}
+
+function Metric({ label, value }: any) {
+  return (
+    <div className="bg-neutral-800 rounded-lg p-4 text-center">
+      <div className="text-neutral-400 text-xs">{label}</div>
+      <div className="text-xl font-bold">{value ?? "--"}</div>
+    </div>
+  )
+}
+
 
 /* =======================================================
    INLINE STRIP (MIN MODE)
@@ -408,21 +595,6 @@ function TradeBar({
       </div>
 
     </div>
-  )
-}
-
-function TabBtn({ label, active, onClick }: any) {
-  return (
-    <button
-      onClick={(e) => { e.stopPropagation(); onClick() }}
-      className={`flex-1 py-3 text-center transition-all duration-200 ${
-        active
-          ? "text-white border-b-2 border-white bg-neutral-900"
-          : "text-neutral-500 hover:text-neutral-300"
-      }`}
-    >
-      {label}
-    </button>
   )
 }
 
