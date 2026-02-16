@@ -260,7 +260,7 @@ ${liveDir === "EXIT"
                 </div>
 
                 <div className="bg-neutral-800 rounded-lg p-4 text-sm text-neutral-300 leading-relaxed">
-                  {notes || "No market commentary available"}
+                  {notes || "Coming Soon"}
                 </div>
 
               </div>
