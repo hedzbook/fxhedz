@@ -188,77 +188,83 @@ export default function Page() {
 
       </div>
 
-{/* ==============================
+{/* ============================== 
    BOTTOM CONTROL BAR
 ============================== */}
 <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
-  <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-[18px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+  <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-[14px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
-    {/* ================= LEFT ================= */}
-    <div className="flex items-center gap-3">
+    {/* ================= LEFT SIDE ================= */}
+    <div className="flex items-center gap-2 z-10">
 
-      {/* HAMBURGER */}
-      <div className="w-6 h-6 flex flex-col justify-center gap-[3px] cursor-pointer">
-        <div className="h-[2px] bg-neutral-400" />
-        <div className="h-[2px] bg-neutral-400" />
-        <div className="h-[2px] bg-neutral-400" />
+      {/* Slim Hamburger */}
+      <div className="w-5 h-5 flex flex-col justify-center gap-[2px] cursor-pointer">
+        <div className="h-[2px] w-4 bg-neutral-400" />
+        <div className="h-[2px] w-4 bg-neutral-400" />
+        <div className="h-[2px] w-4 bg-neutral-400" />
       </div>
 
-      {/* FXHEDZ TEXT */}
-      <div className="text-[15px] font-semibold tracking-wide leading-none">
+      {/* Brand */}
+      <div className="text-[14px] font-semibold tracking-wide leading-none">
         FXHEDZ
       </div>
 
     </div>
 
-    {/* ================= CENTER ================= */}
-    <button
-      onClick={() => {
-        setViewMode(prev => {
-          if (prev === "MIN") {
-            setOpenPair(null)
-            return "MID"
-          }
-          if (prev === "MID") return "MAX"
-          setOpenPair(null)
-          return "MIN"
-        })
-      }}
-      className={`relative w-14 h-6 rounded-full transition-all duration-300
-        ${viewMode === "MIN"
-          ? "bg-neutral-700"
-          : viewMode === "MID"
-            ? "bg-neutral-600"
-            : "bg-neutral-500"
-        }`}
-    >
-      {/* Sliding Dot */}
-      <div
-        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full transition-all duration-300"
-        style={{
-          left:
-            viewMode === "MIN"
-              ? "4px"
-              : viewMode === "MID"
-                ? "20px"
-                : "36px"
-        }}
-      />
-    </button>
+    {/* ================= CENTER TOGGLE ================= */}
+    <div className="absolute left-1/2 -translate-x-1/2">
 
-    {/* ================= RIGHT ================= */}
-    <div className="text-right leading-tight">
-      <div className="text-[10px] font-semibold tracking-wide">
-        ZEROLOSS
+      <button
+        onClick={() => {
+          if (viewMode === "MIN") {
+            setViewMode("MID")
+          } else if (viewMode === "MID") {
+            setViewMode("MAX")
+          } else {
+            setViewMode("MIN")
+            setOpenPair(null)
+          }
+        }}
+        className={`
+          w-12 h-6 rounded-full transition-all duration-300 relative
+          ${viewMode === "MIN"
+            ? "bg-neutral-700"
+            : viewMode === "MID"
+              ? "bg-neutral-600"
+              : "bg-neutral-500"}
+        `}
+      >
+        <div
+          className={`
+            absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white transition-all duration-300
+            ${viewMode === "MIN"
+              ? "left-1"
+              : viewMode === "MID"
+                ? "left-1/2 -translate-x-1/2"
+                : "right-1"}
+          `}
+        />
+      </button>
+
+    </div>
+
+    {/* ================= RIGHT SIDE ================= */}
+    <div className="ml-auto text-right leading-tight text-[9px] z-10">
+
+      <div className="tracking-wide">
+        ZEROLOSS COMPOUNDED
       </div>
-      <div className="text-[9px] text-neutral-400 tracking-wider">
-        COMPOUNDED HEDGING SYSTEM
+
+      <div className="tracking-wide text-neutral-400">
+        HEDGING SYSTEM
       </div>
+
     </div>
 
   </div>
 </div>
+
     </main>
   )
 }
