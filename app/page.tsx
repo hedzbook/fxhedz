@@ -255,7 +255,7 @@ export default function Page() {
     ZEROLOSS COMPOUNDED
   </div>
 
-  <div className="text-[9px] text-neutral-500 tracking-[1.5px] leading-[11px]">
+  <div className="text-[9px] text-neutral-500 tracking-[2.0px] leading-[11px]">
     HEDGING SYSTEM
   </div>
 
