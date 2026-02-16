@@ -172,14 +172,14 @@ export default function Page() {
       </div>
 
       {/* CONTENT AREA */}
-<div
-  className={`
+      <div
+        className={`
     px-[clamp(12px,3vw,24px)]
     ${viewMode === "MIN"
-      ? "pt-12 pb-12 flex flex-col gap-[clamp(8px,1.5vh,14px)] h-[calc(100vh-80px)]"
-      : "pt-12 pb-12 space-y-[clamp(10px,2vw,16px)]"}
+            ? "pt-12 pb-12 flex flex-col gap-[clamp(8px,1.5vh,14px)] h-[calc(100vh-80px)]"
+            : "pt-12 pb-12 space-y-[clamp(10px,2vw,16px)]"}
   `}
->
+      >
 
         {PAIRS.map((pair) => {
 
@@ -187,19 +187,21 @@ export default function Page() {
           const extra = pairData?.[pair] || {}
 
           return (
-            <PairCard
-              key={pair}
-              pair={pair}
-              open={viewMode === "MAX" ? true : openPair === pair}
-              direction={signal?.direction}
-              signal={signal}
-              history={extra?.history}
-              orders={extra?.orders}
-              performance={extra?.performance}
-              notes={extra?.notes}
-              viewMode={viewMode}
-              onToggle={() => togglePair(pair)}
-            />
+            <div className={viewMode === "MIN" ? "flex-1 min-h-0" : ""}>
+              <PairCard
+                key={pair}
+                pair={pair}
+                open={viewMode === "MAX" ? true : openPair === pair}
+                direction={signal?.direction}
+                signal={signal}
+                history={extra?.history}
+                orders={extra?.orders}
+                performance={extra?.performance}
+                notes={extra?.notes}
+                viewMode={viewMode}
+                onToggle={() => togglePair(pair)}
+              />
+            </div>
           )
         })}
 
