@@ -175,7 +175,7 @@ export default function Page() {
     >
 
       {/* 🔥 TOP STICKY STRIP — HEIGHT MATCHED */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-14">
+      <div className="fixed top-0 left-0 right-0 z-50 h-10">
         <div className="h-full">
           <AccountStrip
             pairs={pairsData}
@@ -214,7 +214,7 @@ export default function Page() {
       </div>
 
       {/* 🔥 BOTTOM CONTROL BAR — SAME HEIGHT */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 h-14">
+      <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
         <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-4 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
