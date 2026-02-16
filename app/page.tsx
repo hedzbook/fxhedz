@@ -112,7 +112,6 @@ export default function Page() {
     let cancelled = false
 
     async function refreshOpenPair() {
-
       try {
         const res = await fetch(`/api/signals?pair=${pairKey}`)
         const json = await res.json()
@@ -136,32 +135,19 @@ export default function Page() {
 
   }, [authorized, openPair])
 
-  // ======================================================
-  // TOGGLE HANDLER
-  // ======================================================
   function togglePair(pair: string) {
-
     if (viewMode === "MIN") return
-
     setOpenPair(prev => prev === pair ? null : pair)
   }
 
-  // ======================================================
-  // ACCOUNT STRIP DATA
-  // ======================================================
   const pairsData = useMemo(() => {
-
     return PAIRS.map((pair) => {
       const signal = uiSignals?.[pair]
       const extra = pairData?.[pair] || {}
       return { pair, signal, orders: extra?.orders || [] }
     })
-
   }, [uiSignals, pairData])
 
-  // ======================================================
-  // ACCESS BLOCK
-  // ======================================================
   if (!authorized) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -175,12 +161,9 @@ export default function Page() {
     )
   }
 
-  // ======================================================
-  // MAIN UI
-  // ======================================================
   return (
     <main
-      className="min-h-screen text-white pb-24 transition-all duration-500"
+      className="min-h-screen text-white pb-16 transition-all duration-500"
       style={{
         background:
           netState === "NET BUY"
@@ -191,20 +174,20 @@ export default function Page() {
       }}
     >
 
-      {/* ======================================================
-          🔥 STICKY TOP ACCOUNT STRIP
-      ====================================================== */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <AccountStrip
-          pairs={pairsData}
-          onStateChange={(state: string) => {
-            setNetState(state)
-          }}
-        />
+      {/* 🔥 TOP STICKY STRIP — HEIGHT MATCHED */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-14">
+        <div className="h-full">
+          <AccountStrip
+            pairs={pairsData}
+            onStateChange={(state: string) => {
+              setNetState(state)
+            }}
+          />
+        </div>
       </div>
 
-      {/* CONTENT WRAPPER WITH TOP OFFSET */}
-      <div className="pt-20 px-4 space-y-3">
+      {/* CONTENT OFFSET = BAR HEIGHT */}
+      <div className="pt-16 px-4 space-y-3">
 
         {PAIRS.map((pair) => {
 
@@ -230,12 +213,10 @@ export default function Page() {
 
       </div>
 
-      {/* ======================================================
-          🔥 STICKY BOTTOM CONTROL BAR
-      ====================================================== */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* 🔥 BOTTOM CONTROL BAR — SAME HEIGHT */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 h-14">
 
-        <div className="bg-neutral-900 border-t border-neutral-800 h-12 flex items-center justify-between px-4 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-4 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
           <div className="flex gap-3">
 
@@ -262,7 +243,7 @@ export default function Page() {
 
           </div>
 
-          <div className="w-8 h-8 flex flex-col justify-center gap-1 cursor-pointer">
+          <div className="w-7 h-7 flex flex-col justify-center gap-1 cursor-pointer">
             <div className="h-[2px] bg-neutral-400" />
             <div className="h-[2px] bg-neutral-400" />
             <div className="h-[2px] bg-neutral-400" />
@@ -274,10 +255,6 @@ export default function Page() {
     </main>
   )
 }
-
-/* ======================================================
-   MODE BUTTON
-====================================================== */
 
 function ModeBtn({
   label,
