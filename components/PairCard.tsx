@@ -77,9 +77,9 @@ function PairCard({
     <div
       className={`border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300
       ${liveDir === "EXIT"
-        ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-100 border-neutral-800/60"
-        : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
-      }`}
+          ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-100 border-neutral-800/60"
+          : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
+        }`}
     >
 
       {/* ================= HEADER ================= */}
@@ -87,7 +87,11 @@ function PairCard({
         className="p-4 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
-          if (!isMin && !isMax) onToggle()
+
+          if (!isMax) {
+            onToggle()
+          }
+
         }}
       >
 
@@ -112,15 +116,14 @@ function PairCard({
             </div>
 
             <div className="flex flex-col items-end">
-              <div className={`font-bold text-sm ${
-                liveDir === "BUY"
+              <div className={`font-bold text-sm ${liveDir === "BUY"
                   ? "text-green-400"
                   : liveDir === "SELL"
                     ? "text-red-400"
                     : liveDir === "HEDGED"
                       ? "text-sky-400"
                       : "text-neutral-500"
-              }`}>
+                }`}>
                 {liveDir}
               </div>
 
@@ -141,15 +144,14 @@ function PairCard({
             <div className="flex justify-between items-center">
               <div className="font-semibold">{pair}</div>
 
-              <div className={`font-bold ${
-                liveDir === "BUY"
+              <div className={`font-bold ${liveDir === "BUY"
                   ? "text-green-400"
                   : liveDir === "SELL"
                     ? "text-red-400"
                     : liveDir === "HEDGED"
                       ? "text-sky-400"
                       : "text-neutral-500"
-              }`}>
+                }`}>
                 {liveDir}
               </div>
             </div>
@@ -241,11 +243,10 @@ function PairCard({
                           className={`bg-neutral-900 p-2 rounded-md text-xs flex justify-between transition-all duration-300 ${pulseClass}`}
                         >
                           <div>
-                            <div className={`font-semibold ${
-                              o.direction === "BUY"
+                            <div className={`font-semibold ${o.direction === "BUY"
                                 ? "text-green-400"
                                 : "text-red-400"
-                            }`}>
+                              }`}>
                               {o.direction}
                             </div>
                             <div className="text-neutral-400">
@@ -292,9 +293,8 @@ function PairCard({
                 {history?.length ? history.map((h, i) => (
                   <div key={i} className="bg-neutral-800 p-3 rounded-lg text-sm flex justify-between">
                     <div>
-                      <div className={`font-semibold ${
-                        h.direction === "BUY" ? "text-green-400" : "text-red-400"
-                      }`}>
+                      <div className={`font-semibold ${h.direction === "BUY" ? "text-green-400" : "text-red-400"
+                        }`}>
                         {h.direction}
                       </div>
                       <div className="text-neutral-400 text-xs">
@@ -348,11 +348,10 @@ function TabBtn({ label, active, onClick }: any) {
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick() }}
-      className={`flex-1 py-3 text-center transition-all duration-200 ${
-        active
+      className={`flex-1 py-3 text-center transition-all duration-200 ${active
           ? "text-white border-b-2 border-white bg-neutral-900"
           : "text-neutral-500 hover:text-neutral-300"
-      }`}
+        }`}
     >
       {label}
     </button>
@@ -448,12 +447,10 @@ function InlineTradeStrip({ signal, direction }: any) {
             transition: "left 300ms ease"
           }}
         >
-          <div className={`absolute -inset-2 rounded-full blur-md ${
-            isTPside ? "bg-green-500/30" : "bg-red-500/30"
-          }`} />
-          <div className={`w-2 h-2 rounded-full ${
-            isTPside ? "bg-green-400" : "bg-red-400"
-          }`} />
+          <div className={`absolute -inset-2 rounded-full blur-md ${isTPside ? "bg-green-500/30" : "bg-red-500/30"
+            }`} />
+          <div className={`w-2 h-2 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
+            }`} />
         </div>
 
       </div>
@@ -577,14 +574,12 @@ function TradeBar({
           }}
         >
           <div
-            className={`absolute -inset-2 rounded-full blur-md ${
-              isTPside ? "bg-green-500/30" : "bg-red-500/30"
-            }`}
+            className={`absolute -inset-2 rounded-full blur-md ${isTPside ? "bg-green-500/30" : "bg-red-500/30"
+              }`}
           />
           <div
-            className={`w-3 h-3 rounded-full ${
-              isTPside ? "bg-green-400" : "bg-red-400"
-            }`}
+            className={`w-3 h-3 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
+              }`}
           />
         </div>
 
