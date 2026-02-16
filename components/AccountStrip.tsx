@@ -21,14 +21,17 @@ pairs.forEach(p => {
 
     const orders = p.signal?.orders || [];
 
-    orders.forEach((pos: any) => {
+orders.forEach((pos: any) => {
+    const lot = Number(pos.lots || 0);
+    const pnl = Number(pos.profit || 0);
 
-        const lot = Number(pos.lots || 0);
-        const pnl = Number(pos.profit || 0);
+    totalLots += lot;
+    totalFloating += pnl;
 
-        totalLots += lot;
-        totalFloating += pnl;
-    });
+    if (pos.direction === "BUY") buyVol += lot;
+    if (pos.direction === "SELL") sellVol += lot;
+});
+
 });
 
     const netState =
