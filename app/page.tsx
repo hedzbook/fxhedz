@@ -30,9 +30,6 @@ export default function Page() {
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MID")
 
-  // ======================================================
-  // TELEGRAM MINIAPP GUARD
-  // ======================================================
   useEffect(() => {
 
     const tg = (window as any)?.Telegram?.WebApp
@@ -58,9 +55,6 @@ export default function Page() {
 
   }, [])
 
-  // ======================================================
-  // GLOBAL SIGNAL LOOP
-  // ======================================================
   useEffect(() => {
 
     if (!authorized) return
@@ -85,9 +79,6 @@ export default function Page() {
 
   }, [authorized])
 
-  // ======================================================
-  // SMOOTH UI SYNC
-  // ======================================================
   useEffect(() => {
 
     const timer = setTimeout(() => {
@@ -101,9 +92,6 @@ export default function Page() {
 
   }, [signals])
 
-  // ======================================================
-  // OPEN PAIR REFRESH
-  // ======================================================
   useEffect(() => {
 
     if (!authorized || !openPair) return
@@ -162,31 +150,18 @@ export default function Page() {
   }
 
   return (
-    <main
-      className="min-h-screen text-white pb-16 transition-all duration-500"
-      style={{
-        background:
-          netState === "NET BUY"
-            ? `radial-gradient(circle at top, rgba(34,197,94,0.08), #000)`
-            : netState === "NET SELL"
-              ? `radial-gradient(circle at top, rgba(248,113,113,0.08), #000)`
-              : "#000"
-      }}
-    >
+    <main className="min-h-screen text-white pb-16 transition-all duration-500 bg-black">
 
-      {/* 🔥 TOP STICKY STRIP — HEIGHT MATCHED */}
+      {/* TOP STRIP */}
       <div className="fixed top-0 left-0 right-0 z-50 h-10">
-        <div className="h-full">
-          <AccountStrip
-            pairs={pairsData}
-            onStateChange={(state: string) => {
-              setNetState(state)
-            }}
-          />
-        </div>
+        <AccountStrip
+          pairs={pairsData}
+          onStateChange={(state: string) => {
+            setNetState(state)
+          }}
+        />
       </div>
 
-      {/* CONTENT OFFSET = BAR HEIGHT */}
       <div className="pt-16 px-4 space-y-3">
 
         {PAIRS.map((pair) => {
@@ -213,15 +188,36 @@ export default function Page() {
 
       </div>
 
-      {/* 🔥 BOTTOM CONTROL BAR — SAME HEIGHT */}
+      {/* ==============================
+         BOTTOM CONTROL BAR
+      ============================== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
-        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-4 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
-          <div className="flex gap-3">
+          {/* LEFT SECTION */}
+          <div className="flex items-center gap-2 pl-[7px]">
 
-            <ModeBtn
-              label="MIN"
+            {/* LOGO PLACEHOLDER */}
+            <div className="w-6 h-6 rounded-full bg-neutral-700" />
+
+            <div className="leading-[10px]">
+              <div className="text-[10px] font-semibold tracking-wider">
+                ZEROLOSS
+              </div>
+              <div className="text-[8px] text-neutral-400 tracking-wide">
+                COMPOUNDED HEDGING SYSTEM
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT SECTION */}
+          <div className="flex items-center gap-2 pr-[7px]">
+
+            {/* VIEW MODE ICONS */}
+            <ViewIcon
+              size="small"
               active={viewMode === "MIN"}
               onClick={() => {
                 setViewMode("MIN")
@@ -229,24 +225,25 @@ export default function Page() {
               }}
             />
 
-            <ModeBtn
-              label="MID"
+            <ViewIcon
+              size="medium"
               active={viewMode === "MID"}
               onClick={() => setViewMode("MID")}
             />
 
-            <ModeBtn
-              label="MAX"
+            <ViewIcon
+              size="large"
               active={viewMode === "MAX"}
               onClick={() => setViewMode("MAX")}
             />
 
-          </div>
+            {/* HAMBURGER */}
+            <div className="w-6 h-6 flex flex-col justify-center gap-[3px] cursor-pointer ml-2">
+              <div className="h-[2px] bg-neutral-400" />
+              <div className="h-[2px] bg-neutral-400" />
+              <div className="h-[2px] bg-neutral-400" />
+            </div>
 
-          <div className="w-7 h-7 flex flex-col justify-center gap-1 cursor-pointer">
-            <div className="h-[2px] bg-neutral-400" />
-            <div className="h-[2px] bg-neutral-400" />
-            <div className="h-[2px] bg-neutral-400" />
           </div>
 
         </div>
@@ -256,26 +253,35 @@ export default function Page() {
   )
 }
 
-function ModeBtn({
-  label,
+/* =========================================
+   VIEW MODE ICON (NO TEXT)
+========================================= */
+
+function ViewIcon({
+  size,
   active,
   onClick
 }: {
-  label: string
+  size: "small" | "medium" | "large"
   active: boolean
   onClick: () => void
 }) {
 
+  const dimension =
+    size === "small"
+      ? "w-3 h-3"
+      : size === "medium"
+        ? "w-4 h-4"
+        : "w-5 h-5"
+
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all duration-200
+      className={`${dimension} rounded-sm transition-all duration-200
         ${active
-          ? "bg-white text-black"
-          : "bg-neutral-800 text-neutral-400 hover:text-white"
+          ? "bg-white"
+          : "bg-neutral-700 hover:bg-neutral-500"
         }`}
-    >
-      {label}
-    </button>
+    />
   )
 }

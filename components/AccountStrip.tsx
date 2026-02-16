@@ -55,7 +55,7 @@ export default function AccountStrip({
 return (
   <div className="bg-gradient-to-b from-neutral-900 to-neutral-950 border-b border-neutral-800 shadow-[0_10px_24px_rgba(0,0,0,0.6)] backdrop-blur">
 
-    <div className="h-10 px-6 flex items-center text-sm">
+    <div className="h-10 px-7 flex items-center text-sm">
 
       {/* LEFT COLUMN */}
       <div className="flex-1 flex items-center">
