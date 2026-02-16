@@ -135,8 +135,10 @@ function InlineTradeStrip({
   if (direction === "BUY") {
     const leftRange = Math.abs(entry - sl)
     const rightRange = Math.abs(tp - entry)
+
     if (price < entry && leftRange > 0)
       pricePercent = 50 - ((entry - price) / leftRange) * 50
+
     if (price > entry && rightRange > 0)
       pricePercent = 50 + ((price - entry) / rightRange) * 50
   }
@@ -144,8 +146,10 @@ function InlineTradeStrip({
   if (direction === "SELL") {
     const leftRange = Math.abs(tp - entry)
     const rightRange = Math.abs(entry - sl)
+
     if (price > entry && rightRange > 0)
       pricePercent = 50 - ((price - entry) / rightRange) * 50
+
     if (price < entry && leftRange > 0)
       pricePercent = 50 + ((entry - price) / leftRange) * 50
   }
@@ -167,9 +171,13 @@ function InlineTradeStrip({
         <span>TP</span>
       </div>
 
-      {/* BAR */}
-      <div className="relative w-full h-[2px] rounded-full bg-neutral-800">
+      {/* BAR CONTAINER */}
+      <div className="relative w-full h-[2px]">
 
+        {/* Base line */}
+        <div className="absolute inset-0 bg-neutral-800 rounded-full" />
+
+        {/* Left Red */}
         <div
           className="absolute left-0 h-[2px] w-1/2"
           style={{
@@ -178,6 +186,7 @@ function InlineTradeStrip({
           }}
         />
 
+        {/* Right Green */}
         <div
           className="absolute right-0 h-[2px] w-1/2"
           style={{
@@ -186,17 +195,34 @@ function InlineTradeStrip({
           }}
         />
 
-        {/* DOT */}
+        {/* FIXED ANCHOR CIRCLES */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+
+        {/* GLOW DOT */}
         <div
-          className="absolute top-1/2 -translate-y-1/2"
+          className="absolute top-1/2"
           style={{
             left: `${pricePercent}%`,
-            transform: "translate(-50%, -50%)"
+            transform: "translate(-50%, -50%)",
+            transition: "left 300ms ease"
           }}
         >
           <div
-            className={`w-2 h-2 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
-              }`}
+            className={`absolute -inset-2 rounded-full blur-md ${
+              isTPside ? "bg-green-500/30" : "bg-red-500/30"
+            }`}
+          />
+          <div
+            className={`w-2 h-2 rounded-full ${
+              isTPside ? "bg-green-400" : "bg-red-400"
+            }`}
+            style={{
+              boxShadow: isTPside
+                ? "0 0 8px rgba(74,222,128,0.9)"
+                : "0 0 8px rgba(248,113,113,0.9)"
+            }}
           />
         </div>
 
@@ -212,5 +238,6 @@ function InlineTradeStrip({
     </div>
   )
 }
+
 
 export default React.memo(PairCard)
