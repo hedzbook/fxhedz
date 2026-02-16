@@ -193,7 +193,7 @@ export default function Page() {
 ============================== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
-        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-[14px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-[18px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
           {/* ================= LEFT SIDE ================= */}
           <div className="flex items-center gap-3">
