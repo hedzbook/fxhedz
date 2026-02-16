@@ -202,8 +202,8 @@ export default function Page() {
             {/* LOGO */}
             <img
               src="/favicon.png"
-              alt="logo"
-              className="h-[22px] w-auto"
+              alt="Logo"
+              className="h-[26px] w-auto object-contain"
             />
 
             {/* TEXT BLOCK */}
