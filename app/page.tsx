@@ -249,14 +249,14 @@ export default function Page() {
     </div>
 
 {/* RIGHT SIDE */}
-<div className="ml-auto text-right leading-[10px] text-[9px] font-mono z-10">
-
-  <div>
+<div className="ml-auto text-right z-10 flex flex-col items-end">
+  
+  <div className="text-[9px] font-medium tracking-[0.5px] leading-[11px]">
     ZEROLOSS COMPOUNDED
   </div>
 
-  <div className="text-neutral-200">
-    H E D G I N G  S Y S T E M
+  <div className="text-[9px] text-neutral-500 tracking-[0.5px] leading-[11px]">
+    HEDGING SYSTEM
   </div>
 
 </div>
