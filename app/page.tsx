@@ -126,6 +126,9 @@ export default function Page() {
   }, [authorized, openPair])
 
 function togglePair(pair: string) {
+  if (viewMode === "MIN") {
+    setViewMode("MID")
+  }
   setOpenPair(prev => prev === pair ? null : pair)
 }
 
