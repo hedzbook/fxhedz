@@ -29,7 +29,9 @@ export default function Page() {
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
+  const [scale, setScale] = useState(1)
 
+  // TELEGRAM INIT
   useEffect(() => {
 
     const tg = (window as any)?.Telegram?.WebApp
@@ -55,6 +57,35 @@ export default function Page() {
 
   }, [])
 
+  // AUTO SCALE CALCULATION (MIN MODE ONLY)
+  useEffect(() => {
+
+    function calculateScale() {
+
+      if (viewMode !== "MIN") {
+        setScale(1)
+        return
+      }
+
+      const screenHeight = window.innerHeight
+      const usableHeight = screenHeight - 80 // top + bottom bars
+
+      const estimatedCardHeight = 90 // approximate normal card height
+      const totalEstimated = estimatedCardHeight * PAIRS.length
+
+      const newScale = Math.min(1, usableHeight / totalEstimated)
+
+      setScale(newScale)
+    }
+
+    calculateScale()
+    window.addEventListener("resize", calculateScale)
+
+    return () => window.removeEventListener("resize", calculateScale)
+
+  }, [viewMode])
+
+  // LOAD SIGNALS
   useEffect(() => {
 
     if (!authorized) return
@@ -176,23 +207,32 @@ export default function Page() {
         className={`
           pt-16 px-4
           ${viewMode === "MIN"
-            ? "flex flex-col gap-2 h-[calc(100vh-80px)] overflow-hidden"
+            ? "h-[calc(100vh-80px)] overflow-hidden"
             : "space-y-3 pb-16"
           }
         `}
       >
 
-        {PAIRS.map((pair) => {
+        <div
+          className={viewMode === "MIN" ? "origin-top" : ""}
+          style={
+            viewMode === "MIN"
+              ? {
+                  transform: `scale(${scale})`,
+                  height: `${100 / scale}%`
+                }
+              : undefined
+          }
+        >
 
-          const signal = uiSignals?.[pair]
-          const extra = pairData?.[pair] || {}
+          {PAIRS.map((pair) => {
 
-          return (
-            <div
-              key={pair}
-              className={viewMode === "MIN" ? "flex-1 min-h-0" : ""}
-            >
+            const signal = uiSignals?.[pair]
+            const extra = pairData?.[pair] || {}
+
+            return (
               <PairCard
+                key={pair}
                 pair={pair}
                 open={viewMode === "MAX" ? true : openPair === pair}
                 direction={signal?.direction}
@@ -204,9 +244,10 @@ export default function Page() {
                 viewMode={viewMode}
                 onToggle={() => togglePair(pair)}
               />
-            </div>
-          )
-        })}
+            )
+          })}
+
+        </div>
 
       </div>
 
