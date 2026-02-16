@@ -431,16 +431,16 @@ function InlineTradeStrip({ signal, direction }: any) {
         <span className="absolute right-0">TP</span>
       </div>
 
-      <div className="relative w-full h-[2px]">
+      <div className="relative w-full h-[clamp(4px,0.8vh,8px)]">
 
         <div className="absolute inset-0 bg-neutral-800 rounded-full" />
 
-        <div className="absolute left-0 h-[2px] w-1/2 bg-red-500/70" />
-        <div className="absolute right-0 h-[2px] w-1/2 bg-green-500/70" />
+        <div className="absolute left-0 h-full w-1/2 bg-red-500/70" />
+        <div className="absolute right-0 h-full w-1/2 bg-green-500/70" />
 
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[clamp(10px,1.6vh,22px)] h-[clamp(10px,1.6vh,22px)] rounded-full border border-neutral-500 bg-black" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[clamp(10px,1.6vh,22px)] h-[clamp(10px,1.6vh,22px)] rounded-full border border-neutral-500 bg-black" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[clamp(10px,1.6vh,22px)] h-[clamp(10px,1.6vh,22px)] rounded-full border border-neutral-500 bg-black" />
 
         <div
           className="absolute top-1/2"
@@ -452,7 +452,7 @@ function InlineTradeStrip({ signal, direction }: any) {
         >
           <div className={`absolute -inset-2 rounded-full blur-md ${isTPside ? "bg-green-500/30" : "bg-red-500/30"
             }`} />
-          <div className={`w-2 h-2 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
+          <div className={`w-[clamp(10px,1.6vh,22px)] h-[clamp(10px,1.6vh,22px)] rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
             }`} />
         </div>
 
@@ -537,7 +537,7 @@ function TradeBar({
         <span className="absolute right-0">TP</span>
       </div>
 
-      <div className="relative h-6 flex items-center overflow-visible">
+      <div className="relative h-[clamp(12px,2vh,28px)] flex items-center overflow-visible">
 
         <div
           className="absolute h-[2px]"
@@ -558,15 +558,15 @@ function TradeBar({
           }}
         />
 
-        <div className="absolute left-0 w-3 h-3 rounded-full border border-neutral-400" />
+        <div className="absolute left-0 w-[clamp(12px,2vh,26px)] h-[clamp(12px,2vh,26px)] rounded-full border border-neutral-400" />
         <div
-          className="absolute w-3 h-3 rounded-full border border-neutral-400"
+          className="absolute w-[clamp(12px,2vh,26px)] h-[clamp(12px,2vh,26px)] rounded-full border border-neutral-400"
           style={{
             left: `${entryPercent}%`,
             transform: "translateX(-50%)"
           }}
         />
-        <div className="absolute right-0 w-3 h-3 rounded-full border border-neutral-400" />
+        <div className="absolute right-0 w-[clamp(12px,2vh,26px)] h-[clamp(12px,2vh,26px)] rounded-full border border-neutral-400" />
 
         <div
           className="absolute"
@@ -581,7 +581,7 @@ function TradeBar({
               }`}
           />
           <div
-            className={`w-3 h-3 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
+            className={`w-[clamp(12px,2vh,26px)] h-[clamp(12px,2vh,26px)] rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
               }`}
           />
         </div>
