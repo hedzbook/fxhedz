@@ -1,3 +1,5 @@
+// components/DashboardControlBar.tsx
+
 "use client"
 
 import React from "react"

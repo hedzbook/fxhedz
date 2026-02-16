@@ -1,3 +1,5 @@
+// components/AccountStrip.tsx
+
 "use client"
 
 import { useEffect } from "react"

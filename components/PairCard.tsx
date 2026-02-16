@@ -1,3 +1,5 @@
+// components/PairCard.tsx
+
 "use client"
 
 import React, { useState, useEffect } from "react"
@@ -104,11 +106,14 @@ function PairCard({
         )}
 
         {/* TradeBar hidden in MIN mode */}
-        {!isMin &&
-          liveDir !== "EXIT" &&
-          (liveDir === "HEDGED" || (signal?.entry && signal?.sl && signal?.tp)) && (
-            <TradeBar signal={signal} direction={liveDir} />
-          )}
+{liveDir !== "EXIT" &&
+  (liveDir === "HEDGED" || (signal?.entry && signal?.sl && signal?.tp)) && (
+    <TradeBar 
+      signal={signal} 
+      direction={liveDir} 
+      viewMode={viewMode}
+    />
+)}
       </div>
 
       {/* ================= MIN MODE = HEADER ONLY ================= */}
@@ -226,34 +231,210 @@ function PairCard({
 
 function TradeBar({
   signal,
-  direction
+  direction,
+  viewMode
 }: {
   signal: any
   direction?: TradeDirection
+  viewMode?: ViewMode
 }) {
 
   if (!signal?.entry) return null
+  if (direction === "EXIT") return null
+
+  const sl = Number(signal?.sl)
+  const tp = Number(signal?.tp)
+  const entry = Number(signal?.entry)
+  const price = Number(signal?.price || entry)
+
+  if (!entry) return null
+
+  const isMin = viewMode === "MIN"
+
+  // ==========================================
+  // HEDGED MODE
+  // ==========================================
+  if (direction === "HEDGED") {
+
+    return (
+      <div className={`mt-2 select-none ${isMin ? "scale-[0.9]" : ""}`}>
+
+        {!isMin && (
+          <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
+            <span className="absolute left-0 text-sky-400">HEDZ</span>
+            <span
+              className="absolute text-sky-400"
+              style={{ left: "50%", transform: "translateX(-50%)" }}
+            >
+              ENTRY
+            </span>
+            <span className="absolute right-0 text-sky-400">HEDZ</span>
+          </div>
+        )}
+
+        <div className="relative h-4 flex items-center">
+
+          <div className="absolute h-[2px] bg-sky-400/60 w-1/2" />
+          <div className="absolute h-[2px] bg-sky-400/60 left-1/2 w-1/2" />
+
+          <div
+            className="absolute"
+            style={{ left: "50%", transform: "translateX(-50%)" }}
+          >
+            <div className="absolute -inset-2 rounded-full blur-md bg-sky-400/30" />
+            <div
+              className="w-2.5 h-2.5 rounded-full bg-sky-400"
+              style={{ boxShadow: "0 0 12px rgba(56,189,248,0.9)" }}
+            />
+          </div>
+        </div>
+
+        {!isMin && (
+          <div className="flex justify-between text-[10px] text-sky-400 mt-1">
+            <span>{entry}</span>
+            <span>{entry}</span>
+            <span>{entry}</span>
+          </div>
+        )}
+
+      </div>
+    )
+  }
+
+  if (!sl || !tp) return null
+
+  // ==========================================
+  // ENTRY-CENTERED AXIS
+  // ==========================================
+
+  const entryPercent = 50
+  let pricePercent = 50
+
+  if (direction === "BUY") {
+
+    const leftRange = Math.abs(entry - sl)
+    const rightRange = Math.abs(tp - entry)
+
+    if (price < entry && leftRange > 0) {
+      pricePercent = 50 - ((entry - price) / leftRange) * 50
+    }
+
+    if (price > entry && rightRange > 0) {
+      pricePercent = 50 + ((price - entry) / rightRange) * 50
+    }
+
+  } else if (direction === "SELL") {
+
+    const leftRange = Math.abs(tp - entry)
+    const rightRange = Math.abs(entry - sl)
+
+    if (price > entry && rightRange > 0) {
+      pricePercent = 50 - ((price - entry) / rightRange) * 50
+    }
+
+    if (price < entry && leftRange > 0) {
+      pricePercent = 50 + ((entry - price) / leftRange) * 50
+    }
+  }
+
+  pricePercent = Math.max(0, Math.min(100, pricePercent))
+
+  const isTPside =
+    direction === "BUY"
+      ? price >= entry
+      : price <= entry
 
   return (
-    <div className="mt-3 select-none">
+    <div className={`mt-2 select-none ${isMin ? "scale-[0.9]" : ""}`}>
 
-      <div className="relative h-2 bg-neutral-800 rounded-full">
+      {!isMin && (
+        <div className="relative h-3 text-[10px] text-neutral-400 mb-1">
+          <span className="absolute left-0">SL / HEDZ</span>
+          <span
+            className="absolute"
+            style={{ left: `${entryPercent}%`, transform: "translateX(-50%)" }}
+          >
+            ENTRY
+          </span>
+          <span className="absolute right-0">TP</span>
+        </div>
+      )}
 
-        <div className={`absolute left-0 top-0 h-2 rounded-full ${
-          direction === "BUY"
-            ? "bg-green-500/60 w-1/2"
-            : direction === "SELL"
-              ? "bg-red-500/60 w-1/2"
-              : "bg-sky-500/60 w-full"
-        }`} />
+      <div className="relative h-4 flex items-center overflow-visible">
+
+        <div
+          className="absolute h-[2px]"
+          style={{
+            width: `${entryPercent}%`,
+            background:
+              "linear-gradient(90deg, rgba(248,113,113,0.8), rgba(239,68,68,0.05))"
+          }}
+        />
+
+        <div
+          className="absolute h-[2px]"
+          style={{
+            left: `${entryPercent}%`,
+            width: `${100 - entryPercent}%`,
+            background:
+              "linear-gradient(90deg, rgba(34,197,94,0.05), rgba(74,222,128,0.8))"
+          }}
+        />
+
+        <div className="absolute left-0 w-2 h-2 rounded-full border border-neutral-500" />
+        <div
+          className="absolute w-2 h-2 rounded-full border border-neutral-500"
+          style={{
+            left: `${entryPercent}%`,
+            transform: "translateX(-50%)"
+          }}
+        />
+        <div className="absolute right-0 w-2 h-2 rounded-full border border-neutral-500" />
+
+        <div
+          className="absolute"
+          style={{
+            left: `${pricePercent}%`,
+            transform: "translateX(-50%)",
+            transition: "left 350ms cubic-bezier(0.22,1,0.36,1)"
+          }}
+        >
+          <div
+            className={`absolute -inset-2 rounded-full blur-md ${
+              isTPside ? "bg-green-500/30" : "bg-red-500/30"
+            }`}
+          />
+
+          <div
+            className={`w-2.5 h-2.5 rounded-full ${
+              isTPside ? "bg-green-400" : "bg-red-400"
+            }`}
+            style={{
+              boxShadow: isTPside
+                ? "0 0 14px rgba(74,222,128,0.9)"
+                : "0 0 14px rgba(248,113,113,0.9)",
+              animation: "instPulse 1.6s ease-in-out infinite"
+            }}
+          />
+        </div>
 
       </div>
 
-      <div className="flex justify-between text-[10px] text-neutral-400 mt-1">
-        <span>{signal?.sl ?? "--"}</span>
-        <span>{signal?.entry}</span>
-        <span>{signal?.tp ?? "--"}</span>
-      </div>
+      {!isMin && (
+        <div className="flex justify-between text-[10px] text-neutral-400 mt-1">
+          <span>{sl}</span>
+          <span>{entry}</span>
+          <span>{tp}</span>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes instPulse {
+          0% { transform: scale(0.85); opacity:.7 }
+          50% { transform: scale(1.2); opacity:1 }
+          100% { transform: scale(0.85); opacity:.7 }
+        }
+      `}</style>
 
     </div>
   )
