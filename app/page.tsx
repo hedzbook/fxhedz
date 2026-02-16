@@ -1,5 +1,3 @@
-// app/page.tsx
-
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
@@ -125,19 +123,19 @@ export default function Page() {
 
   }, [authorized, openPair])
 
-function togglePair(pair: string) {
+  function togglePair(pair: string) {
 
-  if (viewMode === "MIN") {
-    setViewMode("MID")
-    setOpenPair(pair)
-    return
+    if (viewMode === "MIN") {
+      setViewMode("MID")
+      setOpenPair(pair)
+      return
+    }
+
+    if (viewMode === "MID") {
+      setOpenPair(prev => prev === pair ? null : pair)
+    }
+
   }
-
-  if (viewMode === "MID") {
-    setOpenPair(prev => prev === pair ? null : pair)
-  }
-
-}
 
   const pairsData = useMemo(() => {
     return PAIRS.map((pair) => {
@@ -161,7 +159,7 @@ function togglePair(pair: string) {
   }
 
   return (
-    <main className="min-h-screen text-white pb-16 transition-all duration-500 bg-black">
+    <main className="min-h-screen text-white bg-black">
 
       {/* TOP STRIP */}
       <div className="fixed top-0 left-0 right-0 z-50 h-10">
@@ -173,7 +171,16 @@ function togglePair(pair: string) {
         />
       </div>
 
-      <div className="pt-16 px-4 space-y-3">
+      {/* CONTENT AREA */}
+      <div
+        className="
+          pt-12
+          pb-12
+          px-[clamp(12px,3vw,24px)]
+          space-y-[clamp(10px,2vw,16px)]
+          min-h-screen
+        "
+      >
 
         {PAIRS.map((pair) => {
 
@@ -199,12 +206,10 @@ function togglePair(pair: string) {
 
       </div>
 
-      {/* ============================== 
-   BOTTOM CONTROL BAR
-============================== */}
+      {/* BOTTOM CONTROL BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
-        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-[17px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-[clamp(12px,3vw,20px)] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
           {/* LEFT SIDE */}
           <div className="flex items-center gap-2 z-10">
@@ -215,7 +220,7 @@ function togglePair(pair: string) {
               <div className="h-[2px] w-2 bg-neutral-400" />
             </div>
 
-            <div className="text-[15px] font-semibold tracking-wide leading-none">
+            <div className="text-[clamp(13px,2vw,16px)] font-semibold tracking-wide leading-none">
               FXHEDZ
             </div>
 
@@ -240,24 +245,32 @@ function togglePair(pair: string) {
 
               }}
               className={`
-          pointer-events-auto
-          w-12 h-6 rounded-full transition-all duration-300 relative
-          ${viewMode === "MIN"
+                pointer-events-auto
+                w-[clamp(40px,8vw,48px)]
+                h-[clamp(20px,4vw,24px)]
+                rounded-full
+                transition-all
+                duration-300
+                relative
+                ${viewMode === "MIN"
                   ? "bg-neutral-700"
                   : viewMode === "MID"
                     ? "bg-neutral-600"
                     : "bg-neutral-500"}
-        `}
+              `}
             >
               <div
                 className={`
-            absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white transition-all duration-300
-${viewMode === "MID"
+                  absolute top-1/2 -translate-y-1/2
+                  w-[clamp(14px,3vw,18px)]
+                  h-[clamp(14px,3vw,18px)]
+                  rounded-full bg-white transition-all duration-300
+                  ${viewMode === "MID"
                     ? "left-1"
                     : viewMode === "MIN"
                       ? "left-1/2 -translate-x-1/2"
                       : "right-1"}
-          `}
+                `}
               />
             </button>
 
@@ -265,53 +278,18 @@ ${viewMode === "MID"
 
           {/* RIGHT SIDE */}
           <div className="ml-auto text-right z-10 flex flex-col items-end">
-
-            <div className="text-[5px] font-medium tracking-[0.5px] leading-[11px]">
+            <div className="text-[clamp(6px,1.4vw,8px)] font-medium tracking-[0.5px] leading-tight">
               ZEROLOSS COMPOUNDED
             </div>
 
-            <div className="text-[9px] text-neutral-500 tracking-[2.2px] leading-[11px]">
+            <div className="text-[clamp(8px,1.6vw,10px)] text-neutral-500 tracking-[2px] leading-tight">
               HEDGING SYSTEM
             </div>
-
           </div>
 
         </div>
       </div>
 
     </main>
-  )
-}
-
-/* =========================================
-   VIEW MODE ICON (NO TEXT)
-========================================= */
-
-function ViewIcon({
-  size,
-  active,
-  onClick
-}: {
-  size: "small" | "medium" | "large"
-  active: boolean
-  onClick: () => void
-}) {
-
-  const dimension =
-    size === "small"
-      ? "w-3 h-3"
-      : size === "medium"
-        ? "w-4 h-4"
-        : "w-5 h-5"
-
-  return (
-    <button
-      onClick={onClick}
-      className={`${dimension} rounded-sm transition-all duration-200
-        ${active
-          ? "bg-white"
-          : "bg-neutral-700 hover:bg-neutral-500"
-        }`}
-    />
   )
 }
