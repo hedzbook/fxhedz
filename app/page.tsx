@@ -191,54 +191,79 @@ export default function Page() {
       {/* ==============================
          BOTTOM CONTROL BAR
       ============================== */}
+      {/* 🔥 BOTTOM CONTROL BAR — SAME HEIGHT */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
 
-        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+        <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center justify-between px-[7px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
-          {/* LEFT SECTION */}
-          <div className="flex items-center gap-2 pl-[7px]">
+          {/* ================= LEFT SIDE ================= */}
+          <div className="flex items-center gap-2">
 
-            {/* LOGO PLACEHOLDER */}
-            <div className="w-6 h-6 rounded-full bg-neutral-700" />
+            {/* LOGO */}
+            <img
+              src="/favicon.ico"
+              alt="logo"
+              className="w-5 h-5 object-contain"
+            />
 
-            <div className="leading-[10px]">
-              <div className="text-[10px] font-semibold tracking-wider">
+            {/* TEXT BLOCK */}
+            <div className="leading-tight">
+              <div className="text-[10px] font-semibold tracking-wide">
                 ZEROLOSS
               </div>
-              <div className="text-[8px] text-neutral-400 tracking-wide">
+              <div className="text-[9px] text-neutral-400 tracking-wider">
                 COMPOUNDED HEDGING SYSTEM
               </div>
             </div>
 
           </div>
 
-          {/* RIGHT SECTION */}
-          <div className="flex items-center gap-2 pr-[7px]">
+          {/* ================= RIGHT SIDE ================= */}
+          <div className="flex items-center gap-3">
 
-            {/* VIEW MODE ICONS */}
-            <ViewIcon
-              size="small"
-              active={viewMode === "MIN"}
-              onClick={() => {
-                setViewMode("MIN")
-                setOpenPair(null)
-              }}
-            />
+            {/* VIEW MODE BUTTONS (NO TEXT — DIFFERENT SIZES) */}
+            <div className="flex items-center gap-2">
 
-            <ViewIcon
-              size="medium"
-              active={viewMode === "MID"}
-              onClick={() => setViewMode("MID")}
-            />
+              {/* MIN */}
+              <button
+                onClick={() => {
+                  setViewMode("MIN")
+                  setOpenPair(null)
+                }}
+                className={`transition-all duration-200
+            ${viewMode === "MIN"
+                    ? "bg-white"
+                    : "bg-neutral-700 hover:bg-neutral-500"
+                  }`}
+                style={{ width: 12, height: 12 }}
+              />
 
-            <ViewIcon
-              size="large"
-              active={viewMode === "MAX"}
-              onClick={() => setViewMode("MAX")}
-            />
+              {/* MID */}
+              <button
+                onClick={() => setViewMode("MID")}
+                className={`transition-all duration-200
+            ${viewMode === "MID"
+                    ? "bg-white"
+                    : "bg-neutral-700 hover:bg-neutral-500"
+                  }`}
+                style={{ width: 16, height: 16 }}
+              />
 
-            {/* HAMBURGER */}
-            <div className="w-6 h-6 flex flex-col justify-center gap-[3px] cursor-pointer ml-2">
+              {/* MAX */}
+              <button
+                onClick={() => setViewMode("MAX")}
+                className={`transition-all duration-200
+            ${viewMode === "MAX"
+                    ? "bg-white"
+                    : "bg-neutral-700 hover:bg-neutral-500"
+                  }`}
+                style={{ width: 20, height: 20 }}
+              />
+
+            </div>
+
+            {/* HAMBURGER — 7PX FROM RIGHT */}
+            <div className="w-6 h-6 flex flex-col justify-center gap-1 cursor-pointer">
               <div className="h-[2px] bg-neutral-400" />
               <div className="h-[2px] bg-neutral-400" />
               <div className="h-[2px] bg-neutral-400" />
@@ -248,7 +273,6 @@ export default function Page() {
 
         </div>
       </div>
-
     </main>
   )
 }
