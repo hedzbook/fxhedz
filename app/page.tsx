@@ -1,11 +1,8 @@
-//app/page.tsx
-
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
 import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
-import GlobalLightChart from "@/components/GlobalLightChart"
 
 const PAIRS = [
   "XAUUSD",
@@ -22,6 +19,8 @@ const PAIRS = [
 
 const SIGNAL_API = "/api/signals"
 
+type ViewMode = "MIN" | "MID" | "MAX"
+
 export default function Page() {
 
   const [signals, setSignals] = useState<any>({})
@@ -30,9 +29,7 @@ export default function Page() {
   const [authorized, setAuthorized] = useState(false)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
-  const [netIntensity, setNetIntensity] = useState(0)
-  const [liquidityPulse, setLiquidityPulse] = useState(0)
-  const [marketMode, setMarketMode] = useState<"CALM" | "ACTIVE" | "VOLATILE">("CALM")
+  const [viewMode, setViewMode] = useState<ViewMode>("MID")
 
   // ======================================================
   // TELEGRAM MINIAPP GUARD
@@ -53,147 +50,72 @@ export default function Page() {
       document.body.style.minHeight = "100vh"
       document.body.style.overscrollBehavior = "none"
       document.body.style.touchAction = "pan-y"
-      setAuthorized(true)
 
+      setAuthorized(true)
     } else {
-      console.log("Blocked: Not opened via Telegram")
       setAuthorized(false)
     }
 
   }, [])
 
   // ======================================================
-  // GLOBAL LIVE SIGNALS LOOP (LIGHTWEIGHT)
+  // GLOBAL SIGNAL LOOP
   // ======================================================
   useEffect(() => {
 
     if (!authorized) return
 
     async function loadSignals() {
-
       try {
-
         const res = await fetch(SIGNAL_API)
         const json = await res.json()
-
         const incoming = json?.signals ? json.signals : json
 
         setSignals((prev: any) => {
-
-          if (JSON.stringify(prev) === JSON.stringify(incoming)) {
-            return prev
-          }
-
+          if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
           return incoming
         })
 
-      } catch (err) {
-        console.log("Signal fetch error", err)
-      }
+      } catch { }
     }
 
     loadSignals()
-
     const interval = setInterval(loadSignals, 2500)
-
     return () => clearInterval(interval)
 
   }, [authorized])
 
   // ======================================================
-  // DYNAMIC TICK STABILIZER (ADAPTIVE SMOOTHING - SAFE)
+  // SMOOTH UI SYNC
   // ======================================================
   useEffect(() => {
 
-    let delay = 80
-
-    try {
-
-      let totalMove = 0
-      let count = 0
-
-      PAIRS.forEach(pair => {
-
-        const newPrice = Number(signals?.[pair]?.price)
-        const oldPrice = Number(uiSignals?.[pair]?.price)
-
-        if (newPrice && oldPrice) {
-          totalMove += Math.abs(newPrice - oldPrice)
-          count++
-        }
-
-      })
-
-      const avgMove = count ? totalMove / count : 0
-
-      if (avgMove > 1) delay = 160
-      else if (avgMove > 0.2) delay = 120
-      else delay = 70
-
-    } catch { }
-
     const timer = setTimeout(() => {
       setUiSignals((prev: any) => {
-        // 🔥 prevent useless updates
         if (JSON.stringify(prev) === JSON.stringify(signals)) return prev
         return signals
       })
-    }, delay)
+    }, 90)
 
     return () => clearTimeout(timer)
 
   }, [signals])
 
   // ======================================================
-  // GLOBAL MARKET MODE DETECTOR
-  // ======================================================
-  useEffect(() => {
-
-    let totalMove = 0
-    let count = 0
-
-    PAIRS.forEach(pair => {
-
-      const newPrice = Number(signals?.[pair]?.price)
-      const oldPrice = Number(uiSignals?.[pair]?.price)
-
-      if (newPrice && oldPrice) {
-        totalMove += Math.abs(newPrice - oldPrice)
-        count++
-      }
-
-    })
-
-    const avgMove = count ? totalMove / count : 0
-
-    if (avgMove > 2) {
-      setMarketMode("VOLATILE")
-    } else if (avgMove > 0.4) {
-      setMarketMode("ACTIVE")
-    } else {
-      setMarketMode("CALM")
-    }
-
-  }, [signals, uiSignals])
-
-  // ======================================================
-  // 🔥 OPEN PAIR REFRESH LOOP
+  // OPEN PAIR REFRESH
   // ======================================================
   useEffect(() => {
 
     if (!authorized || !openPair) return
 
     const pairKey = openPair
-
     let cancelled = false
 
     async function refreshOpenPair() {
 
       try {
-
         const res = await fetch(`/api/signals?pair=${pairKey}`)
         const json = await res.json()
-
         if (cancelled) return
 
         setPairData((prev: any) => ({
@@ -201,13 +123,10 @@ export default function Page() {
           [pairKey]: json
         }))
 
-      } catch (err) {
-        console.log("Refresh pair error", err)
-      }
+      } catch { }
     }
 
     refreshOpenPair()
-
     const interval = setInterval(refreshOpenPair, 6000)
 
     return () => {
@@ -218,68 +137,30 @@ export default function Page() {
   }, [authorized, openPair])
 
   // ======================================================
-  // LAZY LOAD PAIR DATA
-  // ======================================================
-  async function loadPair(pair: string) {
-
-    if (pairData[pair]) return
-
-    try {
-
-      const res = await fetch(`/api/signals?pair=${pair}`)
-      const json = await res.json()
-
-      setPairData((prev: any) => ({
-        ...prev,
-        [pair]: json
-      }))
-
-    } catch (err) {
-      console.log("Pair load error", err)
-    }
-  }
-
-  // ======================================================
   // TOGGLE HANDLER
   // ======================================================
   function togglePair(pair: string) {
-    setOpenPair(prev => {
 
-      const next = prev === pair ? null : pair
+    if (viewMode === "MIN") return
 
-      if (next) {
-        if ("requestIdleCallback" in window) {
-          (window as any).requestIdleCallback(() => loadPair(next))
-        } else {
-          setTimeout(() => loadPair(next), 0)
-        }
-      }
-
-      return next
-    })
+    setOpenPair(prev => prev === pair ? null : pair)
   }
 
   // ======================================================
-  // 🔥 BUILD GLOBAL PAIRS DATA (FOR ACCOUNT STRIP)
+  // ACCOUNT STRIP DATA
   // ======================================================
   const pairsData = useMemo(() => {
 
     return PAIRS.map((pair) => {
-
       const signal = uiSignals?.[pair]
       const extra = pairData?.[pair] || {}
-
-      return {
-        pair,
-        signal,
-        orders: extra?.orders || []
-      }
+      return { pair, signal, orders: extra?.orders || [] }
     })
 
   }, [uiSignals, pairData])
 
   // ======================================================
-  // ACCESS BLOCK SCREEN
+  // ACCESS BLOCK
   // ======================================================
   if (!authorized) {
     return (
@@ -287,7 +168,7 @@ export default function Page() {
         <div className="text-center space-y-2">
           <div className="text-xl font-bold">FXHEDZ</div>
           <div className="text-neutral-400 text-sm">
-            Open via Telegram Bot to access signals
+            Open via Telegram Bot
           </div>
         </div>
       </main>
@@ -299,40 +180,21 @@ export default function Page() {
   // ======================================================
   return (
     <main
-      className="min-h-screen text-white p-4 space-y-3 transition-all duration-700"
+      className="min-h-screen text-white p-4 pb-24 space-y-3 transition-all duration-500"
       style={{
-        transition:
-          marketMode === "VOLATILE"
-            ? "all 320ms cubic-bezier(0.22,1,0.36,1)"
-            : "all 700ms ease",
-
-        boxShadow: `inset 0 0 ${12 + liquidityPulse * 18}px rgba(255,255,255,0.03)`,
-
         background:
           netState === "NET BUY"
-            ? `radial-gradient(circle at top, rgba(34,197,94,${0.04 + netIntensity * 0.12}), #000000)`
+            ? `radial-gradient(circle at top, rgba(34,197,94,0.08), #000)`
             : netState === "NET SELL"
-              ? `radial-gradient(circle at top, rgba(248,113,113,${0.04 + netIntensity * 0.12}), #000000)`
-              : netState === "HEDGED"
-                ? `radial-gradient(circle at top, rgba(56,189,248,${0.03 + netIntensity * 0.08}), #000000)`
-                : "#000000"
+              ? `radial-gradient(circle at top, rgba(248,113,113,0.08), #000)`
+              : "#000"
       }}
     >
 
-      {/* 🔥 GLOBAL ACCOUNT RISK STRIP */}
       <AccountStrip
         pairs={pairsData}
-        onStateChange={(state: string, intensity: number, pulse: number) => {
+        onStateChange={(state: string) => {
           setNetState(state)
-          setNetIntensity(intensity)
-          setLiquidityPulse(
-            marketMode === "VOLATILE"
-              ? pulse * 1.4
-              : marketMode === "ACTIVE"
-                ? pulse
-                : pulse * 0.6
-          )
-
         }}
       />
 
@@ -345,18 +207,88 @@ export default function Page() {
           <PairCard
             key={pair}
             pair={pair}
-            open={openPair === pair}
+            open={viewMode === "MAX" ? true : openPair === pair}
             direction={signal?.direction}
             signal={signal}
             history={extra?.history}
             orders={extra?.orders}
             performance={extra?.performance}
             notes={extra?.notes}
+            viewMode={viewMode}
             onToggle={() => togglePair(pair)}
           />
         )
       })}
 
+      {/* ======================================================
+          STICKY CONTROL BAR
+      ====================================================== */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+
+        <div className="bg-neutral-900 border-t border-neutral-800 h-16 flex items-center justify-between px-4 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
+
+          <div className="flex gap-3">
+
+            <ModeBtn
+              label="MIN"
+              active={viewMode === "MIN"}
+              onClick={() => {
+                setViewMode("MIN")
+                setOpenPair(null)
+              }}
+            />
+
+            <ModeBtn
+              label="MID"
+              active={viewMode === "MID"}
+              onClick={() => setViewMode("MID")}
+            />
+
+            <ModeBtn
+              label="MAX"
+              active={viewMode === "MAX"}
+              onClick={() => setViewMode("MAX")}
+            />
+
+          </div>
+
+          <div className="w-8 h-8 flex flex-col justify-center gap-1 cursor-pointer">
+            <div className="h-[2px] bg-neutral-400" />
+            <div className="h-[2px] bg-neutral-400" />
+            <div className="h-[2px] bg-neutral-400" />
+          </div>
+
+        </div>
+      </div>
+
     </main>
+  )
+}
+
+/* ======================================================
+   MODE BUTTON
+====================================================== */
+
+function ModeBtn({
+  label,
+  active,
+  onClick
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all duration-200
+        ${active
+          ? "bg-white text-black"
+          : "bg-neutral-800 text-neutral-400 hover:text-white"
+        }`}
+    >
+      {label}
+    </button>
   )
 }
