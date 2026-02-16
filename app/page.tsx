@@ -29,9 +29,7 @@ export default function Page() {
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
-  const [scale, setScale] = useState(1)
 
-  // TELEGRAM INIT
   useEffect(() => {
 
     const tg = (window as any)?.Telegram?.WebApp
@@ -57,35 +55,6 @@ export default function Page() {
 
   }, [])
 
-  // AUTO SCALE CALCULATION (MIN MODE ONLY)
-  useEffect(() => {
-
-    function calculateScale() {
-
-      if (viewMode !== "MIN") {
-        setScale(1)
-        return
-      }
-
-      const screenHeight = window.innerHeight
-      const usableHeight = screenHeight - 80 // top + bottom bars
-
-      const estimatedCardHeight = 90 // approximate normal card height
-      const totalEstimated = estimatedCardHeight * PAIRS.length
-
-      const newScale = Math.min(1, usableHeight / totalEstimated)
-
-      setScale(newScale)
-    }
-
-    calculateScale()
-    window.addEventListener("resize", calculateScale)
-
-    return () => window.removeEventListener("resize", calculateScale)
-
-  }, [viewMode])
-
-  // LOAD SIGNALS
   useEffect(() => {
 
     if (!authorized) return
@@ -202,37 +171,28 @@ export default function Page() {
         />
       </div>
 
-      {/* CONTENT AREA */}
+      {/* CONTENT */}
       <div
         className={`
           pt-16 px-4
           ${viewMode === "MIN"
-            ? "h-[calc(100vh-80px)] overflow-hidden"
+            ? "flex flex-col gap-2 h-[calc(100vh-80px)] overflow-hidden"
             : "space-y-3 pb-16"
           }
         `}
       >
 
-        <div
-          className={viewMode === "MIN" ? "origin-top" : ""}
-          style={
-            viewMode === "MIN"
-              ? {
-                  transform: `scale(${scale})`,
-                  height: `${100 / scale}%`
-                }
-              : undefined
-          }
-        >
+        {PAIRS.map((pair) => {
 
-          {PAIRS.map((pair) => {
+          const signal = uiSignals?.[pair]
+          const extra = pairData?.[pair] || {}
 
-            const signal = uiSignals?.[pair]
-            const extra = pairData?.[pair] || {}
-
-            return (
+          return (
+            <div
+              key={pair}
+              className={viewMode === "MIN" ? "flex-1 min-h-0" : ""}
+            >
               <PairCard
-                key={pair}
                 pair={pair}
                 open={viewMode === "MAX" ? true : openPair === pair}
                 direction={signal?.direction}
@@ -244,43 +204,34 @@ export default function Page() {
                 viewMode={viewMode}
                 onToggle={() => togglePair(pair)}
               />
-            )
-          })}
-
-        </div>
+            </div>
+          )
+        })}
 
       </div>
 
-      {/* BOTTOM CONTROL BAR */}
+      {/* BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
-
         <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-[17px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
-          {/* LEFT SIDE */}
           <div className="flex items-center gap-2 z-10">
             <div className="w-2 h-5 flex flex-col justify-center gap-[2px] cursor-pointer">
               <div className="h-[2px] w-2 bg-neutral-400" />
               <div className="h-[2px] w-2 bg-neutral-400" />
               <div className="h-[2px] w-2 bg-neutral-400" />
             </div>
-
             <div className="text-[15px] font-semibold tracking-wide leading-none">
               FXHEDZ
             </div>
           </div>
 
-          {/* CENTER TOGGLE */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
             <button
               onClick={() => {
 
-                if (viewMode === "MIN") {
-                  setViewMode("MAX")
-                }
-                else if (viewMode === "MAX") {
-                  setViewMode("MID")
-                }
+                if (viewMode === "MIN") setViewMode("MAX")
+                else if (viewMode === "MAX") setViewMode("MID")
                 else {
                   setViewMode("MIN")
                   setOpenPair(null)
@@ -311,12 +262,10 @@ export default function Page() {
 
           </div>
 
-          {/* RIGHT SIDE */}
           <div className="ml-auto text-right z-10 flex flex-col items-end">
             <div className="text-[5px] font-medium tracking-[0.5px] leading-[11px]">
               ZEROLOSS COMPOUNDED
             </div>
-
             <div className="text-[9px] text-neutral-500 tracking-[2.2px] leading-[11px]">
               HEDGING SYSTEM
             </div>
