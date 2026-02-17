@@ -62,7 +62,7 @@ function PairCard({
 
 {/* ================= HEADER ================= */}
 <div
-  className="h-[72px] px-4 flex items-center cursor-pointer"
+  className="h-[96px] px-4 py-2 flex flex-col justify-center cursor-pointer"
   onClick={(e) => {
     e.stopPropagation()
     onToggle()
@@ -70,28 +70,14 @@ function PairCard({
 >
 
   {signal && (
-    <div className="flex w-full items-center justify-between">
+    <div className="flex flex-col gap-2 w-full">
 
-      {/* LEFT */}
-      <div className="flex flex-col justify-center">
-        <div className="font-semibold text-base">{pair}</div>
-        <div className="text-neutral-400 text-xs">
-          {signal?.lots ?? "-"} LOTS
+      {/* ROW 1 — PAIR + DIRECTION */}
+      <div className="flex justify-between items-center">
+        <div className="font-semibold text-base">
+          {pair}
         </div>
-      </div>
 
-      {/* CENTER TRADE STRIP */}
-      <div className="flex-1 flex justify-center px-4">
-        <div className="w-full max-w-[340px]">
-          <InlineTradeStrip
-            signal={signal}
-            direction={liveDir}
-          />
-        </div>
-      </div>
-
-      {/* RIGHT */}
-      <div className="flex flex-col items-end justify-center">
         <div className={`font-bold text-base ${
           liveDir === "BUY"
             ? "text-green-400"
@@ -103,13 +89,26 @@ function PairCard({
         }`}>
           {liveDir}
         </div>
+      </div>
 
-        <div className="text-xs font-semibold">
+      {/* ROW 2 — LOTS + B/S COUNT */}
+      <div className="flex justify-between items-center text-xs">
+        <div className="text-neutral-400">
+          {signal?.lots ?? "-"} LOTS
+        </div>
+
+        <div className="font-semibold">
           <span className="text-green-400">{signal?.buys ?? 0}B</span>
           <span className="text-neutral-500 px-1">/</span>
           <span className="text-red-400">{signal?.sells ?? 0}S</span>
         </div>
       </div>
+
+      {/* ROW 3 — TRADE BAR */}
+      <InlineTradeStrip
+        signal={signal}
+        direction={liveDir}
+      />
 
     </div>
   )}
@@ -326,14 +325,15 @@ function InlineTradeStrip({ signal, direction }: any) {
 
   if (!sl || !tp) return null
 
-  const entryPercent = 50
   let pricePercent = 50
 
   if (direction === "BUY") {
     const leftRange = Math.abs(entry - sl)
     const rightRange = Math.abs(tp - entry)
+
     if (price < entry && leftRange > 0)
       pricePercent = 50 - ((entry - price) / leftRange) * 50
+
     if (price > entry && rightRange > 0)
       pricePercent = 50 + ((price - entry) / rightRange) * 50
   }
@@ -341,8 +341,10 @@ function InlineTradeStrip({ signal, direction }: any) {
   if (direction === "SELL") {
     const leftRange = Math.abs(tp - entry)
     const rightRange = Math.abs(entry - sl)
+
     if (price > entry && rightRange > 0)
       pricePercent = 50 - ((price - entry) / rightRange) * 50
+
     if (price < entry && leftRange > 0)
       pricePercent = 50 + ((entry - price) / leftRange) * 50
   }
@@ -355,25 +357,29 @@ function InlineTradeStrip({ signal, direction }: any) {
       : price <= entry
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col w-full">
 
-      <div className="relative w-full h-[10px] text-[8px] text-neutral-400 mb-1">
-        <span className="absolute left-0">SL/HEDZ</span>
-        <span className="absolute left-1/2 -translate-x-1/2">ENTRY</span>
-        <span className="absolute right-0">TP</span>
-      </div>
-
+      {/* BAR */}
       <div className="relative w-full h-[2px]">
 
         <div className="absolute inset-0 bg-neutral-800 rounded-full" />
 
+        {/* left half */}
         <div className="absolute left-0 h-[2px] w-1/2 bg-red-500/70" />
+
+        {/* right half */}
         <div className="absolute right-0 h-[2px] w-1/2 bg-green-500/70" />
 
+        {/* SL dot */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+
+        {/* ENTRY dot */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
+
+        {/* TP dot */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
 
+        {/* LIVE DOT */}
         <div
           className="absolute top-1/2"
           style={{
@@ -382,15 +388,22 @@ function InlineTradeStrip({ signal, direction }: any) {
             transition: "left 300ms ease"
           }}
         >
-          <div className={`absolute -inset-2 rounded-full blur-md ${isTPside ? "bg-green-500/30" : "bg-red-500/30"
-            }`} />
-          <div className={`w-2 h-2 rounded-full ${isTPside ? "bg-green-400" : "bg-red-400"
-            }`} />
+          <div
+            className={`absolute -inset-2 rounded-full blur-md ${
+              isTPside ? "bg-green-500/30" : "bg-red-500/30"
+            }`}
+          />
+          <div
+            className={`w-2 h-2 rounded-full ${
+              isTPside ? "bg-green-400" : "bg-red-400"
+            }`}
+          />
         </div>
 
       </div>
 
-      <div className="w-full flex justify-between text-[8px] text-neutral-400 mt-1">
+      {/* PRICE ROW */}
+      <div className="flex justify-between text-[10px] text-neutral-400 mt-1">
         <span>{sl}</span>
         <span>{entry}</span>
         <span>{tp}</span>
