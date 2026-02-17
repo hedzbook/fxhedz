@@ -1,3 +1,5 @@
+// app/page.tsx
+
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
@@ -18,7 +20,7 @@ const PAIRS = [
 
 const SIGNAL_API = "/api/signals"
 
-type ViewMode = "MIN" | "MAX"
+type ViewMode = "MIN" | "MID" | "MAX"
 
 export default function Page() {
 
@@ -125,11 +127,16 @@ export default function Page() {
 
 function togglePair(pair: string) {
 
-  if (openPair === pair) {
-    setOpenPair(null)
-  } else {
+  if (viewMode === "MIN") {
+    setViewMode("MID")
     setOpenPair(pair)
+    return
   }
+
+  if (viewMode === "MID") {
+    setOpenPair(prev => prev === pair ? null : pair)
+  }
+
 }
 
   const pairsData = useMemo(() => {
@@ -154,7 +161,7 @@ function togglePair(pair: string) {
   }
 
   return (
-    <main className="min-h-screen text-white bg-black">
+    <main className="min-h-screen text-white pb-16 transition-all duration-500 bg-black">
 
       {/* TOP STRIP */}
       <div className="fixed top-0 left-0 right-0 z-50 h-10">
@@ -166,16 +173,7 @@ function togglePair(pair: string) {
         />
       </div>
 
-      {/* CONTENT */}
-      <div
-        className={`
-          pt-16 px-4
-          ${viewMode === "MIN"
-  ? "flex flex-col gap-2 min-h-[calc(100vh-80px)]"
-            : "space-y-3 pb-16"
-          }
-        `}
-      >
+      <div className="pt-16 px-4 space-y-3">
 
         {PAIRS.map((pair) => {
 
@@ -183,43 +181,47 @@ function togglePair(pair: string) {
           const extra = pairData?.[pair] || {}
 
           return (
-            <div
+            <PairCard
               key={pair}
-              className={viewMode === "MIN" ? "flex-1 min-h-0" : ""}
-            >
-              <PairCard
-                pair={pair}
-                open={openPair === pair}
-                direction={signal?.direction}
-                signal={signal}
-                history={extra?.history}
-                orders={extra?.orders}
-                performance={extra?.performance}
-                notes={extra?.notes}
-                viewMode={viewMode}
-                onToggle={() => togglePair(pair)}
-              />
-            </div>
+              pair={pair}
+              open={viewMode === "MAX" ? true : openPair === pair}
+              direction={signal?.direction}
+              signal={signal}
+              history={extra?.history}
+              orders={extra?.orders}
+              performance={extra?.performance}
+              notes={extra?.notes}
+              viewMode={viewMode}
+              onToggle={() => togglePair(pair)}
+            />
           )
         })}
 
       </div>
 
-      {/* BOTTOM BAR */}
+      {/* ============================== 
+   BOTTOM CONTROL BAR
+============================== */}
       <div className="fixed bottom-0 left-0 right-0 z-50 h-10">
+
         <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-[17px] shadow-[0_-8px_30px_rgba(0,0,0,0.6)]">
 
+          {/* LEFT SIDE */}
           <div className="flex items-center gap-2 z-10">
+
             <div className="w-2 h-5 flex flex-col justify-center gap-[2px] cursor-pointer">
               <div className="h-[2px] w-2 bg-neutral-400" />
               <div className="h-[2px] w-2 bg-neutral-400" />
               <div className="h-[2px] w-2 bg-neutral-400" />
             </div>
+
             <div className="text-[15px] font-semibold tracking-wide leading-none">
               FXHEDZ
             </div>
+
           </div>
 
+          {/* CENTER TOGGLE */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
             <button
@@ -227,43 +229,89 @@ function togglePair(pair: string) {
 
                 if (viewMode === "MIN") {
                   setViewMode("MAX")
-                } else {
+                }
+                else if (viewMode === "MAX") {
+                  setViewMode("MID")
+                }
+                else {
                   setViewMode("MIN")
+                  setOpenPair(null)
                 }
 
               }}
               className={`
-                pointer-events-auto
-                w-12 h-6 rounded-full transition-all duration-300 relative
-${viewMode === "MIN"
+          pointer-events-auto
+          w-12 h-6 rounded-full transition-all duration-300 relative
+          ${viewMode === "MIN"
                   ? "bg-neutral-700"
-                  : "bg-neutral-500"}
-              `}
+                  : viewMode === "MID"
+                    ? "bg-neutral-600"
+                    : "bg-neutral-500"}
+        `}
             >
               <div
                 className={`
-                  absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white transition-all duration-300
-${viewMode === "MIN"
+            absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white transition-all duration-300
+${viewMode === "MID"
                     ? "left-1"
-                    : "right-1"}
-                `}
+                    : viewMode === "MIN"
+                      ? "left-1/2 -translate-x-1/2"
+                      : "right-1"}
+          `}
               />
             </button>
 
           </div>
 
+          {/* RIGHT SIDE */}
           <div className="ml-auto text-right z-10 flex flex-col items-end">
+
             <div className="text-[5px] font-medium tracking-[0.5px] leading-[11px]">
               ZEROLOSS COMPOUNDED
             </div>
+
             <div className="text-[9px] text-neutral-500 tracking-[2.2px] leading-[11px]">
               HEDGING SYSTEM
             </div>
+
           </div>
 
         </div>
       </div>
 
     </main>
+  )
+}
+
+/* =========================================
+   VIEW MODE ICON (NO TEXT)
+========================================= */
+
+function ViewIcon({
+  size,
+  active,
+  onClick
+}: {
+  size: "small" | "medium" | "large"
+  active: boolean
+  onClick: () => void
+}) {
+
+  const dimension =
+    size === "small"
+      ? "w-3 h-3"
+      : size === "medium"
+        ? "w-4 h-4"
+        : "w-5 h-5"
+
+  return (
+    <button
+      onClick={onClick}
+      className={`${dimension} rounded-sm transition-all duration-200
+        ${active
+          ? "bg-white"
+          : "bg-neutral-700 hover:bg-neutral-500"
+        }`}
+    />
   )
 }

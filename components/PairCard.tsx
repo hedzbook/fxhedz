@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react"
 import GlobalLightChart from "./GlobalLightChart"
 
 type TradeDirection = "BUY" | "SELL" | "HEDGED" | "EXIT" | "--"
-type ViewMode = "MIN" | "MAX"
+type ViewMode = "MIN" | "MID" | "MAX"
 
 type Props = {
   pair: string
@@ -24,7 +24,7 @@ type Props = {
 function PairCard({
   pair,
   open,
-  viewMode = "MIN",
+  viewMode = "MID",
   onToggle,
   direction,
   signal,
@@ -32,7 +32,7 @@ function PairCard({
   orders,
   performance,
   notes
-}: Props){
+}: Props) {
 
   const dir: TradeDirection = direction ?? "--"
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
@@ -42,49 +42,72 @@ function PairCard({
 
   const isMin = viewMode === "MIN"
   const isMax = viewMode === "MAX"
-const expanded = !!open
+  const expanded = isMax ? true : open
 
   useEffect(() => setLiveDir(dir), [dir])
   useEffect(() => setLiveOrders(orders ?? []), [orders])
   useEffect(() => { if (expanded) setTab("market") }, [expanded])
 
+  // EXIT auto sync
+  useEffect(() => {
+    if (!signal) return
+    if (dir === "HEDGED") return
+
+    const price = Number(signal?.price)
+    const tp = Number(signal?.tp)
+    const sl = Number(signal?.sl)
+
+    if (!price || !tp || !sl) return
+
+    if (liveDir === "BUY") {
+      if (price >= tp || price <= sl) setLiveDir("EXIT")
+    }
+
+    if (liveDir === "SELL") {
+      if (price <= tp || price >= sl) setLiveDir("EXIT")
+    }
+
+  }, [signal?.price, dir, liveDir])
+
+  useEffect(() => {
+    if (liveDir === "EXIT") setLiveOrders([])
+  }, [liveDir])
+
   return (
     <div
-      className={`
-        border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300
-        ${isMin ? "h-full flex flex-col justify-center" : ""}
-        ${liveDir === "EXIT"
-          ? "bg-gradient-to-b from-neutral-900 to-neutral-950 border-neutral-800/60"
+      className={`border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300
+      ${liveDir === "EXIT"
+          ? "bg-gradient-to-b from-neutral-900 to-neutral-950 opacity-100 border-neutral-800/60"
           : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
-        }
-      `}
+        }`}
     >
 
       {/* ================= HEADER ================= */}
       <div
-        className={`
-          ${isMin ? "flex-1 flex items-center px-4" : "p-4"}
-          cursor-pointer
-        `}
-        onClick={(e) => {
+  className={`${isMin ? "p-2" : "p-4"} cursor-pointer`}
+  onClick={(e) => {
           e.stopPropagation()
-          onToggle()
+
+          if (!isMax) {
+            onToggle()
+          }
+
         }}
       >
 
-        {/* ================= MIN MODE ================= */}
+        {/* ================= MIN MODE (FINAL — UNTOUCHED) ================= */}
         {isMin && signal ? (
-          <div className="flex w-full items-center justify-between">
+          <div className="flex items-center justify-between">
 
-            <div className="flex flex-col justify-center">
-              <div className="font-semibold text-base">{pair}</div>
-              <div className="text-neutral-400 text-xs">
+            <div className="flex flex-col">
+              <div className="font-semibold text-sm">{pair}</div>
+              <div className="text-neutral-400 text-[11px]">
                 {signal?.lots ?? "-"} LOTS
               </div>
             </div>
 
             <div className="flex-1 flex justify-center px-4">
-              <div className="w-full max-w-[340px]">
+              <div className="w-full max-w-[320px]">
                 <InlineTradeStrip
                   signal={signal}
                   direction={liveDir}
@@ -92,20 +115,19 @@ const expanded = !!open
               </div>
             </div>
 
-            <div className="flex flex-col items-end justify-center">
-              <div className={`font-bold text-base ${
-                liveDir === "BUY"
+            <div className="flex flex-col items-end">
+              <div className={`font-bold text-sm ${liveDir === "BUY"
                   ? "text-green-400"
                   : liveDir === "SELL"
                     ? "text-red-400"
                     : liveDir === "HEDGED"
                       ? "text-sky-400"
                       : "text-neutral-500"
-              }`}>
+                }`}>
                 {liveDir}
               </div>
 
-              <div className="text-xs font-semibold">
+              <div className="text-[11px] font-semibold">
                 <span className="text-green-400">{signal?.buys ?? 0}B</span>
                 <span className="text-neutral-500 px-1">/</span>
                 <span className="text-red-400">{signal?.sells ?? 0}S</span>
@@ -122,18 +144,31 @@ const expanded = !!open
             <div className="flex justify-between items-center">
               <div className="font-semibold">{pair}</div>
 
-              <div className={`font-bold ${
-                liveDir === "BUY"
+              <div className={`font-bold ${liveDir === "BUY"
                   ? "text-green-400"
                   : liveDir === "SELL"
                     ? "text-red-400"
                     : liveDir === "HEDGED"
                       ? "text-sky-400"
                       : "text-neutral-500"
-              }`}>
+                }`}>
                 {liveDir}
               </div>
             </div>
+
+            {signal && (
+              <div className="flex justify-between items-center text-[11px] mt-1">
+                <div className="text-neutral-400 font-semibold tracking-widest">
+                  {(signal?.lots ?? "--")} LOTS
+                </div>
+
+                <div className="font-semibold tracking-wide">
+                  <span className="text-green-400">{signal?.buys ?? 0}B</span>
+                  <span className="text-neutral-500 px-1">/</span>
+                  <span className="text-red-400">{signal?.sells ?? 0}S</span>
+                </div>
+              </div>
+            )}
 
             {liveDir !== "EXIT" &&
               (liveDir === "HEDGED" || (signal?.entry && signal?.sl && signal?.tp)) && (
@@ -146,7 +181,7 @@ const expanded = !!open
       </div>
 
       {/* ================= EXPANDED CONTENT ================= */}
-      {expanded && (
+      {!isMin && expanded && (
         <div className="border-t border-neutral-800">
 
           {/* TABS */}
