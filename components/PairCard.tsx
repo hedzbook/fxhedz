@@ -62,7 +62,7 @@ useEffect(() => {
     border border-neutral-800 rounded-xl
     overflow-hidden
 ${expanded 
-  ? "h-[calc(100vh-72px)]" 
+  ? "h-[calc(100dvh-72px)]" 
   : "h-[calc((100dvh-72px-64px)/9)]"}
     ${liveDir === "EXIT"
       ? "bg-gradient-to-b from-neutral-900 to-neutral-950 border-neutral-800/60"
