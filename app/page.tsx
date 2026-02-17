@@ -146,7 +146,7 @@ export default function Page() {
   return (
     <main className="min-h-[100dvh] text-white bg-black flex flex-col">
       {/* TOP STRIP */}
-      <div className="h-9 shrink-0">
+      <div className="h-9 shrink-0 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
         <AccountStrip
           pairs={pairsData}
           onStateChange={(state: string) => {
