@@ -55,7 +55,7 @@ export default function AccountStrip({
     }, [netState, intensity, pulse])
 
 return (
-  <div className="bg-gradient-to-b from-neutral-900 to-neutral-950 border-b border-neutral-800 shadow-[0_10px_24px_rgba(0,0,0,0.6)] backdrop-blur">
+<div className="bg-neutral-900 border-b border-neutral-800 flex items-center h-full">
 
     <div className="h-full px-5 flex items-center text-sm">
 
