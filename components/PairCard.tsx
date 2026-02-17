@@ -376,15 +376,15 @@ function InlineTradeStrip({ signal, direction }: any) {
     <div className="flex flex-col w-full gap-[1px]">
 
       {/* BAR */}
-      <div className="relative w-full h-[2px]">
+      <div className="relative w-full h-[0.4vh]">
 
         <div className="absolute inset-0 bg-neutral-800 rounded-full" />
 
         {/* left half */}
-        <div className="absolute left-0 h-[2px] w-1/2 bg-red-500/70" />
+        <div className="absolute left-0 h-[0.4vh] w-1/2 bg-red-500/70" />
 
         {/* right half */}
-        <div className="absolute right-0 h-[2px] w-1/2 bg-green-500/70" />
+        <div className="absolute right-0 h-[0.4vh] w-1/2 bg-green-500/70" />
 
         {/* SL dot */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-neutral-500 bg-black" />
@@ -500,7 +500,7 @@ function TradeBar({
       <div className="relative h-6 flex items-center overflow-visible">
 
         <div
-          className="absolute h-[2px]"
+          className="absolute h-[0.4vh]"
           style={{
             width: `${entryPercent}%`,
             background:
@@ -509,7 +509,7 @@ function TradeBar({
         />
 
         <div
-          className="absolute h-[2px]"
+          className="absolute h-[0.4vh]"
           style={{
             left: `${entryPercent}%`,
             width: `${100 - entryPercent}%`,
