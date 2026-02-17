@@ -135,7 +135,7 @@ useEffect(() => {
             <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
           </div>
 
-          <div className="p-4 space-y-4 overflow-y-auto flex-1">
+          <div className="p-3 space-y-3 flex flex-col h-full">
 
             {/* ================= MARKET ================= */}
             {tab === "market" && (
