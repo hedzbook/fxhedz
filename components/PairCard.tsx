@@ -91,7 +91,7 @@ function PairCard({
       </div>
 
       {/* ROW 2 — LOTS + B/S COUNT */}
-      <div className="flex justify-between items-center text-xs">
+      <div className="flex justify-between items-center text-[11px] leading-none">
         <div className="text-neutral-400">
           {signal?.lots ?? "-"} LOTS
         </div>
