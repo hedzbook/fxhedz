@@ -69,7 +69,7 @@ useEffect(() => {
 >
 
 {/* ================= HEADER ================= */}
-<div className="h-[92px] px-4 py-1 flex flex-col justify-center cursor-pointer"
+<div className="h-[78px] px-4 py-[6px] flex flex-col justify-between cursor-pointer">
   onClick={(e) => {
     e.stopPropagation()
     onToggle()
