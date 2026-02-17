@@ -69,7 +69,7 @@ function PairCard({
 >
 
   {signal && (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-1 w-full">
 
       {/* ROW 1 — PAIR + DIRECTION */}
       <div className="flex justify-between items-center">
