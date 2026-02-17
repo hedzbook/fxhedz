@@ -94,7 +94,7 @@ ${expanded
           {pair}
         </div>
 
-        <div className={`font-bold text-[14px] ${
+        <div className={`font-bold text-[clamp(11px,3vw,14px)] ${
           liveDir === "BUY"
             ? "text-green-400"
             : liveDir === "SELL"
