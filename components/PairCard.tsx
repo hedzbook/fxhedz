@@ -91,11 +91,11 @@ ${expanded
 
       {/* ROW 1 — PAIR + DIRECTION */}
       <div className="flex justify-between items-center">
-        <div className="font-semibold text-[clamp(11px,3vw,14px)] leading-none">
+        <div className="font-semibold text-[clamp(10px,1.8vh,20px)] leading-none">
           {pair}
         </div>
 
-        <div className={`font-bold text-[clamp(11px,3vw,14px)] ${
+        <div className={`font-bold text-[clamp(10px,1.8vh,20px)] ${
           liveDir === "BUY"
             ? "text-green-400"
             : liveDir === "SELL"
