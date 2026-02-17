@@ -73,12 +73,13 @@ ${expanded
 
 {/* ================= HEADER ================== */}
 <div
-  className={`
-    ${viewMode === "MIN" ? "h-[48px]" : "h-[72px]"}
-    px-3 py-[4px]
-    flex flex-col justify-between
+  className="
+    h-full
+    flex flex-col
+    justify-center
+    px-3
     cursor-pointer
-  `}
+  "
   onClick={(e) => {
     e.stopPropagation()
     onToggle()
