@@ -64,6 +64,7 @@ useEffect(() => {
 ${expanded 
   ? "h-full" 
   : "h-[calc(100%/9)]"}
+
     ${liveDir === "EXIT"
       ? "bg-gradient-to-b from-neutral-900 to-neutral-950 border-neutral-800/60"
       : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
