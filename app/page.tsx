@@ -147,7 +147,7 @@ return (
   <main className="h-[100dvh] bg-black text-white relative overflow-hidden">
 
     {/* TOP BAR */}
-    <div className="fixed top-0 left-0 right-0 h-9 z-50 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
+    <div className="fixed top-0 left-0 right-0 h-8 z-50 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
       <AccountStrip
         pairs={pairsData}
         onStateChange={(state: string) => {
