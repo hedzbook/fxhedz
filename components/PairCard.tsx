@@ -390,7 +390,7 @@ function InlineTradeStrip({ signal, direction }: any) {
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[1vh] h-[1vh] rounded-full border border-neutral-500 bg-black" />
 
 {/* ENTRY dot */}
-<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3px] h-[3px] rounded-full bg-neutral-400" />
+<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[0.5vh] h-[0.5vh] rounded-full bg-neutral-400" />
 
         {/* TP dot */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[1vh] h-[1vh] rounded-full border border-neutral-500 bg-black" />
