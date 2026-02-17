@@ -157,7 +157,7 @@ return (
     </div>
 
     {/* SCROLLABLE CONTENT */}
-    <div className="absolute inset-0 pt-[36px] pb-[36px] overflow-y-auto px-4 space-y-2">
+    <div className="absolute inset-0 pt-[32px] pb-[36px] overflow-y-auto px-3 space-y-1">
 
       {loading
         ? PAIRS.map((pair) => (
