@@ -203,7 +203,7 @@ export default function Page() {
               <div className="h-[2px] w-2 bg-neutral-400" />
               <div className="h-[2px] w-2 bg-neutral-400" />
             </div>
-            <div className="text-[15px] font-semibold tracking-wide leading-none">
+            <div className="text-[14px] font-semibold tracking-wide leading-none">
               FXHEDZ
             </div>
           </div>
