@@ -108,8 +108,7 @@ ${expanded
       </div>
 
       {/* ROW 2 — LOTS + B/S COUNT */}
-      <div className="flex justify-between items-center text-[clamp(8px,2.2vw,10px)]
- leading-none">
+      <div className="flex justify-between items-center text-[clamp(8px,2.2vw,10px)] leading-none">
         <div className="text-neutral-400">
           {signal?.lots ?? "-"} LOTS
         </div>
