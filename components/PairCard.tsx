@@ -90,7 +90,7 @@ ${expanded
 
       {/* ROW 1 — PAIR + DIRECTION */}
       <div className="flex justify-between items-center">
-        <div className="font-semibold text-[14px] leading-none">
+        <div className="font-semibold text-[clamp(11px,3vw,14px)] leading-none">
           {pair}
         </div>
 
