@@ -154,11 +154,7 @@ export default function Page() {
       </div>
 
       {/* CONTENT */}
-      <div
-  className="flex-1 px-4 py-2 space-y-2"
-  style={{ overflowY: viewMode === "MAX" || openPair ? "hidden" : "auto" }}
->
-
+      <div className="flex-1 px-4 py-2 overflow-y-auto space-y-2">
         {loading
           ? PAIRS.map((pair) => (
             <div key={pair} className="h-[72px]">
