@@ -44,6 +44,14 @@ function PairCard({
   useEffect(() => setLiveDir(dir), [dir])
   useEffect(() => setLiveOrders(orders ?? []), [orders])
   useEffect(() => { if (expanded) setTab("market") }, [expanded])
+useEffect(() => {
+  const newCache: Record<string, number> = {}
+  liveOrders.forEach(o => {
+    const key = o.id || `${o.direction}_${o.entry}_${o.time}`
+    newCache[key] = Number(o.profit ?? 0)
+  })
+  setPnlCache(newCache)
+}, [liveOrders])
 
   return (
 <div
