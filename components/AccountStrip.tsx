@@ -55,33 +55,24 @@ export default function AccountStrip({
     }, [netState, intensity, pulse])
 
 return (
-<div className="bg-neutral-900 border-b border-neutral-800 flex items-center h-full">
+  <div className="h-full bg-neutral-900 border-b border-neutral-800 flex items-center px-4">
 
-    <div className="h-full px-5 flex items-center text-sm">
-
-      <div className="flex-1 flex items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-neutral-400">LOTS</span>
-          <span className="font-semibold">{totalLots.toFixed(2)}</span>
-        </div>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <span className="text-neutral-400">~PnL</span>
-          <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
-            {totalFloating.toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex-1 flex items-center justify-end">
-        <div className="font-semibold text-sky-400">
-          {netState}
-        </div>
-      </div>
-
+    <div className="flex-1 text-left text-sm">
+      <span className="text-neutral-400">LOTS </span>
+      <span className="font-semibold">{totalLots.toFixed(2)}</span>
     </div>
+
+    <div className="flex-1 text-center text-sm">
+      <span className="text-neutral-400">~PnL </span>
+      <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
+        {totalFloating.toFixed(2)}
+      </span>
+    </div>
+
+    <div className="flex-1 text-right text-sm font-semibold text-sky-400">
+      {netState}
+    </div>
+
   </div>
 )
 
