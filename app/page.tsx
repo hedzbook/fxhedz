@@ -154,7 +154,7 @@ export default function Page() {
       </div>
 
       {/* CONTENT */}
-      <div className="flex-1 px-4 py-2 flex flex-col gap-2 overflow-y-auto">
+      <div className="flex-1 px-4 py-2 overflow-y-auto space-y-2">
         {loading
           ? PAIRS.map((pair) => (
             <div key={pair} className="flex-1 min-h-0">
@@ -203,14 +203,15 @@ export default function Page() {
 
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <button
-              onClick={() => {
-                if (viewMode === "MIN") {
-                  setViewMode("MAX")
-                } else {
-                  setViewMode("MIN")
-                  setOpenPair(null)
-                }
-              }}
+onClick={() => {
+  if (viewMode === "MIN") {
+    setViewMode("MAX")
+    setOpenPair(null)
+  } else {
+    setViewMode("MIN")
+    setOpenPair(null)
+  }
+}}
               className={`pointer-events-auto w-12 h-6 rounded-full transition-all duration-300 relative
                 ${viewMode === "MIN" ? "bg-neutral-700" : "bg-neutral-500"}`}
             >

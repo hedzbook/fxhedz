@@ -48,8 +48,11 @@ function PairCard({
   return (
 <div
   className={`
-    flex flex-col
-    border border-neutral-800 rounded-xl overflow-hidden
+    relative
+    transition-all duration-300
+    border border-neutral-800 rounded-xl
+    overflow-hidden
+    ${expanded ? "h-[85vh]" : "h-[72px]"}
     ${liveDir === "EXIT"
       ? "bg-gradient-to-b from-neutral-900 to-neutral-950 border-neutral-800/60"
       : "bg-[linear-gradient(180deg,rgba(20,20,20,0.9),rgba(0,0,0,0.95))]"
@@ -59,7 +62,7 @@ function PairCard({
 
 {/* ================= HEADER ================= */}
 <div
-  className="flex-1 px-4 flex items-center cursor-pointer"
+  className="h-[72px] px-4 flex items-center cursor-pointer"
   onClick={(e) => {
     e.stopPropagation()
     onToggle()
@@ -114,7 +117,7 @@ function PairCard({
 
       {/* ================= EXPANDED CONTENT ================= */}
       {expanded && (
-        <div className="border-t border-neutral-800">
+        <div className="border-t border-neutral-800 h-[calc(85vh-72px)] flex flex-col">
 
           {/* TABS */}
           <div className="flex w-full border-b border-neutral-800 text-sm">
