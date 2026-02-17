@@ -410,7 +410,6 @@ function InlineTradeStrip({ signal, direction }: any) {
     </div>
   )
 }
-
 /* ======================================================
    TRADE BAR (MID / MAX MODE)
 ====================================================== */
