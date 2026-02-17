@@ -57,7 +57,7 @@ export default function AccountStrip({
 return (
   <div className="h-full bg-neutral-900 border-b border-neutral-800 flex items-center px-4">
 
-    <div className="flex-1 text-left text-sm">
+    <div className="flex-1 text-left text-[clamp(10px,2.5vw,13px)]">
       <span className="text-neutral-400">LOTS </span>
       <span className="font-semibold">{totalLots.toFixed(2)}</span>
     </div>
