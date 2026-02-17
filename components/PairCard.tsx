@@ -73,7 +73,7 @@ function PairCard({
 
       {/* ROW 1 — PAIR + DIRECTION */}
       <div className="flex justify-between items-center">
-        <div className="font-semibold text-base">
+        <div className="font-semibold text-[15px] leading-none">
           {pair}
         </div>
 
