@@ -126,7 +126,7 @@ useEffect(() => {
   )}
 </div>
 
-      {/* ================= EXPANDED CONTENT ================= */}
+      {/* ================= EXPANDED CONTENT ================ */}
       {expanded && (
         <div className="border-t border-neutral-800 flex flex-col flex-1 min-h-0 overflow-y-auto">
 
