@@ -7,7 +7,6 @@ import VerticalSymbolButton from "@/components/VerticalSymbolButton"
 import PairDetail from "@/components/PairDetail"
 import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
-import PublicLanding from "@/components/PublicLanding"
 
 const PAIRS = [
   "XAUUSD",
@@ -37,30 +36,31 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { data: session, status } = useSession()
   const [subActive, setSubActive] = useState<boolean | null>(null)
+  const isAuthorized = session && subActive === true
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (!session || !subActive) return
+    if (!session || subActive !== true) return
 
-  async function loadSignals() {
-    try {
-      const res = await fetch(SIGNAL_API)
-      const json = await res.json()
-      const incoming = json?.signals ? json.signals : json
-      setLoading(false)
+    async function loadSignals() {
+      try {
+        const res = await fetch(SIGNAL_API)
+        const json = await res.json()
+        const incoming = json?.signals ? json.signals : json
+        setLoading(false)
 
-      setSignals((prev: any) => {
-        if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
-        return incoming
-      })
-    } catch { }
-  }
+        setSignals((prev: any) => {
+          if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
+          return incoming
+        })
+      } catch { }
+    }
 
-  loadSignals()
-  const interval = setInterval(loadSignals, 2500)
-  return () => clearInterval(interval)
+    loadSignals()
+    const interval = setInterval(loadSignals, 2500)
+    return () => clearInterval(interval)
 
-}, [session, subActive])
+  }, [session, subActive])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -139,179 +139,215 @@ useEffect(() => {
     })
   }, [uiSignals, pairData])
 
-  if (status === "loading") return null
-  if (!session) {
-  return <PublicLanding />
-}
+  if (status === "loading") {
+    return (
+      <main className="h-screen bg-black flex items-center justify-center text-neutral-500">
+        Loading...
+      </main>
+    )
+  }
 
-  if (subActive === null) return null
-
-if (!subActive) {
-  return (
-    <main className="h-screen bg-black flex items-center justify-center text-white">
-      <div className="text-center space-y-4">
-        <div className="text-xl font-bold">
-          Subscription Required
-        </div>
-        <div className="text-neutral-400">
-          Your free trial has expired.
-        </div>
-      </div>
-    </main>
-  )
-}
+  if (session && subActive === null) {
+    return (
+      <main className="h-screen bg-black flex items-center justify-center text-neutral-500">
+        Verifying subscription...
+      </main>
+    )
+  }
 
   return (
-    <main
-      className="h-[100dvh] bg-black text-white flex flex-col"
-      style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+    <div className="relative">
 
-    >
-
-      {/* TOP BAR */}
-      <div
-        className="shrink-0 grid border-b border-neutral-800"
-        style={{
-          gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-          height: "clamp(26px,3vh,40px)"
-        }}
+      <main
+        className={`h-[100dvh] bg-black text-white flex flex-col transition-all duration-300 ${!isAuthorized ? "blur-sm pointer-events-none select-none" : ""
+          }`}
+        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
       >
 
-        {/* TOP LEFT BUTTON */}
-        <button
-          className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
-        >
-        </button>
-
-        {/* ACCOUNT STRIP */}
-        <AccountStrip
-          pairs={pairsData}
-          onStateChange={(state: string) => {
-            setNetState(state)
+        {/* TOP BAR */}
+        <div
+          className="shrink-0 grid border-b border-neutral-800"
+          style={{
+            gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+            height: "clamp(26px,3vh,40px)"
           }}
-        />
+        >
 
-      </div>
-
-      {/* SCROLL AREA */}
-      <div className="flex-1 overflow-hidden relative">
-
-        {openPair ? (
-
-          <div
-            className="absolute inset-0 grid"
-            style={{
-              gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-              gridTemplateRows: "1fr"
-            }}
+          {/* TOP LEFT BUTTON */}
+          <button
+            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
           >
+          </button>
 
-            {/* LEFT RAIL */}
-            <div className="grid"
+          {/* ACCOUNT STRIP */}
+          <AccountStrip
+            pairs={pairsData}
+            onStateChange={(state: string) => {
+              setNetState(state)
+            }}
+          />
+
+        </div>
+
+        {/* SCROLL AREA */}
+        <div className="flex-1 overflow-hidden relative">
+
+          {openPair ? (
+
+            <div
+              className="absolute inset-0 grid"
               style={{
-                gridTemplateRows: "repeat(9, 1fr)"
+                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                gridTemplateRows: "1fr"
               }}
             >
-              {PAIRS.map((pair) => (
-                <VerticalSymbolButton
-                  key={pair}
-                  pair={pair}
-                  active={openPair === pair}
-                  onClick={() => setOpenPair(pair)}
-                />
-              ))}
-            </div>
 
-            {/* RIGHT DETAIL */}
-            <PairDetail
-              pair={openPair}
-              data={pairData?.[openPair]}
-              signal={uiSignals?.[openPair]}
-              onClose={() => setOpenPair(null)}
-            />
-
-          </div>
-
-        ) : (
-
-          <div
-            className="h-full grid"
-            style={{
-              gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-              gridTemplateRows: "repeat(9, 1fr)",
-              rowGap: "0px"
-            }}
-          >
-            {PAIRS.map((pair) => {
-              const signal = uiSignals?.[pair]
-
-              return (
-                <React.Fragment key={pair}>
+              {/* LEFT RAIL */}
+              <div className="grid"
+                style={{
+                  gridTemplateRows: "repeat(9, 1fr)"
+                }}
+              >
+                {PAIRS.map((pair) => (
                   <VerticalSymbolButton
+                    key={pair}
                     pair={pair}
-                    active={false}
+                    active={openPair === pair}
                     onClick={() => setOpenPair(pair)}
                   />
+                ))}
+              </div>
 
-                  <PairCard
-                    pair={pair}
-                    direction={signal?.direction}
-                    signal={signal}
-                    onToggle={() => setOpenPair(pair)}
-                  />
-                </React.Fragment>
-              )
-            })}
-          </div>
+              {/* RIGHT DETAIL */}
+              <PairDetail
+                pair={openPair}
+                data={pairData?.[openPair]}
+                signal={uiSignals?.[openPair]}
+                onClose={() => setOpenPair(null)}
+              />
 
-        )}
-
-      </div>
-
-      {/* BOTTOM BAR */}
-      <div
-        className="shrink-0 grid border-t border-neutral-800 relative"
-        style={{
-          gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-          height: "clamp(26px,3vh,40px)"
-        }}
-      >
-        {menuOpen && (
-          <div className="absolute bottom-[clamp(26px,3vh,40px)] left-0 w-[260px] bg-neutral-900 border border-neutral-800 p-4 z-50">
-            <AuthButton />
-          </div>
-        )}
-
-        {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
-        <button
-          onClick={() => setMenuOpen(prev => !prev)}
-          className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
-        >
-          <div className="w-[60%] flex flex-col gap-[2px]">
-            <div className="h-[2px] w-full bg-neutral-400" />
-            <div className="h-[2px] w-full bg-neutral-400" />
-            <div className="h-[2px] w-full bg-neutral-400" />
-          </div>
-        </button>
-
-        {/* RIGHT SIDE CONTENT */}
-        <div className="bg-neutral-900 flex items-center px-2">
-          <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
-            FXHEDZ
-          </div>
-
-          <div className="ml-auto text-right flex flex-col items-end">
-            <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
-              ZEROLOSS COMPOUNDED
             </div>
-            <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
-              HEDGING SYSTEM
+
+          ) : (
+
+            <div
+              className="h-full grid"
+              style={{
+                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                gridTemplateRows: "repeat(9, 1fr)",
+                rowGap: "0px"
+              }}
+            >
+              {PAIRS.map((pair) => {
+                const signal = uiSignals?.[pair]
+
+                return (
+                  <React.Fragment key={pair}>
+                    <VerticalSymbolButton
+                      pair={pair}
+                      active={false}
+                      onClick={() => setOpenPair(pair)}
+                    />
+
+                    <PairCard
+                      pair={pair}
+                      direction={signal?.direction}
+                      signal={signal}
+                      onToggle={() => setOpenPair(pair)}
+                    />
+                  </React.Fragment>
+                )
+              })}
             </div>
-          </div>
+
+          )}
+
         </div>
 
-      </div>
+        {/* BOTTOM BAR */}
+        <div
+          className="shrink-0 grid border-t border-neutral-800 relative"
+          style={{
+            gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+            height: "clamp(26px,3vh,40px)"
+          }}
+        >
+          {menuOpen && (
+            <div className="absolute bottom-[clamp(26px,3vh,40px)] left-0 w-[260px] bg-neutral-900 border border-neutral-800 p-4 z-50">
+              <AuthButton />
+            </div>
+          )}
 
-    </main>
+          {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
+          <button
+            onClick={() => setMenuOpen(prev => !prev)}
+            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
+          >
+            <div className="w-[60%] flex flex-col gap-[2px]">
+              <div className="h-[2px] w-full bg-neutral-400" />
+              <div className="h-[2px] w-full bg-neutral-400" />
+              <div className="h-[2px] w-full bg-neutral-400" />
+            </div>
+          </button>
+
+          {/* RIGHT SIDE CONTENT */}
+          <div className="bg-neutral-900 flex items-center px-2">
+            <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
+              FXHEDZ
+            </div>
+
+            <div className="ml-auto text-right flex flex-col items-end">
+              <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
+                ZEROLOSS COMPOUNDED
+              </div>
+              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
+                HEDGING SYSTEM
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+      {!isAuthorized && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md z-50">
+          <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-xl text-center space-y-4 max-w-sm">
+
+            <div className="text-xl font-bold">
+              FXHEDZ LIVE
+            </div>
+
+{!session ? (
+  <>
+    <div className="text-neutral-400 text-sm">
+      Login to access institutional signal intelligence.
+    </div>
+    <AuthButton />
+  </>
+) : subActive === false ? (
+  <>
+    <div className="text-neutral-400 text-sm">
+      Your subscription has expired.
+    </div>
+    <a
+      href="https://t.me/yourbot"
+      className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-sm rounded-md"
+    >
+      Renew Subscription
+    </a>
+  </>
+) : null}
+
+            <div className="text-xs text-neutral-500">
+              9 Instruments · Live Orders · Full History
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
   )
 }
+

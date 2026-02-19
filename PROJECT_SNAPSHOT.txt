@@ -6,6 +6,7 @@ PROJECT STRUCTURE
 .env.local
 .gitignore
 app\api\auth\[...nextauth]\route.ts
+app\api\public-preview\route.ts
 app\api\signals\route.ts
 app\api\subscription\route.ts
 app\globals.css
@@ -18,6 +19,7 @@ components\GlobalLightChart.tsx
 components\PairCard.tsx
 components\PairDetail.tsx
 components\Providers.tsx
+components\PublicLanding.tsx
 components\VerticalSymbolButton.tsx
 eslint.config.mjs
 GAS.txt
@@ -90,6 +92,44 @@ export const authOptions: NextAuthOptions = {
 const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
+
+
+
+// app\api\public-preview\route.ts
+// --------------------------------------------------
+
+import { NextResponse } from "next/server"
+
+const GAS_BASE =
+  "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec"
+
+export async function GET() {
+  try {
+    const res = await fetch(
+      `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=XAUUSD`,
+      {
+        next: { revalidate: 10 }
+      }
+    )
+
+    const json = await res.json()
+
+    return NextResponse.json({
+      direction: json?.direction,
+      price: json?.price,
+      entry: json?.entry,
+      sl: json?.sl,
+      tp: json?.tp,
+      candles: json?.candles?.slice(-40) || []
+    })
+
+  } catch {
+    return NextResponse.json(
+      { error: "Preview unavailable" },
+      { status: 500 }
+    )
+  }
+}
 
 
 
@@ -248,6 +288,7 @@ import VerticalSymbolButton from "@/components/VerticalSymbolButton"
 import PairDetail from "@/components/PairDetail"
 import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
+import PublicLanding from "@/components/PublicLanding"
 
 const PAIRS = [
   "XAUUSD",
@@ -278,29 +319,29 @@ export default function Page() {
   const { data: session, status } = useSession()
   const [subActive, setSubActive] = useState<boolean | null>(null)
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (!session || !subActive) return
+    if (!session || subActive !== true) return
 
-  async function loadSignals() {
-    try {
-      const res = await fetch(SIGNAL_API)
-      const json = await res.json()
-      const incoming = json?.signals ? json.signals : json
-      setLoading(false)
+    async function loadSignals() {
+      try {
+        const res = await fetch(SIGNAL_API)
+        const json = await res.json()
+        const incoming = json?.signals ? json.signals : json
+        setLoading(false)
 
-      setSignals((prev: any) => {
-        if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
-        return incoming
-      })
-    } catch { }
-  }
+        setSignals((prev: any) => {
+          if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
+          return incoming
+        })
+      } catch { }
+    }
 
-  loadSignals()
-  const interval = setInterval(loadSignals, 2500)
-  return () => clearInterval(interval)
+    loadSignals()
+    const interval = setInterval(loadSignals, 2500)
+    return () => clearInterval(interval)
 
-}, [session, subActive])
+  }, [session, subActive])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -379,32 +420,34 @@ useEffect(() => {
     })
   }, [uiSignals, pairData])
 
-  if (status === "loading") return null
-
-  if (!session) {
+  if (status === "loading") {
     return (
-      <main className="h-screen bg-black flex items-center justify-center text-white">
-        <AuthButton />
+      <main className="h-screen bg-black flex items-center justify-center text-neutral-500">
+        Loading...
       </main>
     )
   }
 
+  if (!session) {
+    return <PublicLanding />
+  }
+
   if (subActive === null) return null
 
-if (!subActive) {
-  return (
-    <main className="h-screen bg-black flex items-center justify-center text-white">
-      <div className="text-center space-y-4">
-        <div className="text-xl font-bold">
-          Subscription Required
+  if (!subActive) {
+    return (
+      <main className="h-screen bg-black flex items-center justify-center text-white">
+        <div className="text-center space-y-4">
+          <div className="text-xl font-bold">
+            Subscription Required
+          </div>
+          <div className="text-neutral-400">
+            Your free trial has expired.
+          </div>
         </div>
-        <div className="text-neutral-400">
-          Your free trial has expired.
-        </div>
-      </div>
-    </main>
-  )
-}
+      </main>
+    )
+  }
 
   return (
     <main
@@ -1923,6 +1966,87 @@ export default function Providers({
     <SessionProvider>
       {children}
     </SessionProvider>
+  )
+}
+
+
+
+// components\PublicLanding.tsx
+// --------------------------------------------------
+
+"use client"
+
+import { useEffect, useState } from "react"
+import AuthButton from "./AuthButton"
+
+export default function PublicLanding() {
+
+  const [preview, setPreview] = useState<any>(null)
+
+  useEffect(() => {
+    async function loadPreview() {
+      try {
+        const res = await fetch("/api/public-preview")
+        const json = await res.json()
+        setPreview(json)
+      } catch {}
+    }
+
+    loadPreview()
+  }, [])
+
+  return (
+    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
+
+      {/* HERO */}
+      <div className="text-center max-w-2xl space-y-6">
+
+        <h1 className="text-4xl font-bold tracking-tight">
+          Institutional-Grade Forex Signal Engine
+        </h1>
+
+        <p className="text-neutral-400">
+          Live MT5 execution Â· Hedged logic Â· Real-time candle stream
+        </p>
+
+        <div className="flex justify-center pt-4">
+          <AuthButton />
+        </div>
+
+      </div>
+
+      {/* LIVE PREVIEW */}
+      {preview && (
+        <div className="mt-16 w-full max-w-xl bg-neutral-900 border border-neutral-800 p-6 rounded-lg">
+
+          <div className="flex justify-between items-center mb-4">
+            <div className="font-semibold text-lg">
+              XAUUSD
+            </div>
+            <div className={`font-bold ${
+              preview.direction === "BUY"
+                ? "text-green-400"
+                : preview.direction === "SELL"
+                  ? "text-red-400"
+                  : "text-neutral-400"
+            }`}>
+              {preview.direction || "--"}
+            </div>
+          </div>
+
+          <div className="text-neutral-400 text-sm">
+            Entry {preview.entry || "--"} Â· SL {preview.sl || "--"} Â· TP {preview.tp || "--"}
+          </div>
+
+        </div>
+      )}
+
+      {/* LOCKED SECTION */}
+      <div className="mt-12 text-center text-neutral-500">
+        Unlock 9 Instruments Â· Full History Â· Live Orders
+      </div>
+
+    </main>
   )
 }
 
