@@ -220,6 +220,7 @@ import { NextRequest, NextResponse } from "next/server"
 export async function GET(req: NextRequest) {
 
   const deviceId = req.cookies.get("fx_device")?.value
+  const fingerprint = req.nextUrl.searchParams.get("fingerprint") || ""
 
   if (!deviceId) {
     return NextResponse.json({ active: false })
@@ -228,7 +229,7 @@ export async function GET(req: NextRequest) {
   try {
 
     const res = await fetch(
-      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`,
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`,
       { cache: "no-store" }
     )
 
@@ -362,28 +363,42 @@ useEffect(() => {
   // =============================
 useEffect(() => {
   async function init() {
-let id = localStorage.getItem("fxhedz_device_id")
 
-if (!id) {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    id = crypto.randomUUID()
-  } else {
-    id = Date.now().toString() + Math.random().toString(36).substring(2)
-  }
+  let id = localStorage.getItem("fxhedz_device_id")
 
-  localStorage.setItem("fxhedz_device_id", id)
-}
-
-    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-
-    try {
-      const res = await fetch("/api/subscription")
-      const data = await res.json()
-      setSubActive(data.active)
-    } catch {
-      setSubActive(false)
+  if (!id) {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      id = crypto.randomUUID()
+    } else {
+      id = Date.now().toString() + Math.random().toString(36).substring(2)
     }
+
+    localStorage.setItem("fxhedz_device_id", id)
   }
+
+  // ===== FINGERPRINT =====
+  const fingerprint = btoa(
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    Intl.DateTimeFormat().resolvedOptions().timeZone +
+    navigator.platform +
+    navigator.language
+  )
+
+  // store device id cookie
+  document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+
+  try {
+    const res = await fetch(
+      `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`
+    )
+    const data = await res.json()
+    setSubActive(data.active)
+  } catch {
+    setSubActive(false)
+  }
+}
 
   init()
 }, [])
