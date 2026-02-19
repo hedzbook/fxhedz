@@ -28,7 +28,7 @@ export default function Page() {
 
   const [signals, setSignals] = useState<any>({})
   const [pairData, setPairData] = useState<any>({})
-  const [openPair, setOpenPair] = useState<string | null>(null)  // Track only one expanded pair
+  const [openPair, setOpenPair] = useState<string | null>(null)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
@@ -36,11 +36,21 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { data: session, status } = useSession()
   const [subActive, setSubActive] = useState<boolean | null>(null)
-  const isAuthorized = session && subActive === true
 
+  // ✅ ADD DEVICE INITIALIZER HERE
   useEffect(() => {
+    let id = localStorage.getItem("fxhedz_device_id")
 
-    if (!session || subActive !== true) return
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem("fxhedz_device_id", id)
+    }
+
+    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+  }, [])
+
+useEffect(() => {
+  if (subActive !== true) return
 
     async function loadSignals() {
       try {
@@ -60,28 +70,42 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [session, subActive])
+  }, [subActive])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-  useEffect(() => {
+useEffect(() => {
 
-    if (!session) return
-
-    async function checkSubscription() {
-      try {
-        const res = await fetch("/api/subscription")
-        const data = await res.json()
-        setSubActive(data.active)
-      } catch {
-        setSubActive(false)
-      }
+  async function checkAccess() {
+    try {
+      const res = await fetch("/api/subscription")
+      const data = await res.json()
+      setSubActive(data.active)
+    } catch {
+      setSubActive(false)
     }
+  }
 
-    checkSubscription()
+  checkAccess()
 
-  }, [session])
+}, [])
+
+useEffect(() => {
+
+  async function checkAccess() {
+    try {
+      const res = await fetch("/api/subscription")
+      const data = await res.json()
+      setSubActive(data.active)
+    } catch {
+      setSubActive(false)
+    }
+  }
+
+  checkAccess()
+
+}, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -139,20 +163,11 @@ export default function Page() {
     })
   }, [uiSignals, pairData])
 
-  if (status === "loading") {
-    return (
-      <main className="h-screen bg-black flex items-center justify-center text-neutral-500">
-        Loading...
-      </main>
-    )
-  }
-
   return (
     <div className="relative">
 
       <main
-        className={`h-[100dvh] bg-black text-white flex flex-col transition-all duration-300 ${!isAuthorized ? "blur-[2px] opacity-80 pointer-events-none select-none" : ""
-          }`}
+        className={`h-[100dvh] bg-black text-white flex flex-col`}
         style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
       >
 
@@ -301,55 +316,6 @@ export default function Page() {
         </div>
 
       </main>
-
-{!isAuthorized && (
-  <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-50">
-    <div className="bg-neutral-900/70 backdrop-blur-xl border border-neutral-700 shadow-2xl p-8 rounded-xl text-center space-y-4 max-w-sm">
-
-      <div className="text-[10px] text-neutral-600 uppercase tracking-widest">
-        LIVE ENGINE RUNNING
-      </div>
-
-      <div className="text-xl font-bold">
-        FXHEDZ LIVE
-      </div>
-
-      {!session && (
-        <>
-          <div className="text-neutral-400 text-sm">
-            Login to access institutional signal intelligence.
-          </div>
-          <AuthButton />
-        </>
-      )}
-
-      {session && subActive === null && (
-        <div className="text-neutral-400 text-sm">
-          Verifying access...
-        </div>
-      )}
-
-      {session && subActive === false && (
-        <>
-          <div className="text-neutral-400 text-sm">
-            Subscription expired.
-          </div>
-          <a
-            href="https://t.me/yourbot"
-            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-sm rounded-md"
-          >
-            Renew Subscription
-          </a>
-        </>
-      )}
-
-      <div className="text-xs text-neutral-500">
-        9 Instruments · Live Orders · Full History
-      </div>
-
-    </div>
-  </div>
-)}
 
     </div>
   )

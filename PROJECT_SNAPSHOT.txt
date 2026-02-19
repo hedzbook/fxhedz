@@ -19,7 +19,6 @@ components\GlobalLightChart.tsx
 components\PairCard.tsx
 components\PairDetail.tsx
 components\Providers.tsx
-components\PublicLanding.tsx
 components\VerticalSymbolButton.tsx
 eslint.config.mjs
 GAS.txt
@@ -146,43 +145,55 @@ const GAS_BASE =
 export async function GET(req: NextRequest) {
 
   // =====================================
-  // ðŸ” AUTH CHECK
+  // 1ï¸âƒ£ DEVICE CHECK (MANDATORY)
+  // =====================================
+  const deviceId = req.cookies.get("fx_device")?.value
+
+  if (!deviceId) {
+    return NextResponse.json({ error: "No device" }, { status: 401 })
+  }
+
+  const accessRes = await fetch(
+    `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`
+  )
+
+  const access = await accessRes.json()
+
+  if (!access?.active) {
+    return NextResponse.json({ error: "Expired" }, { status: 403 })
+  }
+
+  // =====================================
+  // 2ï¸âƒ£ OPTIONAL EMAIL CHECK (IF LOGGED IN)
   // =====================================
   const session = await getServerSession(authOptions)
 
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
+  if (session?.user?.email) {
+
+    const subRes = await fetch(
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
     )
+
+    const subData = await subRes.json()
+
+    if (!subData?.active) {
+      return NextResponse.json(
+        { error: "Subscription required" },
+        { status: 403 }
+      )
+    }
   }
 
   // =====================================
-  // ðŸ” SUBSCRIPTION CHECK
-  // =====================================
-  const subRes = await fetch(
-  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
-)
-
-  const subData = await subRes.json()
-
-  if (!subData?.active) {
-    return NextResponse.json(
-      { error: "Subscription required" },
-      { status: 403 }
-    )
-  }
-
-  // =====================================
-  // NORMAL SIGNAL FLOW
+  // 3ï¸âƒ£ NORMAL SIGNAL FLOW
   // =====================================
   const pair = req.nextUrl.searchParams.get("pair")
 
   try {
 
-const url = pair
-  ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}`
-  : `${GAS_BASE}?secret=${process.env.GAS_SECRET}`
+    const url = pair
+      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}`
+      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}`
 
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
@@ -203,25 +214,31 @@ const url = pair
 // app\api\subscription\route.ts
 // --------------------------------------------------
 
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "../auth/[...nextauth]/route"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
 
-  const session = await getServerSession(authOptions)
+  const deviceId = req.cookies.get("fx_device")?.value
 
-  if (!session?.user?.email) {
+  if (!deviceId) {
     return NextResponse.json({ active: false })
   }
 
-  const res = await fetch(
-  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
-)
+  try {
 
-  const data = await res.json()
+    const res = await fetch(
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`,
+      { cache: "no-store" }
+    )
 
-  return NextResponse.json(data)
+    const data = await res.json()
+
+    return NextResponse.json(data)
+
+  } catch {
+
+    return NextResponse.json({ active: false })
+  }
 }
 
 
@@ -288,7 +305,6 @@ import VerticalSymbolButton from "@/components/VerticalSymbolButton"
 import PairDetail from "@/components/PairDetail"
 import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
-import PublicLanding from "@/components/PublicLanding"
 
 const PAIRS = [
   "XAUUSD",
@@ -310,7 +326,7 @@ export default function Page() {
 
   const [signals, setSignals] = useState<any>({})
   const [pairData, setPairData] = useState<any>({})
-  const [openPair, setOpenPair] = useState<string | null>(null)  // Track only one expanded pair
+  const [openPair, setOpenPair] = useState<string | null>(null)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
@@ -319,9 +335,20 @@ export default function Page() {
   const { data: session, status } = useSession()
   const [subActive, setSubActive] = useState<boolean | null>(null)
 
+  // âœ… ADD DEVICE INITIALIZER HERE
   useEffect(() => {
+    let id = localStorage.getItem("fxhedz_device_id")
 
-    if (!session || subActive !== true) return
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem("fxhedz_device_id", id)
+    }
+
+    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+  }, [])
+
+useEffect(() => {
+  if (subActive !== true) return
 
     async function loadSignals() {
       try {
@@ -341,28 +368,42 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [session, subActive])
+  }, [subActive])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-  useEffect(() => {
+useEffect(() => {
 
-    if (!session) return
-
-    async function checkSubscription() {
-      try {
-        const res = await fetch("/api/subscription")
-        const data = await res.json()
-        setSubActive(data.active)
-      } catch {
-        setSubActive(false)
-      }
+  async function checkAccess() {
+    try {
+      const res = await fetch("/api/subscription")
+      const data = await res.json()
+      setSubActive(data.active)
+    } catch {
+      setSubActive(false)
     }
+  }
 
-    checkSubscription()
+  checkAccess()
 
-  }, [session])
+}, [])
+
+useEffect(() => {
+
+  async function checkAccess() {
+    try {
+      const res = await fetch("/api/subscription")
+      const data = await res.json()
+      setSubActive(data.active)
+    } catch {
+      setSubActive(false)
+    }
+  }
+
+  checkAccess()
+
+}, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -420,189 +461,213 @@ export default function Page() {
     })
   }, [uiSignals, pairData])
 
-  if (status === "loading") {
-    return (
-      <main className="h-screen bg-black flex items-center justify-center text-neutral-500">
-        Loading...
-      </main>
-    )
-  }
-
-  if (!session) {
-    return <PublicLanding />
-  }
-
-  if (subActive === null) return null
-
-  if (!subActive) {
-    return (
-      <main className="h-screen bg-black flex items-center justify-center text-white">
-        <div className="text-center space-y-4">
-          <div className="text-xl font-bold">
-            Subscription Required
-          </div>
-          <div className="text-neutral-400">
-            Your free trial has expired.
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main
-      className="h-[100dvh] bg-black text-white flex flex-col"
-      style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+    <div className="relative">
 
-    >
-
-      {/* TOP BAR */}
-      <div
-        className="shrink-0 grid border-b border-neutral-800"
-        style={{
-          gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-          height: "clamp(26px,3vh,40px)"
-        }}
+      <main
+        className={`h-[100dvh] bg-black text-white flex flex-col`}
+        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
       >
 
-        {/* TOP LEFT BUTTON */}
-        <button
-          className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
-        >
-        </button>
-
-        {/* ACCOUNT STRIP */}
-        <AccountStrip
-          pairs={pairsData}
-          onStateChange={(state: string) => {
-            setNetState(state)
+        {/* TOP BAR */}
+        <div
+          className="shrink-0 grid border-b border-neutral-800"
+          style={{
+            gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+            height: "clamp(26px,3vh,40px)"
           }}
-        />
+        >
 
-      </div>
-
-      {/* SCROLL AREA */}
-      <div className="flex-1 overflow-hidden relative">
-
-        {openPair ? (
-
-          <div
-            className="absolute inset-0 grid"
-            style={{
-              gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-              gridTemplateRows: "1fr"
-            }}
+          {/* TOP LEFT BUTTON */}
+          <button
+            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
           >
+          </button>
 
-            {/* LEFT RAIL */}
-            <div className="grid"
+          {/* ACCOUNT STRIP */}
+          <AccountStrip
+            pairs={pairsData}
+            onStateChange={(state: string) => {
+              setNetState(state)
+            }}
+          />
+
+        </div>
+
+        {/* SCROLL AREA */}
+        <div className="flex-1 overflow-hidden relative">
+
+          {openPair ? (
+
+            <div
+              className="absolute inset-0 grid"
               style={{
-                gridTemplateRows: "repeat(9, 1fr)"
+                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                gridTemplateRows: "1fr"
               }}
             >
-              {PAIRS.map((pair) => (
-                <VerticalSymbolButton
-                  key={pair}
-                  pair={pair}
-                  active={openPair === pair}
-                  onClick={() => setOpenPair(pair)}
-                />
-              ))}
-            </div>
 
-            {/* RIGHT DETAIL */}
-            <PairDetail
-              pair={openPair}
-              data={pairData?.[openPair]}
-              signal={uiSignals?.[openPair]}
-              onClose={() => setOpenPair(null)}
-            />
-
-          </div>
-
-        ) : (
-
-          <div
-            className="h-full grid"
-            style={{
-              gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-              gridTemplateRows: "repeat(9, 1fr)",
-              rowGap: "0px"
-            }}
-          >
-            {PAIRS.map((pair) => {
-              const signal = uiSignals?.[pair]
-
-              return (
-                <React.Fragment key={pair}>
+              {/* LEFT RAIL */}
+              <div className="grid"
+                style={{
+                  gridTemplateRows: "repeat(9, 1fr)"
+                }}
+              >
+                {PAIRS.map((pair) => (
                   <VerticalSymbolButton
+                    key={pair}
                     pair={pair}
-                    active={false}
+                    active={openPair === pair}
                     onClick={() => setOpenPair(pair)}
                   />
+                ))}
+              </div>
 
-                  <PairCard
-                    pair={pair}
-                    direction={signal?.direction}
-                    signal={signal}
-                    onToggle={() => setOpenPair(pair)}
-                  />
-                </React.Fragment>
-              )
-            })}
-          </div>
+              {/* RIGHT DETAIL */}
+              <PairDetail
+                pair={openPair}
+                data={pairData?.[openPair]}
+                signal={uiSignals?.[openPair]}
+                onClose={() => setOpenPair(null)}
+              />
 
-        )}
-
-      </div>
-
-      {/* BOTTOM BAR */}
-      <div
-        className="shrink-0 grid border-t border-neutral-800 relative"
-        style={{
-          gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-          height: "clamp(26px,3vh,40px)"
-        }}
-      >
-        {menuOpen && (
-          <div className="absolute bottom-[clamp(26px,3vh,40px)] left-0 w-[260px] bg-neutral-900 border border-neutral-800 p-4 z-50">
-            <AuthButton />
-          </div>
-        )}
-
-        {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
-        <button
-          onClick={() => setMenuOpen(prev => !prev)}
-          className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
-        >
-          <div className="w-[60%] flex flex-col gap-[2px]">
-            <div className="h-[2px] w-full bg-neutral-400" />
-            <div className="h-[2px] w-full bg-neutral-400" />
-            <div className="h-[2px] w-full bg-neutral-400" />
-          </div>
-        </button>
-
-        {/* RIGHT SIDE CONTENT */}
-        <div className="bg-neutral-900 flex items-center px-2">
-          <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
-            FXHEDZ
-          </div>
-
-          <div className="ml-auto text-right flex flex-col items-end">
-            <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
-              ZEROLOSS COMPOUNDED
             </div>
-            <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
-              HEDGING SYSTEM
+
+          ) : (
+
+            <div
+              className="h-full grid"
+              style={{
+                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                gridTemplateRows: "repeat(9, 1fr)",
+                rowGap: "0px"
+              }}
+            >
+              {PAIRS.map((pair) => {
+                const signal = uiSignals?.[pair]
+
+                return (
+                  <React.Fragment key={pair}>
+                    <VerticalSymbolButton
+                      pair={pair}
+                      active={false}
+                      onClick={() => setOpenPair(pair)}
+                    />
+
+                    <PairCard
+                      pair={pair}
+                      direction={signal?.direction}
+                      signal={signal}
+                      onToggle={() => setOpenPair(pair)}
+                    />
+                  </React.Fragment>
+                )
+              })}
             </div>
-          </div>
+
+          )}
+
         </div>
 
+        {/* BOTTOM BAR */}
+        <div
+          className="shrink-0 grid border-t border-neutral-800 relative"
+          style={{
+            gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+            height: "clamp(26px,3vh,40px)"
+          }}
+        >
+          {menuOpen && (
+            <div className="absolute bottom-[clamp(26px,3vh,40px)] left-0 w-[260px] bg-neutral-900 border border-neutral-800 p-4 z-50">
+              <AuthButton />
+            </div>
+          )}
+
+          {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
+          <button
+            onClick={() => setMenuOpen(prev => !prev)}
+            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
+          >
+            <div className="w-[60%] flex flex-col gap-[2px]">
+              <div className="h-[2px] w-full bg-neutral-400" />
+              <div className="h-[2px] w-full bg-neutral-400" />
+              <div className="h-[2px] w-full bg-neutral-400" />
+            </div>
+          </button>
+
+          {/* RIGHT SIDE CONTENT */}
+          <div className="bg-neutral-900 flex items-center px-2">
+            <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
+              FXHEDZ
+            </div>
+
+            <div className="ml-auto text-right flex flex-col items-end">
+              <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
+                ZEROLOSS COMPOUNDED
+              </div>
+              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
+                HEDGING SYSTEM
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+{subActive === false && (
+  <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-50">
+    <div className="bg-neutral-900/70 backdrop-blur-xl border border-neutral-700 shadow-2xl p-8 rounded-xl text-center space-y-4 max-w-sm">
+
+      <div className="text-[10px] text-neutral-600 uppercase tracking-widest">
+        LIVE ENGINE RUNNING
       </div>
 
-    </main>
+      <div className="text-xl font-bold">
+        FXHEDZ LIVE
+      </div>
+
+      {!session && (
+        <>
+          <div className="text-neutral-400 text-sm">
+            Login to access institutional signal intelligence.
+          </div>
+          <AuthButton />
+        </>
+      )}
+
+      {session && subActive === null && (
+        <div className="text-neutral-400 text-sm">
+          Verifying access...
+        </div>
+      )}
+
+      {session && subActive === false && (
+        <>
+          <div className="text-neutral-400 text-sm">
+            Subscription expired.
+          </div>
+          <a
+            href="https://t.me/yourbot"
+            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-sm rounded-md"
+          >
+            Renew Subscription
+          </a>
+        </>
+      )}
+
+      <div className="text-xs text-neutral-500">
+        9 Instruments Â· Live Orders Â· Full History
+      </div>
+
+    </div>
+  </div>
+)}
+
+    </div>
   )
 }
+
 
 
 
@@ -1966,87 +2031,6 @@ export default function Providers({
     <SessionProvider>
       {children}
     </SessionProvider>
-  )
-}
-
-
-
-// components\PublicLanding.tsx
-// --------------------------------------------------
-
-"use client"
-
-import { useEffect, useState } from "react"
-import AuthButton from "./AuthButton"
-
-export default function PublicLanding() {
-
-  const [preview, setPreview] = useState<any>(null)
-
-  useEffect(() => {
-    async function loadPreview() {
-      try {
-        const res = await fetch("/api/public-preview")
-        const json = await res.json()
-        setPreview(json)
-      } catch {}
-    }
-
-    loadPreview()
-  }, [])
-
-  return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
-
-      {/* HERO */}
-      <div className="text-center max-w-2xl space-y-6">
-
-        <h1 className="text-4xl font-bold tracking-tight">
-          Institutional-Grade Forex Signal Engine
-        </h1>
-
-        <p className="text-neutral-400">
-          Live MT5 execution Â· Hedged logic Â· Real-time candle stream
-        </p>
-
-        <div className="flex justify-center pt-4">
-          <AuthButton />
-        </div>
-
-      </div>
-
-      {/* LIVE PREVIEW */}
-      {preview && (
-        <div className="mt-16 w-full max-w-xl bg-neutral-900 border border-neutral-800 p-6 rounded-lg">
-
-          <div className="flex justify-between items-center mb-4">
-            <div className="font-semibold text-lg">
-              XAUUSD
-            </div>
-            <div className={`font-bold ${
-              preview.direction === "BUY"
-                ? "text-green-400"
-                : preview.direction === "SELL"
-                  ? "text-red-400"
-                  : "text-neutral-400"
-            }`}>
-              {preview.direction || "--"}
-            </div>
-          </div>
-
-          <div className="text-neutral-400 text-sm">
-            Entry {preview.entry || "--"} Â· SL {preview.sl || "--"} Â· TP {preview.tp || "--"}
-          </div>
-
-        </div>
-      )}
-
-      {/* LOCKED SECTION */}
-      <div className="mt-12 text-center text-neutral-500">
-        Unlock 9 Instruments Â· Full History Â· Live Orders
-      </div>
-
-    </main>
   )
 }
 

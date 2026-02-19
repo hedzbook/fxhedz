@@ -8,43 +8,55 @@ const GAS_BASE =
 export async function GET(req: NextRequest) {
 
   // =====================================
-  // 🔐 AUTH CHECK
+  // 1️⃣ DEVICE CHECK (MANDATORY)
+  // =====================================
+  const deviceId = req.cookies.get("fx_device")?.value
+
+  if (!deviceId) {
+    return NextResponse.json({ error: "No device" }, { status: 401 })
+  }
+
+  const accessRes = await fetch(
+    `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`
+  )
+
+  const access = await accessRes.json()
+
+  if (!access?.active) {
+    return NextResponse.json({ error: "Expired" }, { status: 403 })
+  }
+
+  // =====================================
+  // 2️⃣ OPTIONAL EMAIL CHECK (IF LOGGED IN)
   // =====================================
   const session = await getServerSession(authOptions)
 
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
+  if (session?.user?.email) {
+
+    const subRes = await fetch(
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
     )
+
+    const subData = await subRes.json()
+
+    if (!subData?.active) {
+      return NextResponse.json(
+        { error: "Subscription required" },
+        { status: 403 }
+      )
+    }
   }
 
   // =====================================
-  // 🔐 SUBSCRIPTION CHECK
-  // =====================================
-  const subRes = await fetch(
-  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
-)
-
-  const subData = await subRes.json()
-
-  if (!subData?.active) {
-    return NextResponse.json(
-      { error: "Subscription required" },
-      { status: 403 }
-    )
-  }
-
-  // =====================================
-  // NORMAL SIGNAL FLOW
+  // 3️⃣ NORMAL SIGNAL FLOW
   // =====================================
   const pair = req.nextUrl.searchParams.get("pair")
 
   try {
 
-const url = pair
-  ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}`
-  : `${GAS_BASE}?secret=${process.env.GAS_SECRET}`
+    const url = pair
+      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}`
+      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}`
 
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()

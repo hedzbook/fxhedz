@@ -1,20 +1,26 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "../auth/[...nextauth]/route"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
 
-  const session = await getServerSession(authOptions)
+  const deviceId = req.cookies.get("fx_device")?.value
 
-  if (!session?.user?.email) {
+  if (!deviceId) {
     return NextResponse.json({ active: false })
   }
 
-  const res = await fetch(
-  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
-)
+  try {
 
-  const data = await res.json()
+    const res = await fetch(
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`,
+      { cache: "no-store" }
+    )
 
-  return NextResponse.json(data)
+    const data = await res.json()
+
+    return NextResponse.json(data)
+
+  } catch {
+
+    return NextResponse.json({ active: false })
+  }
 }
