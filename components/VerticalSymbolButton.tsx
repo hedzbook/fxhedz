@@ -8,23 +8,39 @@ type Props = {
   onClick: () => void
 }
 
+function splitPair(pair: string) {
+  const knownQuotes = ["USD", "JPY", "CHF", "OIL"]
+
+  for (const quote of knownQuotes) {
+    if (pair.endsWith(quote)) {
+      return {
+        base: pair.slice(0, pair.length - quote.length),
+        quote
+      }
+    }
+  }
+
+  return {
+    base: pair.slice(0, 3),
+    quote: pair.slice(3)
+  }
+}
+
 export default function VerticalSymbolButton({
   pair,
   active = false,
   onClick
 }: Props) {
 
-  const letters = pair.split("")
+  const { base, quote } = splitPair(pair)
 
   return (
     <button
       onClick={onClick}
       className={`
         h-full w-full
-        flex flex-col items-center justify-center
+        flex items-center justify-center
         border border-neutral-800
-        text-[clamp(7px,0.9vh,12px)]
-        tracking-widest
         rounded-none
         ${active
           ? "bg-neutral-900 text-white border-sky-400"
@@ -32,14 +48,14 @@ export default function VerticalSymbolButton({
         }
       `}
     >
-      {letters.map((l, i) => (
-        <span
-          key={i}
-          className="leading-none"
-        >
-          {l}
+      <div className="flex flex-col items-center leading-[1.05]">
+        <span className="text-[clamp(8px,1vh,13px)] font-semibold tracking-wide">
+          {base}
         </span>
-      ))}
+        <span className="text-[clamp(8px,1vh,13px)] text-neutral-400 tracking-wide">
+          {quote}
+        </span>
+      </div>
     </button>
   )
 }

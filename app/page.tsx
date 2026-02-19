@@ -158,15 +158,30 @@ style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
 
 >
 
-  {/* TOP BAR */}
-  <div className="shrink-0 h-[clamp(26px,3vh,40px)]">
-    <AccountStrip
-      pairs={pairsData}
-      onStateChange={(state: string) => {
-        setNetState(state)
-      }}
-    />
-  </div>
+{/* TOP BAR */}
+<div
+  className="shrink-0 grid border-b border-neutral-800"
+  style={{
+    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+    height: "clamp(26px,3vh,40px)"
+  }}
+>
+
+  {/* TOP LEFT BUTTON */}
+  <button
+    className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
+  >
+  </button>
+
+  {/* ACCOUNT STRIP */}
+  <AccountStrip
+    pairs={pairsData}
+    onStateChange={(state: string) => {
+      setNetState(state)
+    }}
+  />
+
+</div>
 
 {/* SCROLL AREA */}
 <div className="flex-1 overflow-hidden relative">
@@ -245,31 +260,43 @@ style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
 
 </div>
 
-  {/* BOTTOM BAR */}
-  <div className="shrink-0 h-[clamp(26px,3vh,40px)]">
-    <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-3">
-        <div className="flex items-center gap-2 z-10">
-          <div className="w-[clamp(10px,1.5vw,18px)] h-[clamp(10px,1.8vh,22px)] flex flex-col justify-center gap-[2px] cursor-pointer">
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-          </div>
-          <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
-            FXHEDZ
-          </div>
-        </div>
+{/* BOTTOM BAR */}
+<div
+  className="shrink-0 grid border-t border-neutral-800"
+  style={{
+    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+    height: "clamp(26px,3vh,40px)"
+  }}
+>
 
-        <div className="ml-auto text-right z-10 flex flex-col items-end">
-          <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
-            ZEROLOSS COMPOUNDED
-          </div>
-          <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px]">
-            HEDGING SYSTEM
-          </div>
-        </div>
-
-      </div>
+  {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
+  <button
+    className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
+  >
+    <div className="w-[60%] flex flex-col gap-[2px]">
+      <div className="h-[2px] w-full bg-neutral-400" />
+      <div className="h-[2px] w-full bg-neutral-400" />
+      <div className="h-[2px] w-full bg-neutral-400" />
     </div>
+  </button>
+
+  {/* RIGHT SIDE CONTENT */}
+  <div className="bg-neutral-900 flex items-center px-2">
+    <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
+      FXHEDZ
+    </div>
+
+    <div className="ml-auto text-right flex flex-col items-end">
+      <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
+        ZEROLOSS COMPOUNDED
+      </div>
+<div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
+  HEDGING SYSTEM
+</div>
+    </div>
+  </div>
+
+</div>
 
   </main>
 )

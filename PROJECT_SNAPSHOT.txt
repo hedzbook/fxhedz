@@ -311,15 +311,30 @@ style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
 
 >
 
-  {/* TOP BAR */}
-  <div className="shrink-0 h-[clamp(26px,3vh,40px)]">
-    <AccountStrip
-      pairs={pairsData}
-      onStateChange={(state: string) => {
-        setNetState(state)
-      }}
-    />
-  </div>
+{/* TOP BAR */}
+<div
+  className="shrink-0 grid border-b border-neutral-800"
+  style={{
+    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+    height: "clamp(26px,3vh,40px)"
+  }}
+>
+
+  {/* TOP LEFT BUTTON */}
+  <button
+    className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
+  >
+  </button>
+
+  {/* ACCOUNT STRIP */}
+  <AccountStrip
+    pairs={pairsData}
+    onStateChange={(state: string) => {
+      setNetState(state)
+    }}
+  />
+
+</div>
 
 {/* SCROLL AREA */}
 <div className="flex-1 overflow-hidden relative">
@@ -398,31 +413,43 @@ style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
 
 </div>
 
-  {/* BOTTOM BAR */}
-  <div className="shrink-0 h-[clamp(26px,3vh,40px)]">
-    <div className="bg-neutral-900 border-t border-neutral-800 h-full flex items-center relative px-3">
-        <div className="flex items-center gap-2 z-10">
-          <div className="w-[clamp(10px,1.5vw,18px)] h-[clamp(10px,1.8vh,22px)] flex flex-col justify-center gap-[2px] cursor-pointer">
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-            <div className="h-[clamp(1px,0.2vw,3px)] w-full bg-neutral-400" />
-          </div>
-          <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
-            FXHEDZ
-          </div>
-        </div>
+{/* BOTTOM BAR */}
+<div
+  className="shrink-0 grid border-t border-neutral-800"
+  style={{
+    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+    height: "clamp(26px,3vh,40px)"
+  }}
+>
 
-        <div className="ml-auto text-right z-10 flex flex-col items-end">
-          <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
-            ZEROLOSS COMPOUNDED
-          </div>
-          <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px]">
-            HEDGING SYSTEM
-          </div>
-        </div>
-
-      </div>
+  {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
+  <button
+    className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
+  >
+    <div className="w-[60%] flex flex-col gap-[2px]">
+      <div className="h-[2px] w-full bg-neutral-400" />
+      <div className="h-[2px] w-full bg-neutral-400" />
+      <div className="h-[2px] w-full bg-neutral-400" />
     </div>
+  </button>
+
+  {/* RIGHT SIDE CONTENT */}
+  <div className="bg-neutral-900 flex items-center px-2">
+    <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
+      FXHEDZ
+    </div>
+
+    <div className="ml-auto text-right flex flex-col items-end">
+      <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
+        ZEROLOSS COMPOUNDED
+      </div>
+<div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
+  HEDGING SYSTEM
+</div>
+    </div>
+  </div>
+
+</div>
 
   </main>
 )
@@ -490,23 +517,25 @@ export default function AccountStrip({
     }, [netState, intensity, pulse])
 
 return (
-  <div className="h-full bg-neutral-900 border-b border-neutral-800 flex items-center px-3">
+  <div className="h-full bg-neutral-900 flex px-3">
 
-    <div className="flex-1 text-left text-[clamp(9px,1.8vw,16px)]
-">
-      <span className="text-neutral-400">LOTS: </span>
-      <span className="font-semibold">{totalLots.toFixed(2)}</span>
+    <div className="flex-1 h-full flex items-center text-left text-[clamp(9px,1.6vw,15px)] leading-none">
+<div className="flex items-center gap-[clamp(4px,0.6vw,8px)]">
+  <span className="text-neutral-400">LOTS</span>
+  <span className="font-semibold">{totalLots.toFixed(2)}</span>
+</div>
     </div>
 
-    <div className="flex-1 text-center text-[clamp(9px,1.8vw,16px)]
-">
-      <span className="text-neutral-400">~PnL </span>
-      <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
-        {totalFloating.toFixed(2)}
-      </span>
+    <div className="flex-1 h-full flex items-center justify-center text-[clamp(9px,1.6vw,15px)] leading-none">
+<div className="flex items-center gap-[clamp(4px,0.6vw,8px)]">
+  <span className="text-neutral-400">~PnL</span>
+  <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
+    {totalFloating.toFixed(2)}
+  </span>
+</div>
     </div>
 
-    <div className="flex-1 text-right text-[clamp(9px,1.8vw,16px)] font-semibold text-sky-400">
+    <div className="flex-1 h-full flex items-center justify-end text-[clamp(9px,1.6vw,15px)] font-semibold text-sky-400 leading-none">
       {netState}
     </div>
 
@@ -1504,7 +1533,7 @@ export default function PairDetail({
         <div className="flex flex-col h-full bg-black min-h-0">
 
             {/* HEADER */}
-            <div className="shrink-0 flex items-center justify-between px-4 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
+            <div className="shrink-0 flex items-center justify-between px-3 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
                 <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
                     {pair}
                 </div>
@@ -1731,23 +1760,39 @@ type Props = {
   onClick: () => void
 }
 
+function splitPair(pair: string) {
+  const knownQuotes = ["USD", "JPY", "CHF", "OIL"]
+
+  for (const quote of knownQuotes) {
+    if (pair.endsWith(quote)) {
+      return {
+        base: pair.slice(0, pair.length - quote.length),
+        quote
+      }
+    }
+  }
+
+  return {
+    base: pair.slice(0, 3),
+    quote: pair.slice(3)
+  }
+}
+
 export default function VerticalSymbolButton({
   pair,
   active = false,
   onClick
 }: Props) {
 
-  const letters = pair.split("")
+  const { base, quote } = splitPair(pair)
 
   return (
     <button
       onClick={onClick}
       className={`
         h-full w-full
-        flex flex-col items-center justify-center
+        flex items-center justify-center
         border border-neutral-800
-        text-[clamp(7px,0.9vh,12px)]
-        tracking-widest
         rounded-none
         ${active
           ? "bg-neutral-900 text-white border-sky-400"
@@ -1755,14 +1800,14 @@ export default function VerticalSymbolButton({
         }
       `}
     >
-      {letters.map((l, i) => (
-        <span
-          key={i}
-          className="leading-none"
-        >
-          {l}
+      <div className="flex flex-col items-center leading-[1.05]">
+        <span className="text-[clamp(8px,1vh,13px)] font-semibold tracking-wide">
+          {base}
         </span>
-      ))}
+        <span className="text-[clamp(8px,1vh,13px)] text-neutral-400 tracking-wide">
+          {quote}
+        </span>
+      </div>
     </button>
   )
 }

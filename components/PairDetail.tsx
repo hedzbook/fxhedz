@@ -25,7 +25,7 @@ export default function PairDetail({
         <div className="flex flex-col h-full bg-black min-h-0">
 
             {/* HEADER */}
-            <div className="shrink-0 flex items-center justify-between px-4 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
+            <div className="shrink-0 flex items-center justify-between px-3 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
                 <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
                     {pair}
                 </div>
