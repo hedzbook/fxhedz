@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
   // 🔐 SUBSCRIPTION CHECK
   // =====================================
   const subRes = await fetch(
-    `${process.env.GAS_AUTH_URL}?email=${session.user.email}`
-  )
+  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
+)
 
   const subData = await subRes.json()
 

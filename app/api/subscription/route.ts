@@ -11,8 +11,8 @@ export async function GET() {
   }
 
   const res = await fetch(
-    `${process.env.GAS_AUTH_URL}?email=${session.user.email}`
-  )
+  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${session.user.email}`
+)
 
   const data = await res.json()
 
