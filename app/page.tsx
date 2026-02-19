@@ -1,5 +1,3 @@
-// app/page.tsx
-
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
@@ -7,6 +5,7 @@ import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
 import VerticalSymbolButton from "@/components/VerticalSymbolButton"
 import PairDetail from "@/components/PairDetail"
+import AuthButton from "@/components/AuthButton"
 
 const PAIRS = [
   "XAUUSD",
@@ -29,41 +28,12 @@ export default function Page() {
   const [signals, setSignals] = useState<any>({})
   const [pairData, setPairData] = useState<any>({})
   const [openPair, setOpenPair] = useState<string | null>(null)  // Track only one expanded pair
-  const [authorized, setAuthorized] = useState(false)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const tg = (window as any)?.Telegram?.WebApp
-
-    if (tg && tg.initDataUnsafe?.user?.id) {
-      tg.ready()
-      tg.expand()
-      tg.disableVerticalSwipes()
-      tg.setBackgroundColor("#000000")
-      tg.setHeaderColor("#000000")
-
-      document.documentElement.style.height = "100%"
-      document.body.style.minHeight = "100vh"
-      document.body.style.overscrollBehavior = "none"
-      document.body.style.touchAction = "pan-y"
-
-      setAuthorized(true)
-    } else {
-      setAuthorized(false)
-    }
-  }, [])
-// Dev-only override for browser testing
-useEffect(() => {
-  if (process.env.NODE_ENV === "development") {
-    setAuthorized(true)
-  }
-}, [])
-
-  useEffect(() => {
-    if (!authorized) return
 
     async function loadSignals() {
       try {
@@ -82,7 +52,7 @@ useEffect(() => {
     loadSignals()
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
-  }, [authorized])
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -96,7 +66,7 @@ useEffect(() => {
   }, [signals])
 
   useEffect(() => {
-    if (!authorized || !openPair) return
+    if (!openPair) return
 
     const pairKey = openPair
     let cancelled = false
@@ -121,7 +91,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-  }, [authorized, openPair])
+  }, [openPair])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -139,17 +109,6 @@ useEffect(() => {
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
-
-  if (!authorized) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="text-xl font-bold">FXHEDZ</div>
-          <div className="text-neutral-400 text-[clamp(10px,1.4vw,14px)]">Open via Telegram Bot</div>
-        </div>
-      </main>
-    )
-  }
 
 return (
 <main

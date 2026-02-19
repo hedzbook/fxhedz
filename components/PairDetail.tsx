@@ -1,5 +1,3 @@
-// components/PairDetail.tsx
-
 "use client"
 
 import { useState } from "react"

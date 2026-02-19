@@ -1,15 +1,65 @@
 ﻿
+==================================================
+PROJECT STRUCTURE
+==================================================
+
+.env.local
+.gitignore
+app\api\auth\[...nextauth]\route.ts
+app\api\signals\route.ts
+app\globals.css
+app\layout.tsx
+app\page.tsx
+components\AccountStrip.tsx
+components\AuthButton.tsx
+components\DashboardControlBar.tsx
+components\GlobalLightChart.tsx
+components\PairCard.tsx
+components\PairDetail.tsx
+components\Providers.tsx
+components\VerticalSymbolButton.tsx
+eslint.config.mjs
+next.config.ts
+next-env.d.ts
+package.json
+package-lock.json
+postcss.config.js
+public\file.svg
+public\globe.svg
+public\logo.png
+public\next.svg
+public\vercel.svg
+public\window.svg
+tailwind.config.js
+tsconfig.json
+
+==================================================
+FULL SOURCE CODE
+==================================================
+
 
 // app\api\auth\[...nextauth]\route.ts
 // --------------------------------------------------
 
+import NextAuth from "next-auth"
+import GoogleProvider from "next-auth/providers/google"
+
+const handler = NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET,
+})
+
+export { handler as GET, handler as POST }
 
 
 
 // app\api\signals\route.ts
 // --------------------------------------------------
-
-//app/api/signals/route.ts
 
 import { NextRequest } from "next/server"
 
@@ -108,14 +158,10 @@ export async function GET(req: NextRequest) {
 // app\layout.tsx
 // --------------------------------------------------
 
-// app/layout.tsx
-
-"use client"
-
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import Script from "next/script"
-import { SessionProvider } from "next-auth/react"
+import Providers from "@/components/Providers"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -143,15 +189,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased tracking-tight`}
       >
-        {/* Telegram Mini App SDK */}
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
 
-        <SessionProvider>
+        <Providers>
           {children}
-        </SessionProvider>
+        </Providers>
 
       </body>
     </html>
@@ -163,8 +208,6 @@ export default function RootLayout({
 // app\page.tsx
 // --------------------------------------------------
 
-// app/page.tsx
-
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
@@ -172,6 +215,7 @@ import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
 import VerticalSymbolButton from "@/components/VerticalSymbolButton"
 import PairDetail from "@/components/PairDetail"
+import AuthButton from "@/components/AuthButton"
 
 const PAIRS = [
   "XAUUSD",
@@ -194,41 +238,12 @@ export default function Page() {
   const [signals, setSignals] = useState<any>({})
   const [pairData, setPairData] = useState<any>({})
   const [openPair, setOpenPair] = useState<string | null>(null)  // Track only one expanded pair
-  const [authorized, setAuthorized] = useState(false)
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [viewMode, setViewMode] = useState<ViewMode>("MIN")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const tg = (window as any)?.Telegram?.WebApp
-
-    if (tg && tg.initDataUnsafe?.user?.id) {
-      tg.ready()
-      tg.expand()
-      tg.disableVerticalSwipes()
-      tg.setBackgroundColor("#000000")
-      tg.setHeaderColor("#000000")
-
-      document.documentElement.style.height = "100%"
-      document.body.style.minHeight = "100vh"
-      document.body.style.overscrollBehavior = "none"
-      document.body.style.touchAction = "pan-y"
-
-      setAuthorized(true)
-    } else {
-      setAuthorized(false)
-    }
-  }, [])
-// Dev-only override for browser testing
-useEffect(() => {
-  if (process.env.NODE_ENV === "development") {
-    setAuthorized(true)
-  }
-}, [])
-
-  useEffect(() => {
-    if (!authorized) return
 
     async function loadSignals() {
       try {
@@ -247,7 +262,7 @@ useEffect(() => {
     loadSignals()
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
-  }, [authorized])
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -261,7 +276,7 @@ useEffect(() => {
   }, [signals])
 
   useEffect(() => {
-    if (!authorized || !openPair) return
+    if (!openPair) return
 
     const pairKey = openPair
     let cancelled = false
@@ -286,7 +301,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-  }, [authorized, openPair])
+  }, [openPair])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -304,17 +319,6 @@ useEffect(() => {
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
-
-  if (!authorized) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="text-xl font-bold">FXHEDZ</div>
-          <div className="text-neutral-400 text-[clamp(10px,1.4vw,14px)]">Open via Telegram Bot</div>
-        </div>
-      </main>
-    )
-  }
 
 return (
 <main
@@ -472,8 +476,6 @@ style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
 // components\AccountStrip.tsx
 // --------------------------------------------------
 
-// components/AccountStrip.tsx
-
 "use client"
 
 import { useEffect } from "react"
@@ -558,10 +560,54 @@ return (
 
 
 
-// components\DashboardControlBar.tsx
+// components\AuthButton.tsx
 // --------------------------------------------------
 
-// components/DashboardControlBar.tsx
+"use client"
+
+import { signIn, signOut, useSession } from "next-auth/react"
+
+export default function AuthButton() {
+  const { data: session, status } = useSession()
+
+  if (status === "loading") {
+    return (
+      <div className="text-neutral-400 text-sm">
+        Loading...
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <button
+        onClick={() => signIn("google")}
+        className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-sm rounded-md"
+      >
+        Login with Google
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm text-neutral-300">
+        {session.user?.email}
+      </span>
+      <button
+        onClick={() => signOut()}
+        className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-sm rounded-md"
+      >
+        Logout
+      </button>
+    </div>
+  )
+}
+
+
+
+// components\DashboardControlBar.tsx
+// --------------------------------------------------
 
 "use client"
 
@@ -658,8 +704,6 @@ export default function DashboardControlBar({
 
 // components\GlobalLightChart.tsx
 // --------------------------------------------------
-
-// components/GlobalLightChart.tsx
 
 "use client"
 
@@ -889,8 +933,6 @@ const chart = createChart(container, {
 
 // components\PairCard.tsx
 // --------------------------------------------------
-
-// components/PairCard.tsx
 
 "use client"
 
@@ -1518,8 +1560,6 @@ export default React.memo(PairCard)
 // components\PairDetail.tsx
 // --------------------------------------------------
 
-// components/PairDetail.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -1759,10 +1799,29 @@ function Metric({ label, value }: any) {
 
 
 
-// components\VerticalSymbolButton.tsx
+// components\Providers.tsx
 // --------------------------------------------------
 
-// components/VerticalSymbolButton.tsx
+"use client"
+
+import { SessionProvider } from "next-auth/react"
+
+export default function Providers({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <SessionProvider>
+      {children}
+    </SessionProvider>
+  )
+}
+
+
+
+// components\VerticalSymbolButton.tsx
+// --------------------------------------------------
 
 "use client"
 
@@ -1822,6 +1881,95 @@ export default function VerticalSymbolButton({
       </div>
     </button>
   )
+}
+
+
+
+// package.json
+// --------------------------------------------------
+
+{
+  "name": "fxhedz",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "set NEXT_DISABLE_TURBOPACK=1 && next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "lightweight-charts": "^5.1.0",
+    "next": "16.1.6",
+    "next-auth": "^4.24.13",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.24",
+    "cross-env": "^10.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5"
+  }
+}
+
+
+
+// next.config.ts
+// --------------------------------------------------
+
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactStrictMode: false,
+};
+
+export default nextConfig;
+
+
+
+// tsconfig.json
+// --------------------------------------------------
+
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
 }
 
 

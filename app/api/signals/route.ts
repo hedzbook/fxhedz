@@ -1,5 +1,3 @@
-//app/api/signals/route.ts
-
 import { NextRequest } from "next/server"
 
 export const runtime = "edge"

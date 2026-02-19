@@ -1,5 +1,3 @@
-// components/VerticalSymbolButton.tsx
-
 "use client"
 
 type Props = {

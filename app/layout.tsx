@@ -1,11 +1,7 @@
-// app/layout.tsx
-
-"use client"
-
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import Script from "next/script"
-import { SessionProvider } from "next-auth/react"
+import Providers from "@/components/Providers"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -33,15 +29,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased tracking-tight`}
       >
-        {/* Telegram Mini App SDK */}
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
 
-        <SessionProvider>
+        <Providers>
           {children}
-        </SessionProvider>
+        </Providers>
 
       </body>
     </html>
