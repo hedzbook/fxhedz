@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react"
-import { View, ActivityIndicator } from "react-native"
+import { View, ActivityIndicator, StatusBar } from "react-native"
 import { WebView } from "react-native-webview"
+import { SafeAreaView } from "react-native-safe-area-context"
 import * as Device from "expo-device"
 import * as SecureStore from "expo-secure-store"
 
-export default function App() {
+export default function HomeScreen() {
 
   const [deviceId, setDeviceId] = useState<string | null>(null)
 
@@ -25,9 +26,9 @@ export default function App() {
 
   if (!deviceId) {
     return (
-      <View style={{ flex: 1, justifyContent: "center" }}>
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" }}>
         <ActivityIndicator size="large" />
-      </View>
+      </SafeAreaView>
     )
   }
 
@@ -35,12 +36,15 @@ export default function App() {
     `https://fxhedz.vercel.app/?platform=android&device_id=${deviceId}`
 
   return (
-    <WebView
-      source={{ uri: url }}
-      javaScriptEnabled
-      domStorageEnabled
-      originWhitelist={["*"]}
-      startInLoadingState
-    />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "bottom"]}>
+      <StatusBar translucent={false} backgroundColor="#000" barStyle="light-content" />
+      <WebView
+        source={{ uri: url }}
+        style={{ flex: 1 }}
+        javaScriptEnabled
+        domStorageEnabled
+        originWhitelist={["*"]}
+      />
+    </SafeAreaView>
   )
 }
