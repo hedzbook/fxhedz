@@ -36,12 +36,23 @@ export default function Page() {
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session } = useSession()
 
-useEffect(() => {
-  if (subActive !== true) return
+  useEffect(() => {
+    if (subActive !== true) return
 
     async function loadSignals() {
       try {
-        const res = await fetch(SIGNAL_API)
+        const fingerprint = btoa(
+          navigator.userAgent +
+          screen.width +
+          screen.height +
+          Intl.DateTimeFormat().resolvedOptions().timeZone +
+          navigator.platform +
+          navigator.language
+        )
+
+        const res = await fetch(
+          `${SIGNAL_API}?fingerprint=${encodeURIComponent(fingerprint)}`
+        )
         const json = await res.json()
         const incoming = json?.signals ? json.signals : json
 
@@ -61,51 +72,51 @@ useEffect(() => {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
-  async function init() {
+  useEffect(() => {
+    async function init() {
 
-    let id = localStorage.getItem("fxhedz_device_id")
+      let id = localStorage.getItem("fxhedz_device_id")
 
-    if (!id) {
-      if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        id = crypto.randomUUID()
-      } else {
-        id = Date.now().toString() + Math.random().toString(36).substring(2)
+      if (!id) {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+          id = crypto.randomUUID()
+        } else {
+          id = Date.now().toString() + Math.random().toString(36).substring(2)
+        }
+
+        localStorage.setItem("fxhedz_device_id", id)
       }
 
-      localStorage.setItem("fxhedz_device_id", id)
-    }
+      // Write cookie FIRST
+      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
 
-    // Write cookie FIRST
-    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      // 🔥 Critical: small wait to guarantee cookie persistence
+      await new Promise(resolve => setTimeout(resolve, 60))
 
-    // 🔥 Critical: small wait to guarantee cookie persistence
-    await new Promise(resolve => setTimeout(resolve, 60))
-
-    const fingerprint = btoa(
-      navigator.userAgent +
-      screen.width +
-      screen.height +
-      Intl.DateTimeFormat().resolvedOptions().timeZone +
-      navigator.platform +
-      navigator.language
-    )
-
-    try {
-      const res = await fetch(
-        `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-        { cache: "no-store" }
+      const fingerprint = btoa(
+        navigator.userAgent +
+        screen.width +
+        screen.height +
+        Intl.DateTimeFormat().resolvedOptions().timeZone +
+        navigator.platform +
+        navigator.language
       )
 
-      const data = await res.json()
-      setSubActive(data.active)
-    } catch {
-      setSubActive(false)
-    }
-  }
+      try {
+        const res = await fetch(
+          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          { cache: "no-store" }
+        )
 
-  init()
-}, [])
+        const data = await res.json()
+        setSubActive(data.active)
+      } catch {
+        setSubActive(false)
+      }
+    }
+
+    init()
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -118,15 +129,26 @@ useEffect(() => {
     return () => clearTimeout(timer)
   }, [signals])
 
-useEffect(() => {
-  if (!openPair || subActive !== true) return
+  useEffect(() => {
+    if (!openPair || subActive !== true) return
 
     const pairKey = openPair
     let cancelled = false
 
     async function refreshOpenPair() {
       try {
-        const res = await fetch(`/api/signals?pair=${pairKey}`)
+        const fingerprint = btoa(
+          navigator.userAgent +
+          screen.width +
+          screen.height +
+          Intl.DateTimeFormat().resolvedOptions().timeZone +
+          navigator.platform +
+          navigator.language
+        )
+
+        const res = await fetch(
+          `/api/signals?pair=${pairKey}&fingerprint=${encodeURIComponent(fingerprint)}`
+        )
         const json = await res.json()
         if (cancelled) return
 
@@ -144,7 +166,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-}, [openPair, subActive])
+  }, [openPair, subActive])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -166,12 +188,11 @@ useEffect(() => {
   return (
     <div className="relative">
 
-<main
-  className={`h-[100dvh] bg-black text-white flex flex-col ${
-    subActive !== true ? "pointer-events-none" : ""
-  }`}
-  style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
->
+      <main
+        className={`h-[100dvh] bg-black text-white flex flex-col ${subActive !== true ? "pointer-events-none" : ""
+          }`}
+        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+      >
 
         {/* TOP BAR */}
         <div
@@ -318,10 +339,10 @@ useEffect(() => {
         </div>
 
       </main>
-    <AccessOverlay
-      active={subActive}
-      sessionExists={!!session}
-    />
+      <AccessOverlay
+        active={subActive}
+        sessionExists={!!session}
+      />
     </div>
   )
 }

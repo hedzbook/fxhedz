@@ -16,9 +16,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No device" }, { status: 401 })
   }
 
-  const accessRes = await fetch(
-    `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`
-  )
+const fingerprint = req.nextUrl.searchParams.get("fingerprint") || ""
+
+const accessRes = await fetch(
+  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
+)
 
   const access = await accessRes.json()
 
