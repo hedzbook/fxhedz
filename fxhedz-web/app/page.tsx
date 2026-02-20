@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, useMemo } from "react"
+import React, { useEffect, useState, useMemo, useRef } from "react"
 import PairCard from "@/components/PairCard"
 import AccountStrip from "@/components/AccountStrip"
 import VerticalSymbolButton from "@/components/VerticalSymbolButton"
@@ -11,7 +11,7 @@ import AccessOverlay from "@/components/AccessOverlay"
 
 import { generateDummySignals } from "@/lib/dummySignals"
 
-  const pairs: any = {}
+const pairs: any = {}
 
 async function sha256(text: string) {
   const encoder = new TextEncoder()
@@ -50,69 +50,105 @@ export default function Page() {
   const { data: session, status } = useSession()
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
-  console.log("SESSION:", session)
-  console.log("FINGERPRINT:", fingerprint)
-  console.log("SUBACTIVE:", subActive)
-}, [session, fingerprint, subActive])
 
-useEffect(() => {
-  setAccessMeta(null)
-  setSubActive(null)
-}, [session])
+    function handleClickOutside(event: MouseEvent) {
 
-useEffect(() => {
+      if (!menuOpen) return
 
-  async function generateFingerprint() {
+      const target = event.target as Node
 
-    try {
-
-      const raw = [
-        navigator.userAgent,
-        screen.width,
-        screen.height,
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-        navigator.language
-      ].join("|")
-
-      let hash = ""
-
-      if (window.crypto?.subtle) {
-        const encoder = new TextEncoder()
-        const data = encoder.encode(raw)
-        const buffer = await window.crypto.subtle.digest("SHA-256", data)
-        hash = Array.from(new Uint8Array(buffer))
-          .map(b => b.toString(16).padStart(2, "0"))
-          .join("")
-      } else {
-        hash = btoa(raw).slice(0, 64)
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        hamburgerRef.current &&
+        !hamburgerRef.current.contains(target)
+      ) {
+        setMenuOpen(false)
       }
-
-      setFingerprint(hash)
-
-    } catch {
-      setFingerprint("fallback_" + Date.now())
     }
-  }
 
-  generateFingerprint()
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false)
+      }
+    }
 
-}, [])
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", handleEscape)
 
-useEffect(() => {
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", handleEscape)
+    }
 
-// If not logged in → show dummy
-if (!session) {
-  setSignals(generateDummySignals())
-  return
-}
+  }, [menuOpen])
 
-// If logged in but not active → no real signals
-if (subActive !== true) {
-  setSignals(generateDummySignals())
-  return
-}
+  useEffect(() => {
+    console.log("SESSION:", session)
+    console.log("FINGERPRINT:", fingerprint)
+    console.log("SUBACTIVE:", subActive)
+  }, [session, fingerprint, subActive])
+
+  useEffect(() => {
+    setAccessMeta(null)
+    setSubActive(null)
+  }, [session])
+
+  useEffect(() => {
+
+    async function generateFingerprint() {
+
+      try {
+
+        const raw = [
+          navigator.userAgent,
+          screen.width,
+          screen.height,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          navigator.language
+        ].join("|")
+
+        let hash = ""
+
+        if (window.crypto?.subtle) {
+          const encoder = new TextEncoder()
+          const data = encoder.encode(raw)
+          const buffer = await window.crypto.subtle.digest("SHA-256", data)
+          hash = Array.from(new Uint8Array(buffer))
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("")
+        } else {
+          hash = btoa(raw).slice(0, 64)
+        }
+
+        setFingerprint(hash)
+
+      } catch {
+        setFingerprint("fallback_" + Date.now())
+      }
+    }
+
+    generateFingerprint()
+
+  }, [])
+
+  useEffect(() => {
+
+    // If not logged in → show dummy
+    if (!session) {
+      setSignals(generateDummySignals())
+      return
+    }
+
+    // If logged in but not active → no real signals
+    if (subActive !== true) {
+      setSignals(generateDummySignals())
+      return
+    }
     if (!fingerprint) return
 
     async function loadSignals() {
@@ -137,54 +173,54 @@ if (subActive !== true) {
 
   }, [subActive, fingerprint, session])
 
-// =============================
-// CHECK SUBSCRIPTION STATUS
-// =============================
-useEffect(() => {
+  // =============================
+  // CHECK SUBSCRIPTION STATUS
+  // =============================
+  useEffect(() => {
 
-  // NOT logged in → no verification
-  if (!session) {
-    setSubActive(false)
-    return
-  }
-
-  // Wait until fingerprint exists
-  if (!fingerprint) {
-    return
-  }
-
-  async function init() {
-
-    let id = localStorage.getItem("fxhedz_device_id")
-
-    if (!id) {
-      id = crypto.randomUUID()
-      localStorage.setItem("fxhedz_device_id", id)
-    }
-
-    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-    document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
-
-    try {
-      const res = await fetch(
-        `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-        { cache: "no-store" }
-      )
-
-      const data = await res.json()
-
-      // 🔥 CRITICAL LINE
-      setSubActive(Boolean(data?.active))
-      setAccessMeta(data)
-
-    } catch {
+    // NOT logged in → no verification
+    if (!session) {
       setSubActive(false)
+      return
     }
-  }
 
-  init()
+    // Wait until fingerprint exists
+    if (!fingerprint) {
+      return
+    }
 
-}, [fingerprint, session])
+    async function init() {
+
+      let id = localStorage.getItem("fxhedz_device_id")
+
+      if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem("fxhedz_device_id", id)
+      }
+
+      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+
+      try {
+        const res = await fetch(
+          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          { cache: "no-store" }
+        )
+
+        const data = await res.json()
+
+        // 🔥 CRITICAL LINE
+        setSubActive(Boolean(data?.active))
+        setAccessMeta(data)
+
+      } catch {
+        setSubActive(false)
+      }
+    }
+
+    init()
+
+  }, [fingerprint, session])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -267,8 +303,24 @@ useEffect(() => {
 
           {/* TOP LEFT BUTTON */}
           <button
-            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900"
+            className="
+    border-r border-neutral-800
+    bg-neutral-950
+    hover:bg-neutral-900
+    flex items-center justify-center
+  "
           >
+            <img
+              src="/favicon.png"
+              alt="FXHEDZ"
+              className="
+      w-[90%]
+      h-[90%]
+      object-contain
+      select-none
+      pointer-events-none
+    "
+            />
           </button>
 
           {/* ACCOUNT STRIP */}
@@ -365,13 +417,27 @@ useEffect(() => {
           }}
         >
           {menuOpen && (
-            <div className="absolute bottom-[clamp(26px,3vh,40px)] left-0 w-[260px] bg-neutral-900 border border-neutral-800 p-4 z-50">
+            <div
+              ref={menuRef}
+              className="
+      absolute
+      bottom-[clamp(26px,3vh,40px)]
+      left-0
+      w-[260px]
+      bg-neutral-900
+      border border-neutral-800
+      p-4
+      z-50
+      shadow-lg
+    "
+            >
               <AuthButton />
             </div>
           )}
 
           {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
           <button
+            ref={hamburgerRef}
             onClick={() => setMenuOpen(prev => !prev)}
             className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
           >
@@ -401,15 +467,15 @@ useEffect(() => {
         </div>
 
       </main>
-{status !== "loading" && (
-  <AccessOverlay
-    active={subActive}
-    sessionExists={!!session}
-    status={accessMeta?.status}
-    expiry={accessMeta?.expiry}
-    blocked={accessMeta?.blocked}
-  />
-)}
+      {status !== "loading" && (
+        <AccessOverlay
+          active={subActive}
+          sessionExists={!!session}
+          status={accessMeta?.status}
+          expiry={accessMeta?.expiry}
+          blocked={accessMeta?.blocked}
+        />
+      )}
     </div>
   )
 }

@@ -38,9 +38,9 @@ export default function AccessOverlay({
             <Header />
             <Title>Device Restricted</Title>
             <Description>
-              Unauthorized workstation. Please contact support to register this device.
+              Please contact support to register this device.
             </Description>
-            <div className="space-y-4 w-full">
+            <div className="space-y-2 w-full">
               {/* FIXED: Direct Tailwind classes for the blue button */}
               <a 
                 href="https://t.me/fxhedzbot" 
@@ -80,7 +80,7 @@ export default function AccessOverlay({
             <Description>
               Your institutional trial has ended. Please upgrade for continued access.
             </Description>
-            <div className="space-y-4 w-full flex flex-col items-center">
+            <div className="space-y-2 w-full flex flex-col items-center">
               {/* FIXED: Direct Tailwind classes for the blue button */}
               <a 
                 href="https://t.me/fxhedzbot" 
@@ -105,7 +105,13 @@ export default function AccessOverlay({
 
 function OverlayContainer({ children }: any) {
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 pointer-events-none">
+    <div className="
+      fixed inset-0 z-[999]
+      flex items-end justify-center
+      pb-[clamp(20px,3vh,40px)]
+      px-4
+      pointer-events-none
+    ">
       {children}
     </div>
   )
@@ -114,13 +120,13 @@ function OverlayContainer({ children }: any) {
 function Panel({ children }: any) {
   return (
     <div className="
-      w-[90%] max-w-[360px] 
-      bg-[#0d0d0d] 
-      border border-neutral-800 
-      rounded-2xl 
-      shadow-[0_0_50px_rgba(0,0,0,0.8)] 
-      p-8 sm:p-10 
-      flex flex-col items-center text-center 
+      w-full max-w-[320px]
+      bg-[#0d0d0d]
+      border border-neutral-800
+      rounded-xl
+      shadow-[0_10px_40px_rgba(0,0,0,0.7)]
+      px-5 py-6
+      flex flex-col items-center text-center
       pointer-events-auto
     ">
       {children}
@@ -141,7 +147,7 @@ function Title({ children }: any) {
 }
 
 function Description({ children }: any) {
-  return <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-6">{children}</p>
+  return <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-4">{children}</p>
 }
 
 function GoogleLogoutButton() {
