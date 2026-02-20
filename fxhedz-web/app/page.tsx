@@ -9,61 +9,9 @@ import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
 import AccessOverlay from "@/components/AccessOverlay"
 
-function generateDummySignals() {
-  const base = {
-    direction: "SELL",
-    entry: 2345.50,
-    sl: 2360.00,
-    tp: 2320.00,
-    price: 2342.10,
-    lots: 2.40,
-    buys: 0,
-    sells: 3,
-    orders: [
-      {
-        id: "d1",
-        direction: "SELL",
-        entry: 2345.50,
-        lots: 0.80,
-        profit: -12.30,
-        time: "12:21:05"
-      },
-      {
-        id: "d2",
-        direction: "SELL",
-        entry: 2348.20,
-        lots: 0.80,
-        profit: -5.40,
-        time: "12:25:14"
-      },
-      {
-        id: "d3",
-        direction: "SELL",
-        entry: 2350.10,
-        lots: 0.80,
-        profit: 3.10,
-        time: "12:30:41"
-      }
-    ]
-  }
+import { generateDummySignals } from "@/lib/dummySignals"
 
   const pairs: any = {}
-
-  const PAIRS = [
-    "XAUUSD","BTCUSD","ETHUSD","EURUSD",
-    "GBPUSD","USDJPY","AUDUSD","USDCHF","USOIL"
-  ]
-
-  PAIRS.forEach(p => {
-    pairs[p] = {
-      ...base,
-      entry: base.entry + Math.random() * 50,
-      price: base.price + Math.random() * 30
-    }
-  })
-
-  return pairs
-}
 
 async function sha256(text: string) {
   const encoder = new TextEncoder()
