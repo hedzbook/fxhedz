@@ -35,20 +35,27 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session } = useSession()
+const [fingerprint, setFingerprint] = useState<string>("")
 
   useEffect(() => {
-    if (subActive !== true) return
+  const fp = btoa(
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    Intl.DateTimeFormat().resolvedOptions().timeZone +
+    navigator.platform +
+    navigator.language
+  )
+  setFingerprint(fp)
+}, [])
+
+useEffect(() => {
+
+  if (subActive !== true) return
+  if (!fingerprint) return
 
     async function loadSignals() {
       try {
-        const fingerprint = btoa(
-          navigator.userAgent +
-          screen.width +
-          screen.height +
-          Intl.DateTimeFormat().resolvedOptions().timeZone +
-          navigator.platform +
-          navigator.language
-        )
 
         const res = await fetch(
           `${SIGNAL_API}?fingerprint=${encodeURIComponent(fingerprint)}`
@@ -67,13 +74,16 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive])
+  }, [subActive, fingerprint])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-  useEffect(() => {
-    async function init() {
+useEffect(() => {
+
+  if (!fingerprint) return
+
+  async function init() {
 
       let id = localStorage.getItem("fxhedz_device_id")
 
@@ -93,15 +103,6 @@ export default function Page() {
       // 🔥 Critical: small wait to guarantee cookie persistence
       await new Promise(resolve => setTimeout(resolve, 60))
 
-      const fingerprint = btoa(
-        navigator.userAgent +
-        screen.width +
-        screen.height +
-        Intl.DateTimeFormat().resolvedOptions().timeZone +
-        navigator.platform +
-        navigator.language
-      )
-
       try {
         const res = await fetch(
           `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
@@ -116,7 +117,7 @@ export default function Page() {
     }
 
     init()
-  }, [])
+  }, [fingerprint])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -129,22 +130,16 @@ export default function Page() {
     return () => clearTimeout(timer)
   }, [signals])
 
-  useEffect(() => {
-    if (!openPair || subActive !== true) return
+useEffect(() => {
+
+  if (!openPair || subActive !== true) return
+  if (!fingerprint) return
 
     const pairKey = openPair
     let cancelled = false
 
     async function refreshOpenPair() {
       try {
-        const fingerprint = btoa(
-          navigator.userAgent +
-          screen.width +
-          screen.height +
-          Intl.DateTimeFormat().resolvedOptions().timeZone +
-          navigator.platform +
-          navigator.language
-        )
 
         const res = await fetch(
           `/api/signals?pair=${pairKey}&fingerprint=${encodeURIComponent(fingerprint)}`
@@ -166,7 +161,7 @@ export default function Page() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [openPair, subActive])
+}, [openPair, subActive, fingerprint])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
