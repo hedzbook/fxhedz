@@ -64,41 +64,45 @@ useEffect(() => {
 useEffect(() => {
   async function init() {
 
-  let id = localStorage.getItem("fxhedz_device_id")
+    let id = localStorage.getItem("fxhedz_device_id")
 
-  if (!id) {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      id = crypto.randomUUID()
-    } else {
-      id = Date.now().toString() + Math.random().toString(36).substring(2)
+    if (!id) {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        id = crypto.randomUUID()
+      } else {
+        id = Date.now().toString() + Math.random().toString(36).substring(2)
+      }
+
+      localStorage.setItem("fxhedz_device_id", id)
     }
 
-    localStorage.setItem("fxhedz_device_id", id)
-  }
+    // Write cookie FIRST
+    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
 
-  // ===== FINGERPRINT =====
-  const fingerprint = btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    Intl.DateTimeFormat().resolvedOptions().timeZone +
-    navigator.platform +
-    navigator.language
-  )
+    // 🔥 Critical: small wait to guarantee cookie persistence
+    await new Promise(resolve => setTimeout(resolve, 60))
 
-  // store device id cookie
-  document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-
-  try {
-    const res = await fetch(
-      `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`
+    const fingerprint = btoa(
+      navigator.userAgent +
+      screen.width +
+      screen.height +
+      Intl.DateTimeFormat().resolvedOptions().timeZone +
+      navigator.platform +
+      navigator.language
     )
-    const data = await res.json()
-    setSubActive(data.active)
-  } catch {
-    setSubActive(false)
+
+    try {
+      const res = await fetch(
+        `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+        { cache: "no-store" }
+      )
+
+      const data = await res.json()
+      setSubActive(data.active)
+    } catch {
+      setSubActive(false)
+    }
   }
-}
 
   init()
 }, [])
