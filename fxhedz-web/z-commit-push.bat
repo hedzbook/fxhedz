@@ -1,8 +1,9 @@
 @echo off
-cd /d "%~dp0"
+:: Move to the directory of the script, then go up one level
+cd /d "%~dp0.."
 
 REM =====================================
-REM FXHEDZ — AUTO PUSH
+REM FXHEDZ — AUTO PUSH (PARENT FOLDER)
 REM =====================================
 
 for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss"') do set NOW=%%i
