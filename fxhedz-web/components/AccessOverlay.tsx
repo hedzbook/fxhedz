@@ -77,33 +77,29 @@ if (blocked) {
   // =============================
   // 4️⃣ TRIAL EXPIRED (NOT LOGGED IN)
   // =============================
-  if (!sessionExists) {
-    return (
-      <OverlayContainer>
-        <div className="space-y-4 text-center max-w-sm">
+if (!sessionExists) {
+  return (
+    <OverlayContainer>
+      <div className="space-y-4 text-center max-w-sm">
 
-          <div className="text-[10px] uppercase tracking-widest text-neutral-500">
-            FXHEDZ LIVE ENGINE
-          </div>
-
-          <div className="text-xl font-semibold">
-            Trial Expired
-          </div>
-
-          <div className="text-neutral-400 text-sm">
-            Login with Google to continue your access.
-          </div>
-
-          <AuthButton />
-
-          <div className="text-xs text-neutral-500">
-            Continue trial for 7 days after login
-          </div>
-
+        <div className="text-[10px] uppercase tracking-widest text-neutral-500">
+          FXHEDZ LIVE ENGINE
         </div>
-      </OverlayContainer>
-    )
-  }
+
+        <div className="text-xl font-semibold">
+          Login Required
+        </div>
+
+        <div className="text-neutral-400 text-sm">
+          Sign in with Google to unlock live signals.
+        </div>
+
+        <AuthButton />
+
+      </div>
+    </OverlayContainer>
+  )
+}
 
   // =============================
   // 5️⃣ FREE EXPIRED (LOGGED IN)
