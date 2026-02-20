@@ -2,10 +2,11 @@
 // CONFIG
 // ======================================================
 const TOKEN = PropertiesService.getScriptProperties().getProperty("BOT_TOKEN");
-const WEBHOOK_SECRET = PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
+//const WEBHOOK_SECRET = PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
 const SPREADSHEET_ID = "1jMlONsIzwXyf_j9y96HkeIwRh0OynfTUak3MvHrJLyo";
 const SHEET_NAME = "USERS_LIST";
 const ADMIN_CHAT_ID = "7115081072";
+const WEBHOOK_SECRET = "HEDZ2026";
 
 const PAIRS = [
     "XAUUSD",
@@ -97,32 +98,123 @@ function setMarketNotes(data) {
         .setProperty("MARKET_NOTES", JSON.stringify(data))
 }
 
-function handleAuthUser(email, deviceId) {
+function handleAuthUser(email, deviceId, fingerprint) {
+
+    if (!email || !fingerprint) {
+        return {
+            blocked: true
+        };
+    }
 
     const sheet = SpreadsheetApp
         .openById(SPREADSHEET_ID)
         .getSheetByName("USERS_AUTH");
 
     const rows = sheet.getDataRange().getValues();
+    const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
 
-        const existingEmail = String(rows[i][0]).toLowerCase();
-        const existingDevice = String(rows[i][7] || "");
+        const rowEmail = String(rows[i][0] || "").toLowerCase();
+        const rowFingerprint = String(rows[i][8] || "");
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
 
-        // If same email → do nothing
-        if (existingEmail === email.toLowerCase()) {
-            return;
+        // ==================================================
+        // CASE 1 — Fingerprint trial exists without email → bind
+        // ==================================================
+        if (rowFingerprint === fingerprint && !rowEmail) {
+
+            const newExpiry = new Date(now);
+            newExpiry.setDate(newExpiry.getDate() + 7);
+
+            sheet.getRange(i + 1, 1).setValue(email); // bind email
+            sheet.getRange(i + 1, 3).setValue(newExpiry);
+            sheet.getRange(i + 1, 4).setValue("free");
+
+            return {
+                upgraded: true
+            };
         }
 
-        // 🚨 DEVICE ALREADY USED → BLOCK NEW TRIAL
-        if (existingDevice && existingDevice === deviceId) {
-            return;
+        // ==================================================
+        // CASE 2 — Same fingerprint + same email
+        // ==================================================
+        if (rowFingerprint === fingerprint && rowEmail === email.toLowerCase()) {
+
+            if (status !== "paid" && expiry < now) {
+                return {
+                    blocked: true
+                };
+            }
+
+            return {
+                upgraded: false
+            };
+        }
+
+        // ==================================================
+        // CASE 3 — Same email but DIFFERENT fingerprint
+        // ==================================================
+        if (rowEmail === email.toLowerCase() && rowFingerprint !== fingerprint) {
+
+            // Paid users → allow max 2 fingerprints
+            if (status === "paid" && expiry > now) {
+
+                // Count fingerprints for this email
+                const userFingerprints = rows
+                    .filter(r => String(r[0] || "").toLowerCase() === email.toLowerCase())
+                    .map(r => String(r[8] || ""))
+                    .filter(fp => fp);
+
+                const uniqueFingerprints = [...new Set(userFingerprints)];
+
+                if (uniqueFingerprints.length < 2) {
+
+                    const newExpiry = expiry > now ? expiry : now;
+
+                    sheet.appendRow([
+                        email,
+                        now,
+                        newExpiry,
+                        "paid",
+                        rows[i][4] || 0,
+                        "",
+                        "",
+                        deviceId,
+                        fingerprint,
+                        true
+                    ]);
+
+                    return {
+                        upgraded: false
+                    };
+                }
+
+                return {
+                    blocked: true
+                };
+            }
+
+            // Free users → only 1 fingerprint allowed
+            return {
+                blocked: true
+            };
+        }
+
+        // ==================================================
+        // CASE 4 — Fingerprint used by different email
+        // ==================================================
+        if (rowFingerprint === fingerprint && rowEmail !== email.toLowerCase()) {
+            return {
+                blocked: true
+            };
         }
     }
 
-    // Create 7-day free trial
-    const now = new Date();
+    // ==================================================
+    // BRAND NEW LOGIN (no fingerprint record)
+    // ==================================================
     const expiry = new Date(now);
     expiry.setDate(expiry.getDate() + 7);
 
@@ -134,8 +226,91 @@ function handleAuthUser(email, deviceId) {
         1,
         "",
         "",
-        deviceId
+        deviceId,
+        fingerprint,
+        true
     ]);
+
+    return {
+        upgraded: true
+    };
+}
+
+function handleDeviceAccess(deviceId, fingerprint) {
+
+    if (!fingerprint) {
+        return {
+            active: false,
+            blocked: true
+        };
+    }
+
+    const sheet = SpreadsheetApp
+        .openById(SPREADSHEET_ID)
+        .getSheetByName("USERS_AUTH");
+
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    // Check if fingerprint already consumed trial
+    const trialExists = rows.some(r =>
+        String(r[8] || "") === fingerprint &&
+        String(r[9] || "").toLowerCase() === "true"
+    );
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const rowFingerprint = String(rows[i][8] || "");
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
+
+        // SAME FINGERPRINT
+        if (rowFingerprint === fingerprint) {
+
+            const active =
+                status === "paid" ||
+                (status === "free" && expiry > now);
+
+            return {
+                active: active,
+                status: status,
+                expiry: expiry,
+                blocked: !active
+            };
+        }
+    }
+
+    if (trialExists) {
+        return {
+            active: false,
+            blocked: true
+        };
+    }
+
+    // 🔒 FINGERPRINT NEVER SEEN BEFORE
+    // Give 24h trial ONCE
+
+    const expiry = new Date(now);
+    expiry.setHours(expiry.getHours() + 24);
+
+    sheet.appendRow([
+        "", // email
+        now,
+        expiry,
+        "free",
+        0,
+        "",
+        "",
+        deviceId,
+        fingerprint,
+        true
+    ]);
+
+    return {
+        active: true,
+        status: "free",
+        expiry: expiry
+    };
 }
 
 function checkAuthUser(email) {
@@ -153,7 +328,7 @@ function checkAuthUser(email) {
         if (rowEmail !== email.toLowerCase()) continue;
 
         const expiry = new Date(rows[i][2]);
-        const status = String(rows[i][3]).toLowerCase();
+        const status = String(rows[i][3] || "").toLowerCase();
 
         const active =
             status === "paid" ||
@@ -189,8 +364,14 @@ function doPost(e) {
                 const data = JSON.parse(e.postData.contents);
 
                 if (data.email) {
-                    handleAuthUser(data.email, data.device_id || "");
-                    return ack;
+                    const result = handleAuthUser(
+                        data.email,
+                        data.device_id || "",
+                        data.fingerprint || ""
+                    );
+                    return ContentService
+                        .createTextOutput(JSON.stringify(result))
+                        .setMimeType(ContentService.MimeType.JSON);
                 }
 
             }
@@ -282,9 +463,24 @@ function doGet(e) {
             .createTextOutput("unauthorized");
     }
 
-    // ===============================
-    // EMAIL SUBSCRIPTION CHECK
-    // ===============================
+    // =================================================
+    // DEVICE ACCESS CHECK (24h trial + expiry)
+    // =================================================
+    if (e.parameter.device_id) {
+
+        const result = handleDeviceAccess(
+            e.parameter.device_id,
+            e.parameter.fingerprint || ""
+        );
+
+        return ContentService
+            .createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =================================================
+    // EMAIL SUBSCRIPTION CHECK (login upgrade layer)
+    // =================================================
     if (e.parameter.email) {
 
         const result = checkAuthUser(e.parameter.email);
@@ -294,9 +490,9 @@ function doGet(e) {
             .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // ===============================
+    // =================================================
     // SIGNAL READ
-    // ===============================
+    // =================================================
     const signals = getLiveSignals();
     const pair = (e.parameter.pair || "").toUpperCase();
 
@@ -1592,6 +1788,11 @@ function getMainKeyboard() {
         is_persistent: true,
         one_time_keyboard: false
     };
+}
+
+function debugSignals() {
+    const raw = PropertiesService.getScriptProperties().getProperty("LIVE_SIGNALS");
+    Logger.log(raw);
 }
 
 function getUserRow(chatId) {

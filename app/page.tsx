@@ -118,8 +118,8 @@ export default function Page() {
       }
 
       // Write cookie FIRST
-      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+document.cookie = `fx_device=${id}; path=/; max-age=31536000; SameSite=Lax`
+document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000; SameSite=Lax`
 
       // 🔥 Critical: small wait to guarantee cookie persistence
       await new Promise(resolve => setTimeout(resolve, 60))
