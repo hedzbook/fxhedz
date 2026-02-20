@@ -9,6 +9,15 @@ import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
 import AccessOverlay from "@/components/AccessOverlay"
 
+async function sha256(text: string) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(text)
+  const hash = await crypto.subtle.digest("SHA-256", data)
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+}
+
 const PAIRS = [
   "XAUUSD",
   "BTCUSD",
@@ -35,24 +44,35 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session } = useSession()
-const [fingerprint, setFingerprint] = useState<string>("")
+  const [fingerprint, setFingerprint] = useState<string>("")
+  const [accessMeta, setAccessMeta] = useState<any>(null)
 
   useEffect(() => {
-  const fp = btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    Intl.DateTimeFormat().resolvedOptions().timeZone +
-    navigator.platform +
-    navigator.language
-  )
-  setFingerprint(fp)
-}, [])
 
-useEffect(() => {
+    async function generateFingerprint() {
 
-  if (subActive !== true) return
-  if (!fingerprint) return
+      const raw = [
+        navigator.userAgent,
+        screen.width,
+        screen.height,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        navigator.hardwareConcurrency,
+        navigator.platform,
+        navigator.language
+      ].join("|")
+
+      const hash = await sha256(raw)
+      setFingerprint(hash)
+    }
+
+    generateFingerprint()
+
+  }, [])
+
+  useEffect(() => {
+
+    if (subActive !== true) return
+    if (!fingerprint) return
 
     async function loadSignals() {
       try {
@@ -79,11 +99,11 @@ useEffect(() => {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
+  useEffect(() => {
 
-  if (!fingerprint) return
+    if (!fingerprint) return
 
-  async function init() {
+    async function init() {
 
       let id = localStorage.getItem("fxhedz_device_id")
 
@@ -99,6 +119,7 @@ useEffect(() => {
 
       // Write cookie FIRST
       document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
 
       // 🔥 Critical: small wait to guarantee cookie persistence
       await new Promise(resolve => setTimeout(resolve, 60))
@@ -111,6 +132,7 @@ useEffect(() => {
 
         const data = await res.json()
         setSubActive(data.active)
+setAccessMeta(data)
       } catch {
         setSubActive(false)
       }
@@ -130,10 +152,10 @@ useEffect(() => {
     return () => clearTimeout(timer)
   }, [signals])
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (!openPair || subActive !== true) return
-  if (!fingerprint) return
+    if (!openPair || subActive !== true) return
+    if (!fingerprint) return
 
     const pairKey = openPair
     let cancelled = false
@@ -161,7 +183,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-}, [openPair, subActive, fingerprint])
+  }, [openPair, subActive, fingerprint])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -334,10 +356,13 @@ useEffect(() => {
         </div>
 
       </main>
-      <AccessOverlay
-        active={subActive}
-        sessionExists={!!session}
-      />
+<AccessOverlay
+  active={subActive}
+  sessionExists={!!session}
+  status={accessMeta?.status}
+  expiry={accessMeta?.expiry}
+  blocked={accessMeta?.blocked}
+/>
     </div>
   )
 }

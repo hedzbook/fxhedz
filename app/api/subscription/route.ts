@@ -6,7 +6,12 @@ export async function GET(req: NextRequest) {
   const fingerprint = req.nextUrl.searchParams.get("fingerprint") || ""
 
   if (!deviceId) {
-    return NextResponse.json({ active: false })
+    return NextResponse.json({
+      active: false,
+      blocked: true,
+      status: null,
+      expiry: null
+    })
   }
 
   try {
@@ -18,10 +23,20 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json()
 
-    return NextResponse.json(data)
+    return NextResponse.json({
+      active: Boolean(data?.active),
+      blocked: Boolean(data?.blocked),
+      status: data?.status ?? null,
+      expiry: data?.expiry ?? null
+    })
 
   } catch {
 
-    return NextResponse.json({ active: false })
+    return NextResponse.json({
+      active: false,
+      blocked: true,
+      status: null,
+      expiry: null
+    })
   }
 }

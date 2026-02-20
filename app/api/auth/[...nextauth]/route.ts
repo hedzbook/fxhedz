@@ -13,31 +13,32 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async signIn({ user }) {
-      try {
-        if (user?.email) {
+async signIn({ user }) {
+  try {
+    if (user?.email) {
 
-          // ✅ cookies() is async in Next 16
-          const cookieStore = await cookies()
+      const cookieStore = await cookies()
+      const deviceId = cookieStore.get("fx_device")?.value || ""
 
-          const deviceId =
-            cookieStore.get("fx_device")?.value || ""
+      // 🔥 read fingerprint cookie too
+      const fingerprint = cookieStore.get("fx_fp")?.value || ""
 
-          await fetch(process.env.GAS_AUTH_URL!, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              device_id: deviceId
-            }),
-          })
-        }
-      } catch (e) {
-        console.error("Auth sync failed:", e)
-      }
-
-      return true
+      await fetch(process.env.GAS_AUTH_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          device_id: deviceId,
+          fingerprint: fingerprint
+        }),
+      })
     }
+  } catch (e) {
+    console.error("Auth sync failed:", e)
+  }
+
+  return true
+}
   }
 }
 

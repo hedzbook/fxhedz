@@ -61,31 +61,32 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async signIn({ user }) {
-      try {
-        if (user?.email) {
+async signIn({ user }) {
+  try {
+    if (user?.email) {
 
-          // âœ… cookies() is async in Next 16
-          const cookieStore = await cookies()
+      const cookieStore = await cookies()
+      const deviceId = cookieStore.get("fx_device")?.value || ""
 
-          const deviceId =
-            cookieStore.get("fx_device")?.value || ""
+      // ðŸ”¥ read fingerprint cookie too
+      const fingerprint = cookieStore.get("fx_fp")?.value || ""
 
-          await fetch(process.env.GAS_AUTH_URL!, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              device_id: deviceId
-            }),
-          })
-        }
-      } catch (e) {
-        console.error("Auth sync failed:", e)
-      }
-
-      return true
+      await fetch(process.env.GAS_AUTH_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          device_id: deviceId,
+          fingerprint: fingerprint
+        }),
+      })
     }
+  } catch (e) {
+    console.error("Auth sync failed:", e)
+  }
+
+  return true
+}
   }
 }
 
@@ -154,9 +155,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No device" }, { status: 401 })
   }
 
-  const accessRes = await fetch(
-    `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}`
-  )
+const fingerprint = req.nextUrl.searchParams.get("fingerprint") || ""
+
+const accessRes = await fetch(
+  `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
+)
 
   const access = await accessRes.json()
 
@@ -309,6 +312,15 @@ import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
 import AccessOverlay from "@/components/AccessOverlay"
 
+async function sha256(text: string) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(text)
+  const hash = await crypto.subtle.digest("SHA-256", data)
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+}
+
 const PAIRS = [
   "XAUUSD",
   "BTCUSD",
@@ -335,13 +347,41 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session } = useSession()
+  const [fingerprint, setFingerprint] = useState<string>("")
 
-useEffect(() => {
-  if (subActive !== true) return
+  useEffect(() => {
+
+    async function generateFingerprint() {
+
+      const raw = [
+        navigator.userAgent,
+        screen.width,
+        screen.height,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        navigator.hardwareConcurrency,
+        navigator.platform,
+        navigator.language
+      ].join("|")
+
+      const hash = await sha256(raw)
+      setFingerprint(hash)
+    }
+
+    generateFingerprint()
+
+  }, [])
+
+  useEffect(() => {
+
+    if (subActive !== true) return
+    if (!fingerprint) return
 
     async function loadSignals() {
       try {
-        const res = await fetch(SIGNAL_API)
+
+        const res = await fetch(
+          `${SIGNAL_API}?fingerprint=${encodeURIComponent(fingerprint)}`
+        )
         const json = await res.json()
         const incoming = json?.signals ? json.signals : json
 
@@ -356,56 +396,51 @@ useEffect(() => {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive])
+  }, [subActive, fingerprint])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
-  async function init() {
+  useEffect(() => {
 
-    let id = localStorage.getItem("fxhedz_device_id")
+    if (!fingerprint) return
 
-    if (!id) {
-      if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        id = crypto.randomUUID()
-      } else {
-        id = Date.now().toString() + Math.random().toString(36).substring(2)
+    async function init() {
+
+      let id = localStorage.getItem("fxhedz_device_id")
+
+      if (!id) {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+          id = crypto.randomUUID()
+        } else {
+          id = Date.now().toString() + Math.random().toString(36).substring(2)
+        }
+
+        localStorage.setItem("fxhedz_device_id", id)
       }
 
-      localStorage.setItem("fxhedz_device_id", id)
+      // Write cookie FIRST
+      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+
+      // ðŸ”¥ Critical: small wait to guarantee cookie persistence
+      await new Promise(resolve => setTimeout(resolve, 60))
+
+      try {
+        const res = await fetch(
+          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          { cache: "no-store" }
+        )
+
+        const data = await res.json()
+        setSubActive(data.active)
+      } catch {
+        setSubActive(false)
+      }
     }
 
-    // Write cookie FIRST
-    document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-
-    // ðŸ”¥ Critical: small wait to guarantee cookie persistence
-    await new Promise(resolve => setTimeout(resolve, 60))
-
-    const fingerprint = btoa(
-      navigator.userAgent +
-      screen.width +
-      screen.height +
-      Intl.DateTimeFormat().resolvedOptions().timeZone +
-      navigator.platform +
-      navigator.language
-    )
-
-    try {
-      const res = await fetch(
-        `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-        { cache: "no-store" }
-      )
-
-      const data = await res.json()
-      setSubActive(data.active)
-    } catch {
-      setSubActive(false)
-    }
-  }
-
-  init()
-}, [])
+    init()
+  }, [fingerprint])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -418,15 +453,20 @@ useEffect(() => {
     return () => clearTimeout(timer)
   }, [signals])
 
-useEffect(() => {
-  if (!openPair || subActive !== true) return
+  useEffect(() => {
+
+    if (!openPair || subActive !== true) return
+    if (!fingerprint) return
 
     const pairKey = openPair
     let cancelled = false
 
     async function refreshOpenPair() {
       try {
-        const res = await fetch(`/api/signals?pair=${pairKey}`)
+
+        const res = await fetch(
+          `/api/signals?pair=${pairKey}&fingerprint=${encodeURIComponent(fingerprint)}`
+        )
         const json = await res.json()
         if (cancelled) return
 
@@ -444,7 +484,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-}, [openPair, subActive])
+  }, [openPair, subActive, fingerprint])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -466,12 +506,11 @@ useEffect(() => {
   return (
     <div className="relative">
 
-<main
-  className={`h-[100dvh] bg-black text-white flex flex-col ${
-    subActive !== true ? "pointer-events-none" : ""
-  }`}
-  style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
->
+      <main
+        className={`h-[100dvh] bg-black text-white flex flex-col ${subActive !== true ? "pointer-events-none" : ""
+          }`}
+        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+      >
 
         {/* TOP BAR */}
         <div
@@ -618,10 +657,10 @@ useEffect(() => {
         </div>
 
       </main>
-    <AccessOverlay
-      active={subActive}
-      sessionExists={!!session}
-    />
+      <AccessOverlay
+        active={subActive}
+        sessionExists={!!session}
+      />
     </div>
   )
 }
