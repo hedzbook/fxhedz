@@ -99,7 +99,7 @@ export default function Page() {
   const [netState, setNetState] = useState("FLAT")
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
 
@@ -108,6 +108,11 @@ export default function Page() {
   console.log("FINGERPRINT:", fingerprint)
   console.log("SUBACTIVE:", subActive)
 }, [session, fingerprint, subActive])
+
+useEffect(() => {
+  setAccessMeta(null)
+  setSubActive(null)
+}, [session])
 
 useEffect(() => {
 
@@ -448,13 +453,15 @@ useEffect(() => {
         </div>
 
       </main>
-<AccessOverlay
-  active={subActive}
-  sessionExists={!!session}
-  status={accessMeta?.status}
-  expiry={accessMeta?.expiry}
-  blocked={accessMeta?.blocked}
-/>
+{status !== "loading" && (
+  <AccessOverlay
+    active={subActive}
+    sessionExists={!!session}
+    status={accessMeta?.status}
+    expiry={accessMeta?.expiry}
+    blocked={accessMeta?.blocked}
+  />
+)}
     </div>
   )
 }
