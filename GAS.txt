@@ -275,7 +275,7 @@ function handleDeviceAccess(deviceId, fingerprint) {
                 active: active,
                 status: status,
                 expiry: expiry,
-                blocked: !active
+                blocked: false
             };
         }
     }
