@@ -3,6 +3,10 @@
 PROJECT STRUCTURE
 ==================================================
 
+==================================================
+PROJECT STRUCTURE
+==================================================
+
 .env.local
 .gitignore
 app\api\auth\[...nextauth]\route.ts
@@ -825,7 +829,7 @@ export default function Page() {
                 <div className="space-y-2 text-neutral-400">
 
                   <div className="flex justify-between">
-                    <span>Status</span>
+                    <span>Plan</span>
                     <span className={subActive ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
                       {subActive ? "ACTIVE" : "INACTIVE"}
                     </span>
@@ -864,7 +868,7 @@ export default function Page() {
           transition-colors
         "
                 >
-                  Upgrade
+                  LIVE+
                 </a>
 
                 {/* SUPPORT */}
@@ -880,7 +884,7 @@ export default function Page() {
           transition-colors
         "
                 >
-                  Support
+                  HELP
                 </a>
 
                 {/* AUTH BUTTON */}
@@ -1028,8 +1032,8 @@ export default function AccessOverlay({
           </>
         )}
 
-        {/* 4ï¸âƒ£ FREE EXPIRED */}
-        {sessionExists && status === "free" && !blocked && (
+        {/* 4ï¸âƒ£ LIVE EXPIRED */}
+        {sessionExists && status === "live" && !blocked && (
           <>
             <Header />
             <Title>Trial Concluded</Title>
@@ -1044,7 +1048,7 @@ export default function AccessOverlay({
                 rel="noopener noreferrer"
                 className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
-                Upgrade Subscription
+                Get LIVE+
               </a>
               <div className="w-full pt-2 border-t border-neutral-800 mt-2 flex justify-center">
                 <GoogleLogoutButton />

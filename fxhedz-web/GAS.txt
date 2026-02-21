@@ -145,7 +145,7 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
             email,
             now,
             expiry,
-            "free",
+            "live",
             0,
             "",
             telegramChatId,
@@ -158,7 +158,7 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
 
         return {
             active: true,
-            status: "free",
+            plan: "live",
             expiry
         };
     }
@@ -168,15 +168,26 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
     // ============================
 
     const expiry = rowData[2] ? new Date(rowData[2]) : new Date(0);
-    const status = String(rowData[3] || "").toLowerCase();
+    const plan = String(rowData[3] || "").toLowerCase();
+    if (telegramChatId) {
+        const existingChatId = rowData[6] || "";
+        if (!existingChatId) {
+            sheet.getRange(rowIndex + 1, 7).setValue(telegramChatId);
+        } else if (existingChatId !== telegramChatId) {
+            return {
+                blocked: true,
+                reason: "telegram_mismatch"
+            };
+        }
+    }
     const active =
-        status === "paid" ||
-        (status === "free" && expiry > now);
+        plan === "live+" ||
+        (plan === "live" && expiry > now);
 
     if (!active) {
         return {
             active: false,
-            status,
+            plan,
             expiry
         };
     }
@@ -202,7 +213,7 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
             .setValue(JSON.stringify(devicePayload));
         return {
             active,
-            status,
+            plan,
             expiry
         };
     }
@@ -222,7 +233,7 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
 
         return {
             active,
-            status,
+            plan,
             expiry
         };
     }
@@ -241,7 +252,7 @@ function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platf
     platform = (platform || "web").toLowerCase().trim();
 
     const hasPaid = userRows.some(u =>
-        String(u.row[3] || "").toLowerCase() === "paid"
+        String(u.row[3] || "").toLowerCase() === "live+"
     );
 
     // =========================================
@@ -265,11 +276,11 @@ function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platf
     if (existing) {
 
         const expiry = existing.row[2] ? new Date(existing.row[2]) : new Date(0);
-        const status = String(existing.row[3] || "").toLowerCase();
+        const plan = String(existing.row[3] || "").toLowerCase();
 
         const active =
-            status === "paid" ||
-            (status === "free" && expiry > now);
+            plan === "live+" ||
+            (plan === "live" && expiry > now);
 
         // Telegram binding logic (unchanged but cleaner)
         if (telegramChatId) {
@@ -293,7 +304,7 @@ function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platf
 
         return {
             active,
-            status,
+            plan,
             expiry
         };
     }
@@ -310,7 +321,7 @@ function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platf
 
         return {
             active: true,
-            status: rowToReplace.row[3],
+            plan: rowToReplace.row[3],
             expiry: rowToReplace.row[2]
         };
     }
@@ -349,7 +360,7 @@ function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platf
 
     return {
         active: true,
-        status: baseRow[3],
+        plan: baseRow[3],
         expiry: baseRow[2]
     };
 }
@@ -371,20 +382,20 @@ function checkAuthUser(email) {
         if (String(rows[i][0] || "").toLowerCase() !== email) continue;
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][3] || "").toLowerCase();
 
-        if (status === "paid") {
+        if (plan === "live+") {
             return {
                 active: true,
-                status,
+                plan,
                 expiry
             };
         }
 
-        if (status === "free" && expiry > now) {
+        if (plan === "live" && expiry > now) {
             return {
                 active: true,
-                status,
+                plan,
                 expiry
             };
         }
@@ -538,14 +549,14 @@ function requireSignalAccess(email) {
     if (!auth || !auth.active) {
         return {
             blocked: true,
-            status: auth ? auth.status : "none",
+            plan: auth ? auth.plan : "none",
             expiry: auth ? auth.expiry : null
         };
     }
 
     return {
         blocked: false,
-        status: auth.status,
+        plan: auth.plan,
         expiry: auth.expiry
     };
 }
@@ -589,18 +600,18 @@ function doGet(e) {
         if (!match) continue;
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][3] || "").toLowerCase();
 
         const active =
-            status === "paid" ||
-            (status === "free" && expiry > now);
+            plan === "live+" ||
+            (plan === "live" && expiry > now);
 
         if (!active) {
-            return jsonBlocked(status, expiry);
+            return jsonBlocked(plan, expiry);
         }
 
         return buildSignalResponse({
-            status,
+            plan,
             expiry
         }, pair);
     }
@@ -635,12 +646,12 @@ function resetUserDevices(email) {
     };
 }
 
-function jsonBlocked(status, expiry) {
+function jsonBlocked(plan, expiry) {
     return ContentService
         .createTextOutput(JSON.stringify({
             blocked: true,
             active: false,
-            status: status || null,
+            plan: plan || null,
             expiry: expiry || null
         }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -660,7 +671,7 @@ function buildSignalResponse(access, pair) {
             .createTextOutput(JSON.stringify({
                 blocked: false,
                 active: true,
-                status: access.status,
+                plan: access.plan,
                 expiry: access.expiry,
                 signals,
                 history: data.history,
@@ -675,7 +686,7 @@ function buildSignalResponse(access, pair) {
         .createTextOutput(JSON.stringify({
             blocked: false,
             active: true,
-            status: access.status,
+            plan: access.plan,
             expiry: access.expiry,
             signals
         }))
@@ -713,7 +724,7 @@ function handleTelegram(data) {
     // UI ROUTING (emoji safe)
     if (text) {
         if (text.includes("PAIR")) return onInstruments(chatId);
-        if (text.includes("PLUS")) return onSubscription(chatId);
+        if (text.includes("LIVE")) return onSubscription(chatId);
         if (text.includes("READ")) return onBooks(chatId);
         if (text.includes("HELP")) return onSupport(chatId);
     }
@@ -723,6 +734,44 @@ function handleTelegram(data) {
     if (chatId === ADMIN_CHAT_ID && text.startsWith("/deactivate")) return onDeactivate(text);
     if (chatId === ADMIN_CHAT_ID && text.startsWith("/sendall")) return onBroadcast(text);
     if (chatId === ADMIN_CHAT_ID && text.startsWith("/reply")) return onAdminReply(text);
+}
+
+function setBotCommands() {
+    const url = "https://api.telegram.org/bot" + TOKEN + "/setMyCommands";
+
+    const payload = {
+        commands: [{
+                command: "start",
+                description: "Open main menu"
+            },
+            {
+                command: "pair",
+                description: "Select instruments"
+            },
+            {
+                command: "live",
+                description: "View live+ plans"
+            },
+            {
+                command: "read",
+                description: "Forex Trilogy Books"
+            },
+            {
+                command: "myid",
+                description: "Show your Chat ID"
+            },
+            {
+                command: "help",
+                description: "Support & assistance"
+            },
+        ]
+    };
+
+    UrlFetchApp.fetch(url, {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify(payload)
+    });
 }
 
 function onInstruments(chatId) {
@@ -826,10 +875,10 @@ function onActivate(text) {
         if (String(rows[i][6]) === chatId) {
 
             const currentExpiry = new Date(rows[i][2]);
-            const status = String(rows[i][3]).toLowerCase();
+            const plan = String(rows[i][3]).toLowerCase();
 
             const baseDate =
-                (status === "paid" && currentExpiry > now) ?
+                (plan === "live+" && currentExpiry > now) ?
                 currentExpiry :
                 now;
 
@@ -837,7 +886,7 @@ function onActivate(text) {
             newExpiry.setMonth(newExpiry.getMonth() + months);
 
             sheet.getRange(i + 1, 3).setValue(newExpiry); // C expiry
-            sheet.getRange(i + 1, 4).setValue("paid"); // D status
+            sheet.getRange(i + 1, 4).setValue("live+"); // D plan
             sheet.getRange(i + 1, 5).setValue(months); // E plan_months
 
             send(chatId,
@@ -898,10 +947,10 @@ function activateAuthUser(email, months) {
         if (String(rows[i][0]).toLowerCase() !== email.toLowerCase()) continue;
 
         const currentExpiry = new Date(rows[i][2]);
-        const currentStatus = String(rows[i][3]).toLowerCase();
+        const currentPlan = String(rows[i][3]).toLowerCase();
 
         let baseDate =
-            (currentStatus === "paid" && currentExpiry > now) ?
+            (currentPlan === "live+" && currentExpiry > now) ?
             currentExpiry :
             now;
 
@@ -909,7 +958,7 @@ function activateAuthUser(email, months) {
         newExpiry.setMonth(newExpiry.getMonth() + months);
 
         sheet.getRange(i + 1, 3).setValue(newExpiry); // expiry
-        sheet.getRange(i + 1, 4).setValue("paid"); // status
+        sheet.getRange(i + 1, 4).setValue("live+"); // plan
         sheet.getRange(i + 1, 5).setValue(months); // plan_months
 
         return;
@@ -940,9 +989,9 @@ function activateAndroidPurchase(email, purchaseToken, months) {
     if (foundRow !== -1) {
 
         const currentExpiry = rows[foundRow][2] ? new Date(rows[foundRow][2]) : new Date(0);
-        const currentStatus = String(rows[foundRow][3] || "").toLowerCase();
+        const currentPlan = String(rows[foundRow][3] || "").toLowerCase();
 
-        if (currentStatus === "paid" && currentExpiry > now) {
+        if (currentPlan === "live+" && currentExpiry > now) {
             baseDate = currentExpiry;
         }
 
@@ -950,7 +999,7 @@ function activateAndroidPurchase(email, purchaseToken, months) {
         newExpiry.setMonth(newExpiry.getMonth() + months);
 
         sheet.getRange(foundRow + 1, 3).setValue(newExpiry);
-        sheet.getRange(foundRow + 1, 4).setValue("paid");
+        sheet.getRange(foundRow + 1, 4).setValue("live+");
         sheet.getRange(foundRow + 1, 5).setValue(months);
         sheet.getRange(foundRow + 1, 12).setValue(purchaseToken);
 
@@ -968,7 +1017,7 @@ function activateAndroidPurchase(email, purchaseToken, months) {
         email,
         now,
         newExpiry,
-        "paid",
+        "live+",
         months,
         "",
         "",
@@ -1227,8 +1276,8 @@ function onStart(chatId) {
     const now = new Date();
 
     const active =
-        row.status === "paid" ||
-        (row.status === "free" && row.expiry >= now);
+        row.plan === "live+" ||
+        (row.plan === "live" && row.expiry >= now);
 
     if (!active) {
         sendExpired(chatId);
@@ -1238,7 +1287,7 @@ function onStart(chatId) {
     sendMenu(
         chatId,
         "👋 <b>Welcome back</b>\n\n" +
-        "Status: " + row.status.toUpperCase() + "\n" +
+        "Plan: " + row.plan.toUpperCase() + "\n" +
         "Valid till: " + formatDate(row.expiry)
     );
 }
@@ -1247,7 +1296,7 @@ function sendMenu(chatId, text) {
     sendRich(chatId, text, getMainKeyboard());
 }
 
-function onStatus(chatId) {
+function onPlan(chatId) {
     if (!isUserAllowed(chatId)) {
         sendExpired(chatId);
         return;
@@ -1257,8 +1306,8 @@ function onStatus(chatId) {
 
     sendMenu(
         chatId,
-        "📊 <b>Subscription Status</b>\n\n" +
-        "Plan: " + row.status.toUpperCase() + "\n" +
+        "📊 <b>Subscription Plan</b>\n\n" +
+        "Plan: " + row.plan.toUpperCase() + "\n" +
         "Valid till: " + formatDate(row.expiry)
     );
 }
@@ -1277,28 +1326,28 @@ function onSubscription(chatId) {
     const row = getUserRow(chatId);
     const now = new Date();
 
-    let statusText;
+    let planText;
 
-    if (!row) {
-        statusText = "Status: NOT FOUND";
-    } else if (row.status === "paid") {
-        statusText =
-            "Status: PAID\n" +
-            "Valid till: " + formatDate(row.expiry);
-    } else if (row.status === "free" && row.expiry >= now) {
-        statusText =
-            "Status: FREE ACCESS\n" +
-            "Valid till: " + formatDate(row.expiry);
-    } else {
-        statusText = "Status: EXPIRED";
-    }
+if (!row) {
+    planText = "Plan: NOT FOUND";
+} else if (row.plan === "live+") {
+    planText =
+        "Plan: LIVE+\n" +
+        "Valid till: " + formatDate(row.expiry);
+} else if (row.plan === "live" && row.expiry >= now) {
+    planText =
+        "Plan: LIVE\n" +
+        "Valid till: " + formatDate(row.expiry);
+} else {
+    planText = "Plan: EXPIRED";
+}
 
     sendRich(
         chatId,
-        "💳 <b>FXHEDZ LIVE – Subscription</b>\n\n" +
-        statusText + "\n\n" +
+        "💳 <b>FXHEDZ LIVE</b>\n\n" +
+        planText + "\n\n" +
         "━━━━━━━━━━━━━━\n\n" +
-        "Choose a plan below 👇\n\n" +
+        "Upgrade to LIVE+ 👇\n\n" +
         "🔥 <b>6 Months</b> is most popular\n" +
         "💎 <b>12 Months</b> is best value\n\n" +
         "🆔 <b>Your Telegram Chat ID</b>:\n" +
@@ -1380,8 +1429,11 @@ function onBooks(chatId) {
 function isUserAllowed(chatId) {
     const row = getUserRow(chatId);
     if (!row) return false;
-    return row.status === "paid" ||
-        (row.status === "free" && row.expiry >= new Date());
+
+    const now = new Date();
+
+    return row.plan === "live+" ||
+        (row.plan === "live" && row.expiry >= now);
 }
 
 function sendExpired(chatId) {
@@ -1955,11 +2007,11 @@ function dispatchImageToUsers(blob, tx) {
         if (!chatId) continue;
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][3] || "").toLowerCase();
         const instruments = rows[i][5] ?
             String(rows[i][5]).split(",") : [];
 
-        if (status !== "paid" && !(status === "free" && expiry > now)) {
+        if (plan !== "live+" && !(plan === "live" && expiry > now)) {
             continue;
         }
 
@@ -2016,7 +2068,7 @@ function getMainKeyboard() {
                     text: "💱 PAIR"
                 },
                 {
-                    text: "👑 PLUS"
+                    text: "👑 LIVE+"
                 },
                 {
                     text: "📚 READ"
@@ -2049,7 +2101,7 @@ function getUserRow(chatId) {
                 rowIndex: i + 1,
                 email: rows[i][0],
                 expiry: rows[i][2] ? new Date(rows[i][2]) : new Date(0),
-                status: String(rows[i][3] || "").toLowerCase(),
+                plan: String(rows[i][3] || "").toLowerCase(),
                 plan_months: rows[i][4] || 0,
                 instruments: rows[i][5] ? String(rows[i][5]).split(",") : []
             };
@@ -2110,9 +2162,9 @@ function nightlyExpirySweep() {
     for (let i = 1; i < rows.length; i++) {
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][3] || "").toLowerCase();
 
-        if (status === "paid" && expiry < now) {
+        if (plan === "live+" && expiry < now) {
             sheet.getRange(i + 1, 4).setValue("expired");
         }
     }
