@@ -46,8 +46,15 @@ export default function AccessOverlay({
 
       <button
         onClick={async () => {
-          await fetch("/api/reset-devices", { method: "POST" })
-          window.location.reload()
+const res = await fetch("/api/reset-devices", {
+  method: "POST"
+})
+
+const data = await res.json()
+
+if (data?.success) {
+  window.location.reload()
+}
         }}
         className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
       >
