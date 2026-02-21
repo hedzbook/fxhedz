@@ -44,18 +44,18 @@ export default function Page() {
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
-  try {
-    const res = await fetch(`/api/public-preview?pair=${pair}`)
-    const json = await res.json()
+    try {
+      const res = await fetch(`/api/public-preview?pair=${pair}`)
+      const json = await res.json()
 
-    setPairData((prev: any) => ({
-      ...prev,
-      [pair]: json
-    }))
-  } catch (e) {
-    console.error("Preview load failed", e)
+      setPairData((prev: any) => ({
+        ...prev,
+        [pair]: json
+      }))
+    } catch (e) {
+      console.error("Preview load failed", e)
+    }
   }
-}
   const menuRef = useRef<HTMLDivElement | null>(null)
   const hamburgerRef = useRef<HTMLButtonElement | null>(null)
   const daysLeft = useMemo(() => {
@@ -120,19 +120,19 @@ export default function Page() {
 
   useEffect(() => {
 
-if (status === "loading") return
+    if (status === "loading") return
 
-if (!session) {
-  setSignals(generateDummySignals())
-  return
-}
+    if (!session) {
+      setSignals(generateDummySignals())
+      return
+    }
 
-if (subActive === false) {
-  setSignals(generateDummySignals())
-  return
-}
+    if (subActive === false) {
+      setSignals(generateDummySignals())
+      return
+    }
 
-if (subActive === null) return
+    if (subActive === null) return
     if (!fingerprint) return
 
     async function loadSignals() {
@@ -162,32 +162,33 @@ if (subActive === null) return
   // =============================
   useEffect(() => {
 
-    // NOT logged in → no verification
-    if (!session) {
+    if (status === "loading") return
+
+    // If definitely not authenticated
+    if (status === "unauthenticated") {
       setSubActive(false)
       return
     }
 
-    // Wait until fingerprint exists
-    if (!fingerprint) {
-      return
-    }
+    // If authenticated but fingerprint not ready
+    if (!fingerprint) return
 
     async function init() {
 
-      const params = new URLSearchParams(window.location.search)
+      // ===============================
+      // PLATFORM + DEVICE COOKIES
+      // ===============================
 
+      const params = new URLSearchParams(window.location.search)
       const urlPlatform = params.get("platform")
       const urlDeviceId = params.get("device_id")
 
-      // Determine platform
       let platform = "web"
 
       if (urlPlatform === "android") {
         platform = "android"
       }
 
-      // Telegram override
       try {
         const tg = (window as any)?.Telegram?.WebApp
         if (tg?.initDataUnsafe?.user?.id) {
@@ -197,7 +198,6 @@ if (subActive === null) return
         }
       } catch { }
 
-      // Determine device ID
       let id = urlDeviceId || localStorage.getItem("fxhedz_device_id")
 
       if (!id) {
@@ -209,21 +209,9 @@ if (subActive === null) return
       document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
       document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
 
-      // 🔥 PLATFORM DETECTION
-      try {
-        const tg = (window as any)?.Telegram?.WebApp
-
-        if (tg?.initDataUnsafe?.user?.id) {
-          const tgUser = tg.initDataUnsafe.user
-
-          document.cookie = `fx_platform=telegram; path=/; max-age=31536000`
-          document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
-        } else {
-          document.cookie = `fx_platform=web; path=/; max-age=31536000`
-        }
-      } catch {
-        document.cookie = `fx_platform=web; path=/; max-age=31536000`
-      }
+      // ===============================
+      // SUBSCRIPTION CHECK
+      // ===============================
 
       try {
         const res = await fetch(
@@ -232,23 +220,14 @@ if (subActive === null) return
         )
 
         const data = await res.json()
-        //console.log("SUB DATA:", data)
 
-        if (data?.blocked && data?.reason === "device_limit_exceeded") {
+        if (data?.blocked) {
           setSubActive(false)
-          setAccessMeta({
-            ...data,
-            deviceLimit: true
-          })
+          setAccessMeta(data)
           return
         }
 
-        if (data?.blocked || data?.active === false) {
-          await signOut({ callbackUrl: "/" })
-          return
-        }
-
-        setSubActive(true)
+        setSubActive(Boolean(data?.active))
         setAccessMeta(data)
 
       } catch {
@@ -258,7 +237,7 @@ if (subActive === null) return
 
     init()
 
-  }, [fingerprint, session])
+  }, [status, fingerprint])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -271,18 +250,18 @@ if (subActive === null) return
     return () => clearTimeout(timer)
   }, [signals])
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (!openPair) return
+    if (!openPair) return
 
-  const isGuest =
-  status !== "authenticated" ||
-  subActive === false
+    const isGuest =
+      status !== "authenticated" ||
+      subActive === false
 
-  if (isGuest) {
-    loadPreview(openPair)
-    return
-  }
+    if (isGuest) {
+      loadPreview(openPair)
+      return
+    }
     if (!fingerprint) return
 
     const pairKey = openPair
@@ -331,24 +310,24 @@ useEffect(() => {
   }, [uiSignals, pairData])
 
   const isGuest =
-  status !== "authenticated" ||
-  subActive === false
+    status !== "authenticated" ||
+    subActive === false
 
-const detailData = openPair
-  ? (
+  const detailData = openPair
+    ? (
       isGuest
         ? {
-            ...pairData?.[openPair],
-            ...generateDummyDetail(openPair),
-            orders: uiSignals?.[openPair]?.orders || []
-          }
+          ...pairData?.[openPair],
+          ...generateDummyDetail(openPair),
+          orders: uiSignals?.[openPair]?.orders || []
+        }
         : pairData?.[openPair]
     )
-  : undefined
+    : undefined
 
-if (openPair) {
-  console.log("DETAIL DATA:", detailData)
-}
+  if (openPair) {
+    console.log("DETAIL DATA:", detailData)
+  }
 
   return (
     <div className="relative">
@@ -430,13 +409,13 @@ if (openPair) {
               </div>
 
               {/* RIGHT DETAIL */}
-<PairDetail
-  pair={openPair}
-  data={detailData}
-  signal={uiSignals?.[openPair]}
-  onClose={() => setOpenPair(null)}
-  isGuest={isGuest}
-/>
+              <PairDetail
+                pair={openPair}
+                data={detailData}
+                signal={uiSignals?.[openPair]}
+                onClose={() => setOpenPair(null)}
+                isGuest={isGuest}
+              />
 
             </div>
 
