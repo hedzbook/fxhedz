@@ -490,66 +490,51 @@ export default function Page() {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
+  useEffect(() => {
 
-  const email = session?.user?.email
-
-  if (!email) {
-    setSubActive(false)
-    return
-  }
-
-  if (!fingerprint) return
-
-  async function init() {
-
-    let deviceId = localStorage.getItem("fxhedz_device_id")
-
-    if (!deviceId) {
-      deviceId = crypto.randomUUID()
-      localStorage.setItem("fxhedz_device_id", deviceId)
+    // NOT logged in â†’ no verification
+    if (!session) {
+      setSubActive(false)
+      return
     }
 
-    document.cookie = `fx_device=${deviceId}; path=/; max-age=31536000`
-    document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+    // Wait until fingerprint exists
+    if (!fingerprint) {
+      return
+    }
 
-    const tg = (window as any)?.Telegram?.WebApp
-    const telegramId =
-      tg?.initDataUnsafe?.user?.id
-        ? String(tg.initDataUnsafe.user.id)
-        : ""
+    async function init() {
 
-    try {
+      let id = localStorage.getItem("fxhedz_device_id")
 
-      const res = await fetch("/api/subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,   // âœ… SAFE
-          device_id: deviceId,
-          fingerprint: fingerprint,
-          platform: telegramId ? "telegram" : "web",
-          telegram_chat_id: telegramId
-        })
-      })
-
-      const data = await res.json()
-
-      if (data?.blocked && data?.reason === "telegram_mismatch") {
-        alert("Telegram account mismatch. Please login from original Telegram account.")
+      if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem("fxhedz_device_id", id)
       }
 
-      setSubActive(Boolean(data?.active))
-      setAccessMeta(data)
+      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
 
-    } catch {
-      setSubActive(false)
+      try {
+        const res = await fetch(
+          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          { cache: "no-store" }
+        )
+
+        const data = await res.json()
+
+        // ðŸ”¥ CRITICAL LINE
+        setSubActive(Boolean(data?.active))
+        setAccessMeta(data)
+
+      } catch {
+        setSubActive(false)
+      }
     }
-  }
 
-  init()
+    init()
 
-}, [fingerprint, session])
+  }, [fingerprint, session])
 
   useEffect(() => {
     const timer = setTimeout(() => {
