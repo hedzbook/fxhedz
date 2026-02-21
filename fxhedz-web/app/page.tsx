@@ -336,12 +336,13 @@ useEffect(() => {
 let detailData: any = undefined
 
 if (openPair) {
-  detailData = isGuest
-    ? {
-        ...generateDummyDetail(openPair),
-        orders: uiSignals?.[openPair]?.orders || []
-      }
-    : pairData?.[openPair]
+detailData = isGuest
+  ? {
+      ...pairData?.[openPair],   // ← preview candles live here
+      ...generateDummyDetail(openPair),
+      orders: uiSignals?.[openPair]?.orders || []
+    }
+  : pairData?.[openPair]
 }
 
   return (
