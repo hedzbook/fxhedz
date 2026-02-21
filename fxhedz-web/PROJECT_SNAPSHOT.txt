@@ -3,10 +3,6 @@
 PROJECT STRUCTURE
 ==================================================
 
-==================================================
-PROJECT STRUCTURE
-==================================================
-
 .env.local
 .gitignore
 app\api\auth\[...nextauth]\route.ts
@@ -298,7 +294,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       active: Boolean(data?.active),
       blocked: Boolean(data?.blocked),
-      status: data?.status ?? null,
+      status: data?.plan ?? null,
       expiry: data?.expiry ?? null
     })
 
@@ -380,6 +376,7 @@ import { useSession } from "next-auth/react"
 import AccessOverlay from "@/components/AccessOverlay"
 import { generateDummySignals } from "@/lib/dummySignals"
 import { ensureDeviceIdentity } from "@/lib/device"
+import { signOut } from "next-auth/react"
 
 const pairs: any = {}
 
@@ -590,6 +587,7 @@ export default function Page() {
         )
 
         const data = await res.json()
+        //console.log("SUB DATA:", data)
 
         if (data?.blocked && data?.reason === "device_limit_exceeded") {
           setSubActive(false)
@@ -600,7 +598,12 @@ export default function Page() {
           return
         }
 
-        setSubActive(Boolean(data?.active))
+        if (data?.blocked || data?.active === false) {
+          await signOut({ callbackUrl: "/" })
+          return
+        }
+
+        setSubActive(true)
         setAccessMeta(data)
 
       } catch {
@@ -856,20 +859,35 @@ export default function Page() {
                 </div>
 
                 {/* UPGRADE */}
-                <a
-                  href="https://t.me/fxhedzbot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="
-          block w-full text-center
-          py-2 rounded-md
-          bg-sky-600 hover:bg-sky-500
-          text-white font-semibold
-          transition-colors
-        "
-                >
-                  LIVE+
-                </a>
+                {accessMeta?.status !== "live+" ? (
+                  <a
+                    href="https://t.me/fxhedzbot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+      block w-full text-center
+      py-2 rounded-md
+      bg-sky-600 hover:bg-sky-500
+      text-white font-semibold
+      transition-colors
+    "
+                  >
+                    GO LIVE+
+                  </a>
+                ) : (
+                  <div
+                    className="
+      block w-full text-center
+      py-2 rounded-md
+      bg-emerald-600
+      text-white font-semibold
+      opacity-90
+      cursor-default
+    "
+                  >
+                    LIVE+ ACTIVE
+                  </div>
+                )}
 
                 {/* SUPPORT */}
                 <a
@@ -1019,7 +1037,7 @@ export default function AccessOverlay({
         )}
 
         {/* 3ï¸âƒ£ LOGIN REQUIRED */}
-        {!sessionExists && !blocked && active !== null && (
+        {(!sessionExists || active === false) && !blocked && (
           <>
             <Header />
             <Title>Institutional Sign-in</Title>
@@ -1033,7 +1051,7 @@ export default function AccessOverlay({
         )}
 
         {/* 4ï¸âƒ£ LIVE EXPIRED */}
-        {sessionExists && status === "live" && !blocked && (
+        {sessionExists && active === false && !blocked && (
           <>
             <Header />
             <Title>Trial Concluded</Title>

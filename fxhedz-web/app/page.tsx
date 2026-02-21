@@ -11,6 +11,7 @@ import AccessOverlay from "@/components/AccessOverlay"
 import { generateDummySignals } from "@/lib/dummySignals"
 import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
+import { generateDummyDetail } from "@/lib/dummyDetail"
 
 const pairs: any = {}
 
@@ -42,6 +43,19 @@ export default function Page() {
   const { data: session, status } = useSession()
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
+  async function loadPreview(pair: string) {
+  try {
+    const res = await fetch(`/api/public-preview?pair=${pair}`)
+    const json = await res.json()
+
+    setPairData((prev: any) => ({
+      ...prev,
+      [pair]: json
+    }))
+  } catch (e) {
+    console.error("Preview load failed", e)
+  }
+}
   const menuRef = useRef<HTMLDivElement | null>(null)
   const hamburgerRef = useRef<HTMLButtonElement | null>(null)
   const daysLeft = useMemo(() => {
@@ -221,7 +235,7 @@ export default function Page() {
         )
 
         const data = await res.json()
-        console.log("SUB DATA:", data)
+        //console.log("SUB DATA:", data)
 
         if (data?.blocked && data?.reason === "device_limit_exceeded") {
           setSubActive(false)
@@ -260,9 +274,16 @@ export default function Page() {
     return () => clearTimeout(timer)
   }, [signals])
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (!openPair || subActive !== true) return
+  if (!openPair) return
+
+  const isGuest = !session || subActive !== true
+
+  if (isGuest) {
+    loadPreview(openPair)
+    return
+  }
     if (!fingerprint) return
 
     const pairKey = openPair
@@ -309,6 +330,19 @@ export default function Page() {
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
+
+  const isGuest = !session || subActive !== true
+
+let detailData: any = undefined
+
+if (openPair) {
+  detailData = isGuest
+    ? {
+        ...generateDummyDetail(openPair),
+        orders: uiSignals?.[openPair]?.orders || []
+      }
+    : pairData?.[openPair]
+}
 
   return (
     <div className="relative">
@@ -390,12 +424,13 @@ export default function Page() {
               </div>
 
               {/* RIGHT DETAIL */}
-              <PairDetail
-                pair={openPair}
-                data={pairData?.[openPair]}
-                signal={uiSignals?.[openPair]}
-                onClose={() => setOpenPair(null)}
-              />
+<PairDetail
+  pair={openPair}
+  data={detailData}
+  signal={uiSignals?.[openPair]}
+  onClose={() => setOpenPair(null)}
+  isGuest={isGuest}
+/>
 
             </div>
 

@@ -8,13 +8,15 @@ type Props = {
     signal: any
     data: any
     onClose: () => void
+    isGuest?: boolean
 }
 
 export default function PairDetail({
     pair,
     signal,
     data,
-    onClose
+    onClose,
+    isGuest = false
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
@@ -41,10 +43,11 @@ export default function PairDetail({
                     id={`chart_mount_${pair}`}
                     className="w-full h-full"
                 />
-                <GlobalLightChart
-                    mountId={`chart_mount_${pair}`}
-                    signal={signal}
-                />
+<GlobalLightChart
+    mountId={`chart_mount_${pair}`}
+    signal={signal}
+    disableOverlays={isGuest}
+/>
             </div>
 
             {/* TABS (FIXED) */}

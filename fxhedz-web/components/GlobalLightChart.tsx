@@ -9,10 +9,12 @@ import {
 
 export default function GlobalLightChart({
     mountId,
-    signal
+    signal,
+    disableOverlays
 }: {
     mountId?: string
     signal?: any
+    disableOverlays?: boolean
 }) {
 
     const chartRef = useRef<any>(null)
@@ -120,6 +122,8 @@ const chart = createChart(container, {
     // OVERLAY ENGINE
     // ==========================================
     useEffect(() => {
+
+    if (disableOverlays) return
 
         const candleSeries = candleSeriesRef.current
         if (!candleSeries || !signal) return

@@ -1328,19 +1328,19 @@ function onSubscription(chatId) {
 
     let planText;
 
-if (!row) {
-    planText = "Plan: NOT FOUND";
-} else if (row.plan === "live+") {
-    planText =
-        "Plan: LIVE+\n" +
-        "Valid till: " + formatDate(row.expiry);
-} else if (row.plan === "live" && row.expiry >= now) {
-    planText =
-        "Plan: LIVE\n" +
-        "Valid till: " + formatDate(row.expiry);
-} else {
-    planText = "Plan: EXPIRED";
-}
+    if (!row) {
+        planText = "Plan: NOT FOUND";
+    } else if (row.plan === "live+") {
+        planText =
+            "Plan: LIVE+\n" +
+            "Valid till: " + formatDate(row.expiry);
+    } else if (row.plan === "live" && row.expiry >= now) {
+        planText =
+            "Plan: LIVE\n" +
+            "Valid till: " + formatDate(row.expiry);
+    } else {
+        planText = "Plan: EXPIRED";
+    }
 
     sendRich(
         chatId,
