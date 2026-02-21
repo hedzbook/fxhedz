@@ -83,7 +83,7 @@ export default function AccessOverlay({
         )}
 
         {/* 4️⃣ LIVE EXPIRED */}
-        {sessionExists && status === "live" && !blocked && (
+        {sessionExists && plan === "LIVE" && !blocked && (
           <>
             <Header />
             <Title>Trial Concluded</Title>
