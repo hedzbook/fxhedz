@@ -498,7 +498,7 @@ export default function Page() {
           transition-colors
         "
                 >
-                  PRO+
+                  LIVE+
                 </a>
 
                 {/* SUPPORT */}

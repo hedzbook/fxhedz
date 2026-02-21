@@ -98,7 +98,7 @@ export default function AccessOverlay({
                 rel="noopener noreferrer"
                 className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
-                PRO+
+                LIVE+
               </a>
               <div className="w-full pt-2 border-t border-neutral-800 mt-2 flex justify-center">
                 <GoogleLogoutButton />
