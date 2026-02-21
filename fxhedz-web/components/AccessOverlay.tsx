@@ -32,31 +32,35 @@ export default function AccessOverlay({
           </div>
         )}
 
-        {/* 2️⃣ DEVICE BLOCKED */}
-        {blocked && (
-          <>
-            <Header />
-            <Title>Device Restricted</Title>
-            <Description>
-              Please contact support to register this device.
-            </Description>
-            <div className="space-y-2 w-full">
-              {/* FIXED: Direct Tailwind classes for the blue button */}
-              <a 
-                href="https://t.me/fxhedzbot" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
-              >
-                Contact Support
-              </a>
-              <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 font-mono">LOCKED</span>
-                <GoogleLogoutButton />
-              </div>
-            </div>
-          </>
-        )}
+{/* 2️⃣ DEVICE BLOCKED */}
+{blocked && (
+  <>
+    <Header />
+    <Title>Device Restricted</Title>
+    <Description>
+      Maximum allowed devices is 2.
+      You may sign out of all registered devices to continue.
+    </Description>
+
+    <div className="space-y-2 w-full">
+
+      <button
+        onClick={async () => {
+          await fetch("/api/reset-devices", { method: "POST" })
+          window.location.reload()
+        }}
+        className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
+      >
+        Logout of All Devices
+      </button>
+
+      <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+        <span className="text-[11px] text-neutral-500 font-mono">DEVICE LIMIT</span>
+        <GoogleLogoutButton />
+      </div>
+    </div>
+  </>
+)}
 
         {/* 3️⃣ LOGIN REQUIRED */}
         {!sessionExists && !blocked && active !== null && (

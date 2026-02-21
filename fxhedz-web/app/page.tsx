@@ -203,15 +203,39 @@ export default function Page() {
 
 async function init() {
 
-  let id = localStorage.getItem("fxhedz_device_id")
+const params = new URLSearchParams(window.location.search)
 
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem("fxhedz_device_id", id)
+const urlPlatform = params.get("platform")
+const urlDeviceId = params.get("device_id")
+
+// Determine platform
+let platform = "web"
+
+if (urlPlatform === "android") {
+  platform = "android"
+}
+
+// Telegram override
+try {
+  const tg = (window as any)?.Telegram?.WebApp
+  if (tg?.initDataUnsafe?.user?.id) {
+    platform = "telegram"
+    const tgUser = tg.initDataUnsafe.user
+    document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
   }
+} catch {}
 
-  document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-  document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+// Determine device ID
+let id = urlDeviceId || localStorage.getItem("fxhedz_device_id")
+
+if (!id) {
+  id = crypto.randomUUID()
+  localStorage.setItem("fxhedz_device_id", id)
+}
+
+document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
 
   // 🔥 PLATFORM DETECTION
   try {
@@ -230,15 +254,24 @@ async function init() {
   }
 
   try {
-    const res = await fetch(
-      `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-      { cache: "no-store" }
-    )
+const res = await fetch(
+  `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+  { cache: "no-store" }
+)
 
-    const data = await res.json()
+const data = await res.json()
 
-    setSubActive(Boolean(data?.active))
-    setAccessMeta(data)
+if (data?.blocked && data?.reason === "device_limit_exceeded") {
+  setSubActive(false)
+  setAccessMeta({
+    ...data,
+    deviceLimit: true
+  })
+  return
+}
+
+setSubActive(Boolean(data?.active))
+setAccessMeta(data)
 
   } catch {
     setSubActive(false)

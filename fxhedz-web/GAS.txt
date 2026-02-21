@@ -2,11 +2,10 @@
 // CONFIG
 // ======================================================
 const TOKEN = PropertiesService.getScriptProperties().getProperty("BOT_TOKEN");
-//const WEBHOOK_SECRET = PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
+const WEBHOOK_SECRET = PropertiesService.getScriptProperties().getProperty("WEBHOOK_SECRET");
 const SPREADSHEET_ID = "1jMlONsIzwXyf_j9y96HkeIwRh0OynfTUak3MvHrJLyo";
-const SHEET_NAME = "USERS_LIST";
+const SHEET_NAME = "USERS_AUTH";
 const ADMIN_CHAT_ID = "7115081072";
-const WEBHOOK_SECRET = "HEDZ2026";
 
 const PAIRS = [
     "XAUUSD",
@@ -98,7 +97,7 @@ function setMarketNotes(data) {
         .setProperty("MARKET_NOTES", JSON.stringify(data))
 }
 
-function handleAuthUser(email, deviceId, fingerprint) {
+function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) {
 
     if (!email || !fingerprint) {
         return {
@@ -106,239 +105,289 @@ function handleAuthUser(email, deviceId, fingerprint) {
         };
     }
 
-    const sheet = SpreadsheetApp
-        .openById(SPREADSHEET_ID)
-        .getSheetByName("USERS_AUTH");
+    email = String(email).toLowerCase().trim();
+    platform = platform || "web";
+    telegramChatId = telegramChatId || "";
 
+    const sheet = mustGetSheet();
     const rows = sheet.getDataRange().getValues();
     const now = new Date();
 
+    let rowIndex = -1;
+    let rowData = null;
+
     for (let i = 1; i < rows.length; i++) {
-
-        const rowEmail = String(rows[i][0] || "").toLowerCase();
-        const rowFingerprint = String(rows[i][8] || "");
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
-
-        // ==================================================
-        // CASE 1 — Fingerprint trial exists without email → bind
-        // ==================================================
-        if (rowFingerprint === fingerprint && !rowEmail) {
-
-            const newExpiry = new Date(now);
-            newExpiry.setDate(newExpiry.getDate() + 7);
-
-            sheet.getRange(i + 1, 1).setValue(email); // bind email
-            sheet.getRange(i + 1, 3).setValue(newExpiry);
-            sheet.getRange(i + 1, 4).setValue("free");
-
-            return {
-                upgraded: true
-            };
-        }
-
-        // ==================================================
-        // CASE 2 — Same fingerprint + same email
-        // ==================================================
-        if (rowFingerprint === fingerprint && rowEmail === email.toLowerCase()) {
-
-            if (status !== "paid" && expiry < now) {
-                return {
-                    blocked: true
-                };
-            }
-
-            return {
-                upgraded: false
-            };
-        }
-
-        // ==================================================
-        // CASE 3 — Same email but DIFFERENT fingerprint
-        // ==================================================
-        if (rowEmail === email.toLowerCase() && rowFingerprint !== fingerprint) {
-
-            // Paid users → allow max 2 fingerprints
-            if (status === "paid" && expiry > now) {
-
-                // Count fingerprints for this email
-                const userFingerprints = rows
-                    .filter(r => String(r[0] || "").toLowerCase() === email.toLowerCase())
-                    .map(r => String(r[8] || ""))
-                    .filter(fp => fp);
-
-                const uniqueFingerprints = [...new Set(userFingerprints)];
-
-                if (uniqueFingerprints.length < 2) {
-
-                    const newExpiry = expiry > now ? expiry : now;
-
-                    sheet.appendRow([
-                        email,
-                        now,
-                        newExpiry,
-                        "paid",
-                        rows[i][4] || 0,
-                        "",
-                        "",
-                        deviceId,
-                        fingerprint,
-                        true
-                    ]);
-
-                    return {
-                        upgraded: false
-                    };
-                }
-
-                return {
-                    blocked: true
-                };
-            }
-
-            // Free users → only 1 fingerprint allowed
-            return {
-                blocked: true
-            };
-        }
-
-        // ==================================================
-        // CASE 4 — Fingerprint used by different email
-        // ==================================================
-        if (rowFingerprint === fingerprint && rowEmail !== email.toLowerCase()) {
-            return {
-                blocked: true
-            };
+        if (String(rows[i][0] || "").toLowerCase() === email) {
+            rowIndex = i;
+            rowData = rows[i];
+            break;
         }
     }
 
-    // ==================================================
-    // BRAND NEW LOGIN (no fingerprint record)
-    // ==================================================
-    const expiry = new Date(now);
-    expiry.setDate(expiry.getDate() + 7);
+    // ============================
+    // NEW USER
+    // ============================
+    if (rowIndex === -1) {
 
-    sheet.appendRow([
-        email,
-        now,
-        expiry,
-        "free",
-        1,
-        "",
-        "",
-        deviceId,
-        fingerprint,
-        true
-    ]);
+        const expiry = new Date(now);
+        expiry.setDate(expiry.getDate() + 14);
 
-    return {
-        upgraded: true
-    };
-}
+        const devicePayload = {
+            devices: [{
+                device_id: deviceId,
+                fingerprint: fingerprint,
+                platform: platform,
+                last_active: now.toISOString()
+            }]
+        };
 
-function handleDeviceAccess(deviceId, fingerprint) {
+        sheet.appendRow([
+            email,
+            now,
+            expiry,
+            "free",
+            0,
+            "",
+            telegramChatId,
+            "",
+            JSON.stringify(devicePayload),
+            true,
+            "",
+            ""
+        ]);
 
-    if (!fingerprint) {
         return {
-            active: false,
-            blocked: true
+            active: true,
+            status: "free",
+            expiry
         };
     }
 
-    const sheet = SpreadsheetApp
-        .openById(SPREADSHEET_ID)
-        .getSheetByName("USERS_AUTH");
+    // ============================
+    // EXISTING USER
+    // ============================
 
-    const rows = sheet.getDataRange().getValues();
+    const expiry = rowData[2] ? new Date(rowData[2]) : new Date(0);
+    const status = String(rowData[3] || "").toLowerCase();
+    const active =
+        status === "paid" ||
+        (status === "free" && expiry > now);
+
+    if (!active) {
+        return {
+            active: false,
+            status,
+            expiry
+        };
+    }
+
+    let devicePayload;
+    try {
+        devicePayload = JSON.parse(rowData[8] || "{}");
+    } catch {
+        devicePayload = {
+            devices: []
+        };
+    }
+
+    if (!devicePayload.devices) devicePayload.devices = [];
+
+    const devices = devicePayload.devices;
+
+    // 1️⃣ Fingerprint already exists → allow
+    const existing = devices.find(d => d.fingerprint === fingerprint);
+    if (existing) {
+        existing.last_active = now.toISOString();
+        sheet.getRange(rowIndex + 1, 9)
+            .setValue(JSON.stringify(devicePayload));
+        return {
+            active,
+            status,
+            expiry
+        };
+    }
+
+    // 2️⃣ Under device limit → add
+    if (devices.length < 2) {
+
+        devices.push({
+            device_id: deviceId,
+            fingerprint: fingerprint,
+            platform: platform,
+            last_active: now.toISOString()
+        });
+
+        sheet.getRange(rowIndex + 1, 9)
+            .setValue(JSON.stringify(devicePayload));
+
+        return {
+            active,
+            status,
+            expiry
+        };
+    }
+
+    // 3️⃣ Exceeded device limit
+    return {
+        blocked: true,
+        reason: "device_limit_exceeded"
+    };
+}
+
+function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platform, telegramChatId) {
+
     const now = new Date();
 
-    // Check if fingerprint already consumed trial
-    const trialExists = rows.some(r =>
-        String(r[8] || "") === fingerprint &&
-        String(r[9] || "").toLowerCase() === "true"
+    platform = (platform || "web").toLowerCase().trim();
+
+    const hasPaid = userRows.some(u =>
+        String(u.row[3] || "").toLowerCase() === "paid"
     );
 
-    for (let i = 1; i < rows.length; i++) {
+    // =========================================
+    // GROUP ROWS BY PLATFORM
+    // =========================================
+    const platformRows = userRows.filter(u =>
+        String(u.row[10] || "").toLowerCase() === platform
+    );
 
-        const rowFingerprint = String(rows[i][8] || "");
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const status = String(rows[i][3] || "").toLowerCase();
+    const usedPlatforms = [
+        ...new Set(userRows.map(u => String(u.row[10] || "").toLowerCase()))
+    ].filter(Boolean);
 
-        // SAME FINGERPRINT
-        if (rowFingerprint === fingerprint) {
+    // =========================================
+    // 1️⃣ EXISTING FINGERPRINT (Exact Match)
+    // =========================================
+    const existing = userRows.find(u =>
+        String(u.row[8] || "") === fingerprint
+    );
 
-            const active =
-                status === "paid" ||
-                (status === "free" && expiry > now);
+    if (existing) {
 
-            return {
-                active: active,
-                status: status,
-                expiry: expiry,
-                blocked: false
-            };
-        }
-    }
-
-    if (trialExists) {
-        return {
-            active: false,
-            blocked: true
-        };
-    }
-
-    // 🔒 FINGERPRINT NEVER SEEN BEFORE
-    // Give 24h trial ONCE
-
-    const expiry = new Date(now);
-    expiry.setHours(expiry.getHours() + 24);
-
-    sheet.appendRow([
-        "", // email
-        now,
-        expiry,
-        "free",
-        0,
-        "",
-        "",
-        deviceId,
-        fingerprint,
-        true
-    ]);
-
-    return {
-        active: true,
-        status: "free",
-        expiry: expiry
-    };
-}
-
-function checkAuthUser(email) {
-
-    const sheet = SpreadsheetApp
-        .openById(SPREADSHEET_ID)
-        .getSheetByName("USERS_AUTH");
-
-    const rows = sheet.getDataRange().getValues();
-    const now = new Date();
-
-    for (let i = 1; i < rows.length; i++) {
-
-        const rowEmail = String(rows[i][0]).toLowerCase();
-        if (rowEmail !== email.toLowerCase()) continue;
-
-        const expiry = new Date(rows[i][2]);
-        const status = String(rows[i][3] || "").toLowerCase();
+        const expiry = existing.row[2] ? new Date(existing.row[2]) : new Date(0);
+        const status = String(existing.row[3] || "").toLowerCase();
 
         const active =
             status === "paid" ||
             (status === "free" && expiry > now);
 
+        // Telegram binding logic (unchanged but cleaner)
+        if (telegramChatId) {
+
+            const mismatch = userRows.some(u =>
+                String(u.row[6] || "") &&
+                String(u.row[6]) !== telegramChatId
+            );
+
+            if (mismatch) {
+                return {
+                    blocked: true,
+                    reason: "telegram_mismatch"
+                };
+            }
+
+            userRows.forEach(u => {
+                sheet.getRange(u.index + 1, 7).setValue(telegramChatId);
+            });
+        }
+
         return {
-            active: active,
-            status: status,
-            expiry: expiry
+            active,
+            status,
+            expiry
         };
+    }
+
+    // =========================================
+    // 2️⃣ SAME PLATFORM → REPLACE FINGERPRINT
+    // =========================================
+    if (platformRows.length > 0) {
+
+        const rowToReplace = platformRows[0];
+
+        sheet.getRange(rowToReplace.index + 1, 9).setValue(fingerprint);
+        sheet.getRange(rowToReplace.index + 1, 8).setValue(deviceId);
+
+        return {
+            active: true,
+            status: rowToReplace.row[3],
+            expiry: rowToReplace.row[2]
+        };
+    }
+
+    // =========================================
+    // 3️⃣ NEW PLATFORM ENTRY
+    // =========================================
+
+    const platformLimit = hasPaid ? 2 : 3;
+    // FREE = 3 (web + telegram + android)
+    // PAID = 2 (max 2 platforms active)
+
+    if (usedPlatforms.length >= platformLimit) {
+        return {
+            blocked: true,
+            reason: "platform_limit_exceeded"
+        };
+    }
+
+    const baseRow = userRows[0].row;
+
+    sheet.appendRow([
+        email,
+        baseRow[1],
+        baseRow[2],
+        baseRow[3],
+        baseRow[4],
+        baseRow[5],
+        telegramChatId || baseRow[6],
+        deviceId,
+        fingerprint,
+        baseRow[9],
+        platform,
+        baseRow[11]
+    ]);
+
+    return {
+        active: true,
+        status: baseRow[3],
+        expiry: baseRow[2]
+    };
+}
+
+function checkAuthUser(email) {
+
+    if (!email) return {
+        active: false
+    };
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    email = email.toLowerCase().trim();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        if (String(rows[i][0] || "").toLowerCase() !== email) continue;
+
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
+
+        if (status === "paid") {
+            return {
+                active: true,
+                status,
+                expiry
+            };
+        }
+
+        if (status === "free" && expiry > now) {
+            return {
+                active: true,
+                status,
+                expiry
+            };
+        }
     }
 
     return {
@@ -357,25 +406,58 @@ function doPost(e) {
         // ===============================
         // GOOGLE AUTH SYNC
         // ===============================
-        try {
-            const contentType = e.postData.type || "";
-            if (contentType.indexOf("application/json") !== -1) {
+        const contentType = e.postData.type || "";
 
-                const data = JSON.parse(e.postData.contents);
+        if (contentType.indexOf("application/json") !== -1) {
 
-                if (data.email) {
-                    const result = handleAuthUser(
-                        data.email,
-                        data.device_id || "",
-                        data.fingerprint || ""
-                    );
-                    return ContentService
-                        .createTextOutput(JSON.stringify(result))
-                        .setMimeType(ContentService.MimeType.JSON);
-                }
+            const data = JSON.parse(e.postData.contents);
 
+            // ===============================
+            // RESET DEVICES
+            // ===============================
+            if (data.reset_devices && data.email) {
+
+                const result = resetUserDevices(data.email);
+
+                return ContentService
+                    .createTextOutput(JSON.stringify(result))
+                    .setMimeType(ContentService.MimeType.JSON);
             }
-        } catch (err) {}
+
+            // ===============================
+            // ANDROID BILLING
+            // ===============================
+            if (data.purchase_token && data.email && data.platform === "android") {
+
+                const result = activateAndroidPurchase(
+                    data.email,
+                    data.purchase_token,
+                    data.months || 1
+                );
+
+                return ContentService
+                    .createTextOutput(JSON.stringify(result))
+                    .setMimeType(ContentService.MimeType.JSON);
+            }
+
+            // ===============================
+            // APP LOGIN
+            // ===============================
+            if (data.email) {
+
+                const result = handleAuthUser(
+                    data.email,
+                    data.device_id || "",
+                    data.fingerprint || "",
+                    data.platform || "web",
+                    data.telegram_chat_id || ""
+                );
+
+                return ContentService
+                    .createTextOutput(JSON.stringify(result))
+                    .setMimeType(ContentService.MimeType.JSON);
+            }
+        }
 
         const type = e.postData.type || "";
 
@@ -449,6 +531,25 @@ function doPost(e) {
     }
 }
 
+function requireSignalAccess(email) {
+
+    const auth = checkAuthUser(email);
+
+    if (!auth || !auth.active) {
+        return {
+            blocked: true,
+            status: auth ? auth.status : "none",
+            expiry: auth ? auth.expiry : null
+        };
+    }
+
+    return {
+        blocked: false,
+        status: auth.status,
+        expiry: auth.expiry
+    };
+}
+
 // ======================================================
 // READ pipeline  (WebApp → GAS)
 // ======================================================
@@ -457,44 +558,97 @@ function doGet(e) {
 
     const secret = (e.parameter.secret || "").trim();
 
-    // 🔐 Require secret for ALL web access
     if (secret !== WEBHOOK_SECRET) {
-        return ContentService
-            .createTextOutput("unauthorized");
+        return ContentService.createTextOutput("unauthorized");
     }
 
-    // =================================================
-    // DEVICE ACCESS CHECK (24h trial + expiry)
-    // =================================================
-    if (e.parameter.device_id) {
-
-        const result = handleDeviceAccess(
-            e.parameter.device_id,
-            e.parameter.fingerprint || ""
-        );
-
-        return ContentService
-            .createTextOutput(JSON.stringify(result))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // =================================================
-    // EMAIL SUBSCRIPTION CHECK (login upgrade layer)
-    // =================================================
-    if (e.parameter.email) {
-
-        const result = checkAuthUser(e.parameter.email);
-
-        return ContentService
-            .createTextOutput(JSON.stringify(result))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // =================================================
-    // SIGNAL READ
-    // =================================================
-    const signals = getLiveSignals();
+    const deviceId = (e.parameter.device_id || "").trim();
+    const fingerprint = (e.parameter.fingerprint || "").trim();
     const pair = (e.parameter.pair || "").toUpperCase();
+
+    if (!fingerprint) {
+        return jsonBlocked();
+    }
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        let devicePayload;
+        try {
+            devicePayload = JSON.parse(rows[i][8] || "{}");
+        } catch {
+            continue;
+        }
+
+        const devices = devicePayload.devices || [];
+        const match = devices.find(d => d.fingerprint === fingerprint);
+
+        if (!match) continue;
+
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
+
+        const active =
+            status === "paid" ||
+            (status === "free" && expiry > now);
+
+        if (!active) {
+            return jsonBlocked(status, expiry);
+        }
+
+        return buildSignalResponse({
+            status,
+            expiry
+        }, pair);
+    }
+
+    return jsonBlocked();
+}
+
+function resetUserDevices(email) {
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+
+    email = email.toLowerCase().trim();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        if (String(rows[i][0] || "").toLowerCase() === email) {
+
+            sheet.getRange(i + 1, 9)
+                .setValue(JSON.stringify({
+                    devices: []
+                }));
+
+            return {
+                success: true
+            };
+        }
+    }
+
+    return {
+        success: false
+    };
+}
+
+function jsonBlocked(status, expiry) {
+    return ContentService
+        .createTextOutput(JSON.stringify({
+            blocked: true,
+            active: false,
+            status: status || null,
+            expiry: expiry || null
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+}
+
+function buildSignalResponse(access, pair) {
+
+    const signals = getLiveSignals();
 
     if (pair) {
 
@@ -504,17 +658,25 @@ function doGet(e) {
 
         return ContentService
             .createTextOutput(JSON.stringify({
+                blocked: false,
+                active: true,
+                status: access.status,
+                expiry: access.expiry,
                 signals,
                 history: data.history,
                 performance: data.performance,
                 notes: notes[pair] || "",
-                orders: orders
+                orders
             }))
             .setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService
         .createTextOutput(JSON.stringify({
+            blocked: false,
+            active: true,
+            status: access.status,
+            expiry: access.expiry,
             signals
         }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -646,6 +808,7 @@ function mustGetSheet() {
 }
 
 function onActivate(text) {
+
     const parts = text.trim().split(/\s+/);
     if (parts.length < 3) {
         send(ADMIN_CHAT_ID, "Usage: /activate <chatId> <months>");
@@ -654,62 +817,40 @@ function onActivate(text) {
 
     const chatId = parts[1];
     const months = parseInt(parts[2], 10);
-
-    if (isNaN(months) || months <= 0) {
-        send(ADMIN_CHAT_ID, "❌ Invalid months value");
-        return;
-    }
-
     const sheet = mustGetSheet();
     const rows = sheet.getDataRange().getValues();
     const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).split(".")[0] === chatId) {
 
-            const currentExpiry = new Date(rows[i][4]);
-            const currentStatus = String(rows[i][5]).toLowerCase();
+        if (String(rows[i][6]) === chatId) {
 
-            // 🔑 BASE DATE DECISION
-            let baseDate;
+            const currentExpiry = new Date(rows[i][2]);
+            const status = String(rows[i][3]).toLowerCase();
 
-            if (currentStatus === "paid" && currentExpiry > now) {
-                // Active user → extend
-                baseDate = currentExpiry;
-            } else {
-                // Expired or free → start fresh
-                baseDate = now;
-            }
+            const baseDate =
+                (status === "paid" && currentExpiry > now) ?
+                currentExpiry :
+                now;
 
             const newExpiry = new Date(baseDate);
             newExpiry.setMonth(newExpiry.getMonth() + months);
 
-            // Update sheet
-            sheet.getRange(i + 1, 5).setValue(newExpiry); // expiry
-            sheet.getRange(i + 1, 6).setValue("paid"); // status
-            sheet.getRange(i + 1, 7).setValue(months); // last_payment_months
+            sheet.getRange(i + 1, 3).setValue(newExpiry); // C expiry
+            sheet.getRange(i + 1, 4).setValue("paid"); // D status
+            sheet.getRange(i + 1, 5).setValue(months); // E plan_months
 
-            // Notify user
-            send(
-                chatId,
+            send(chatId,
                 "✅ <b>Subscription Activated</b>\n\n" +
                 "Plan: " + months + " month(s)\n" +
                 "Valid till: " + formatDate(newExpiry)
-            );
-
-            // Notify admin
-            send(
-                ADMIN_CHAT_ID,
-                "✅ Activated " + chatId +
-                " | +" + months + " month(s)" +
-                " | Expiry: " + formatDate(newExpiry)
             );
 
             return;
         }
     }
 
-    send(ADMIN_CHAT_ID, "❌ Chat ID not found: " + chatId);
+    send(ADMIN_CHAT_ID, "Chat ID not found.");
 }
 
 function onDeactivate(text) {
@@ -722,13 +863,12 @@ function onDeactivate(text) {
     const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).split(".")[0] === chatId) {
+        if (String(rows[i][6]) === chatId) {
 
             // HARD RESET
-            sheet.getRange(i + 1, 5).setValue(now); // expiry → now
-            sheet.getRange(i + 1, 6).setValue("expired"); // status
-            sheet.getRange(i + 1, 7).setValue(0); // last_payment_months
-            sheet.getRange(i + 1, 8).setValue(""); // instruments (clear)
+            sheet.getRange(i + 1, 3).setValue(new Date());
+            sheet.getRange(i + 1, 4).setValue("expired");
+            sheet.getRange(i + 1, 5).setValue(0);
 
             send(chatId, "⛔ <b>Your subscription has been deactivated</b>");
 
@@ -776,6 +916,75 @@ function activateAuthUser(email, months) {
     }
 }
 
+function activateAndroidPurchase(email, purchaseToken, months) {
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    let foundRow = -1;
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const rowEmail = String(rows[i][0] || "").toLowerCase();
+        const rowPlatform = String(rows[i][10] || "").toLowerCase();
+
+        if (rowEmail === email.toLowerCase() && rowPlatform === "android") {
+            foundRow = i;
+            break;
+        }
+    }
+
+    let baseDate = now;
+
+    if (foundRow !== -1) {
+
+        const currentExpiry = rows[foundRow][2] ? new Date(rows[foundRow][2]) : new Date(0);
+        const currentStatus = String(rows[foundRow][3] || "").toLowerCase();
+
+        if (currentStatus === "paid" && currentExpiry > now) {
+            baseDate = currentExpiry;
+        }
+
+        const newExpiry = new Date(baseDate);
+        newExpiry.setMonth(newExpiry.getMonth() + months);
+
+        sheet.getRange(foundRow + 1, 3).setValue(newExpiry);
+        sheet.getRange(foundRow + 1, 4).setValue("paid");
+        sheet.getRange(foundRow + 1, 5).setValue(months);
+        sheet.getRange(foundRow + 1, 12).setValue(purchaseToken);
+
+        return {
+            success: true,
+            expiry: newExpiry
+        };
+    }
+
+    // 🚀 If no android row exists → create one
+    const newExpiry = new Date(now);
+    newExpiry.setMonth(newExpiry.getMonth() + months);
+
+    sheet.appendRow([
+        email,
+        now,
+        newExpiry,
+        "paid",
+        months,
+        "",
+        "",
+        "",
+        "",
+        true,
+        "android",
+        purchaseToken
+    ]);
+
+    return {
+        success: true,
+        expiry: newExpiry
+    };
+}
+
 function onBroadcast(text) {
     const msg = text.replace("/sendall", "").trim();
     if (!msg) return;
@@ -783,7 +992,8 @@ function onBroadcast(text) {
     const rows = mustGetSheet().getDataRange().getValues();
 
     for (let i = 1; i < rows.length; i++) {
-        const chatId = String(rows[i][0]).split(".")[0];
+        const chatId = String(rows[i][6] || "");
+        if (!chatId) continue;
         send(chatId, "📢 <b>Announcement</b>\n\n" + msg);
     }
 
@@ -904,13 +1114,18 @@ function handleCallback(cq) {
 }
 
 function getUserInstruments(chatId) {
+
     const rows = mustGetSheet().getDataRange().getValues();
+
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).split(".")[0] === chatId) {
-            const v = rows[i][7]; // column H
+
+        if (String(rows[i][6]) === chatId) {
+
+            const v = rows[i][5]; // Column F instruments
             return v ? String(v).split(",") : [];
         }
     }
+
     return [];
 }
 
@@ -956,8 +1171,10 @@ function saveInstrumentsToSheet(chatId, list) {
     const rows = sheet.getDataRange().getValues();
 
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).split(".")[0] === chatId) {
-            sheet.getRange(i + 1, 8).setValue(list.join(","));
+
+        if (String(rows[i][6]) === chatId) {
+
+            sheet.getRange(i + 1, 6).setValue(list.join(",")); // Column F
             return;
         }
     }
@@ -986,22 +1203,44 @@ function editFinalInstrumentMessage(chatId, messageId, list) {
 // ======================================================
 // START / MENU / CORE UI (UNCHANGED)
 // ======================================================
-function onStart(chatId, from) {
-    let row = getUserRow(chatId);
-    let isNew = false;
+function onStart(chatId) {
+
+    const row = getUserRow(chatId);
 
     if (!row) {
-        createFreeTrial(chatId, from);
-        row = getUserRow(chatId);
-        isNew = true;
+
+        sendRich(
+            chatId,
+            "👋 <b>Welcome to FXHEDZ LIVE</b>\n\n" +
+            "To activate access:\n\n" +
+            "1️⃣ Login inside the FXHEDZ app\n" +
+            "2️⃣ Start your 14-day trial\n" +
+            "3️⃣ Link this Telegram Chat ID\n\n" +
+            "🆔 Your Chat ID:\n<code>" + chatId + "</code>\n\n" +
+            "Open the app to continue.",
+            null
+        );
+
+        return;
     }
 
-    const text = isNew ?
-        "👋 <b>Welcome to FXHEDZ LIVE</b>\n\n🎉 <b>Free Trial Activated!</b>\n\n📊 You will receive:\n• BUY alerts\n• SELL alerts\n• EXIT / HEDGE alerts\n\n📅 <b>Valid till:</b> " + formatDate(row.expiry) :
-        "👋 <b>Welcome back to FXHEDZ LIVE</b>\n\n📦 <b>Subscription:</b> " +
-        row.status.toUpperCase() + "\n📅 <b>Valid till:</b> " + formatDate(row.expiry);
+    const now = new Date();
 
-    sendMenu(chatId, text);
+    const active =
+        row.status === "paid" ||
+        (row.status === "free" && row.expiry >= now);
+
+    if (!active) {
+        sendExpired(chatId);
+        return;
+    }
+
+    sendMenu(
+        chatId,
+        "👋 <b>Welcome back</b>\n\n" +
+        "Status: " + row.status.toUpperCase() + "\n" +
+        "Valid till: " + formatDate(row.expiry)
+    );
 }
 
 function sendMenu(chatId, text) {
@@ -1048,7 +1287,7 @@ function onSubscription(chatId) {
             "Valid till: " + formatDate(row.expiry);
     } else if (row.status === "free" && row.expiry >= now) {
         statusText =
-            "Status: FREE TRIAL\n" +
+            "Status: FREE ACCESS\n" +
             "Valid till: " + formatDate(row.expiry);
     } else {
         statusText = "Status: EXPIRED";
@@ -1711,18 +1950,21 @@ function dispatchImageToUsers(blob, tx) {
     const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
-        const chatId = String(rows[i][0]).split(".")[0];
-        const expiry = rows[i][4] ? new Date(rows[i][4]) : new Date(0);
-        const status = String(rows[i][5]).toLowerCase();
-        const instruments = rows[i][7] ?
-            String(rows[i][7]).split(",") : [];
 
-        if (status === "expired") continue;
-        if (status === "free" && expiry < now) continue;
+        const chatId = String(rows[i][6] || "");
+        if (!chatId) continue;
 
-        // 🔑 INSTRUMENT FILTER
-        // If user selected instruments and this signal is not one of them → skip
-        if (instrument && instruments.length && instruments.indexOf(instrument) === -1) {
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
+        const instruments = rows[i][5] ?
+            String(rows[i][5]).split(",") : [];
+
+        if (status !== "paid" && !(status === "free" && expiry > now)) {
+            continue;
+        }
+
+        if (instrument && instruments.length &&
+            instruments.indexOf(instrument) === -1) {
             continue;
         }
 
@@ -1796,33 +2038,25 @@ function debugSignals() {
 }
 
 function getUserRow(chatId) {
+
     const rows = mustGetSheet().getDataRange().getValues();
+
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).split(".")[0] === chatId) {
+
+        if (String(rows[i][6]) === chatId) {
+
             return {
-                expiry: new Date(rows[i][4]),
-                status: String(rows[i][5]).toLowerCase()
+                rowIndex: i + 1,
+                email: rows[i][0],
+                expiry: rows[i][2] ? new Date(rows[i][2]) : new Date(0),
+                status: String(rows[i][3] || "").toLowerCase(),
+                plan_months: rows[i][4] || 0,
+                instruments: rows[i][5] ? String(rows[i][5]).split(",") : []
             };
         }
     }
+
     return null;
-}
-
-function createFreeTrial(chatId, from) {
-    const now = new Date();
-    const expiry = new Date(now);
-    expiry.setMonth(expiry.getMonth() + 1);
-
-    mustGetSheet().appendRow([
-        chatId,
-        from.username ? "@" + from.username : "N/A",
-        from.first_name || "",
-        now,
-        expiry,
-        "free",
-        1,
-        "ETHUSD,BTCUSD,XAUUSD"
-    ]);
 }
 
 function send(chatId, text) {
@@ -1865,6 +2099,23 @@ function formatDate(d) {
 
 function ok() {
     return HtmlService.createHtmlOutput("OK");
+}
+
+// RUN ONCE DAILY
+function nightlyExpirySweep() {
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const status = String(rows[i][3] || "").toLowerCase();
+
+        if (status === "paid" && expiry < now) {
+            sheet.getRange(i + 1, 4).setValue("expired");
+        }
+    }
 }
 
 // RUN ONLY WHEN DEPLOYMENT URL CHANGES

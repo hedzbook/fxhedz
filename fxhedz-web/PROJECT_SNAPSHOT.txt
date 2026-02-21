@@ -69,9 +69,22 @@ async signIn({ user }) {
 
       const cookieStore = await cookies()
       const deviceId = cookieStore.get("fx_device")?.value || ""
-
-      // ðŸ”¥ read fingerprint cookie too
       const fingerprint = cookieStore.get("fx_fp")?.value || ""
+
+      // Detect platform
+      let platform = "web"
+      let telegramChatId = ""
+
+      // Telegram detection must happen client-side,
+      // so we rely on a cookie set by frontend
+
+      const tgCookie = cookieStore.get("fx_platform")?.value
+      const tgIdCookie = cookieStore.get("fx_tg_id")?.value
+
+      if (tgCookie === "telegram") {
+        platform = "telegram"
+        telegramChatId = tgIdCookie || ""
+      }
 
       await fetch(process.env.GAS_AUTH_URL!, {
         method: "POST",
@@ -79,7 +92,9 @@ async signIn({ user }) {
         body: JSON.stringify({
           email: user.email,
           device_id: deviceId,
-          fingerprint: fingerprint
+          fingerprint: fingerprint,
+          platform: platform,
+          telegram_chat_id: telegramChatId
         }),
       })
     }
@@ -503,34 +518,73 @@ export default function Page() {
       return
     }
 
-    async function init() {
+async function init() {
 
-      let id = localStorage.getItem("fxhedz_device_id")
+const params = new URLSearchParams(window.location.search)
 
-      if (!id) {
-        id = crypto.randomUUID()
-        localStorage.setItem("fxhedz_device_id", id)
-      }
+const urlPlatform = params.get("platform")
+const urlDeviceId = params.get("device_id")
 
-      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+// Determine platform
+let platform = "web"
 
-      try {
-        const res = await fetch(
-          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-          { cache: "no-store" }
-        )
+if (urlPlatform === "android") {
+  platform = "android"
+}
 
-        const data = await res.json()
+// Telegram override
+try {
+  const tg = (window as any)?.Telegram?.WebApp
+  if (tg?.initDataUnsafe?.user?.id) {
+    platform = "telegram"
+    const tgUser = tg.initDataUnsafe.user
+    document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
+  }
+} catch {}
 
-        // ðŸ”¥ CRITICAL LINE
-        setSubActive(Boolean(data?.active))
-        setAccessMeta(data)
+// Determine device ID
+let id = urlDeviceId || localStorage.getItem("fxhedz_device_id")
 
-      } catch {
-        setSubActive(false)
-      }
+if (!id) {
+  id = crypto.randomUUID()
+  localStorage.setItem("fxhedz_device_id", id)
+}
+
+document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
+
+  // ðŸ”¥ PLATFORM DETECTION
+  try {
+    const tg = (window as any)?.Telegram?.WebApp
+
+    if (tg?.initDataUnsafe?.user?.id) {
+      const tgUser = tg.initDataUnsafe.user
+
+      document.cookie = `fx_platform=telegram; path=/; max-age=31536000`
+      document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
+    } else {
+      document.cookie = `fx_platform=web; path=/; max-age=31536000`
     }
+  } catch {
+    document.cookie = `fx_platform=web; path=/; max-age=31536000`
+  }
+
+  try {
+    const res = await fetch(
+      `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+      { cache: "no-store" }
+    )
+
+    const data = await res.json()
+
+    setSubActive(Boolean(data?.active))
+    setAccessMeta(data)
+
+  } catch {
+    setSubActive(false)
+  }
+}
 
     init()
 
