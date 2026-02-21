@@ -19,13 +19,14 @@ export default function AccessOverlay({
   blocked
 }: Props) {
 
+  // 1️⃣ Still verifying → show ONLY verifying state
   if (active === null) {
     return (
       <OverlayContainer>
         <Panel>
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-4 h-4 border-2 border-neutral-700 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-[9px] font-bold text-neutral-500 tracking-[0.15em]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-5 h-5 border-2 border-neutral-700 border-t-blue-500 rounded-full animate-spin" />
+            <p className="text-[10px] font-bold text-neutral-500 tracking-[0.2em]">
               VERIFYING
             </p>
           </div>
@@ -34,12 +35,14 @@ export default function AccessOverlay({
     )
   }
 
+  // 2️⃣ Active → no overlay
   if (active === true) return null
 
   return (
     <OverlayContainer>
       <Panel>
 
+        {/* 2️⃣ DEVICE BLOCKED */}
         {blocked && (
           <>
             <Header />
@@ -52,30 +55,36 @@ export default function AccessOverlay({
 
               <button
                 onClick={async () => {
-                  const res = await fetch("/api/reset-devices", { method: "POST" })
+                  const res = await fetch("/api/reset-devices", {
+                    method: "POST"
+                  })
+
                   const data = await res.json()
+
                   if (data?.success) {
                     await signOut({ callbackUrl: "/" })
                   }
                 }}
-                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold rounded-md transition active:scale-[0.98]"
+                className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
               >
                 Logout of All Devices
               </button>
 
-              <div className="pt-2 border-t border-neutral-800 flex justify-center">
+              <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
+                <span className="text-[11px] text-neutral-500 font-mono">DEVICE LIMIT</span>
                 <GoogleLogoutButton />
               </div>
             </div>
           </>
         )}
 
+        {/* 3️⃣ LOGIN REQUIRED */}
         {!sessionExists && !blocked && (
           <>
             <Header />
             <Title>Institutional Sign-in</Title>
             <Description>
-              Activate your 14-day terminal trial.
+              Sign in to access FXHEDZ LIVE Terminal
             </Description>
             <div className="w-full flex justify-center">
               <AuthButton />
@@ -83,45 +92,44 @@ export default function AccessOverlay({
           </>
         )}
 
+        {/* 4️⃣ LIVE EXPIRED */}
         {sessionExists && active === false && !blocked && (
           <>
             <Header />
             <Title>Trial Concluded</Title>
             <Description>
-              Upgrade for continued access.
+              Your institutional trial has ended. Please upgrade for continued access.
             </Description>
-
             <div className="space-y-2 w-full flex flex-col items-center">
-
+              {/* FIXED: Direct Tailwind classes for the blue button */}
               <a
                 href="https://t.me/fxhedzbot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-[11px] font-bold rounded-md transition active:scale-[0.98]"
+                className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
                 Get LIVE+
               </a>
-
-              <div className="w-full pt-2 border-t border-neutral-800 flex justify-center">
+              <div className="w-full pt-2 border-t border-neutral-800 mt-2 flex justify-center">
                 <GoogleLogoutButton />
               </div>
             </div>
           </>
         )}
-
       </Panel>
     </OverlayContainer>
   )
 }
 
-/* ---------- Layout ---------- */
+/* --- Styled Sub-Components --- */
 
 function OverlayContainer({ children }: any) {
   return (
     <div className="
-      fixed inset-x-0 bottom-0 z-[999]
+      fixed inset-x-0
+      bottom-[clamp(26px,3vh,40px)]
+      z-[999]
       flex justify-center
-      pb-[clamp(70px,8vh,110px)]
       px-4
       pointer-events-none
     ">
@@ -133,14 +141,14 @@ function OverlayContainer({ children }: any) {
 function Panel({ children }: any) {
   return (
     <div className="
-      w-full max-w-[clamp(220px,70vw,300px)]
+      w-full max-w-[clamp(220px,80vw,340px)]
+px-[clamp(12px,3vw,22px)]
+py-[clamp(12px,3vh,24px)]
       bg-[#0d0d0d]
       border border-neutral-800
-      rounded-lg
-      shadow-[0_8px_30px_rgba(0,0,0,0.7)]
-      px-4 py-4
+      rounded-xl
+      shadow-[0_10px_40px_rgba(0,0,0,0.7)]
       flex flex-col items-center text-center
-      gap-2
       pointer-events-auto
     ">
       {children}
@@ -150,33 +158,25 @@ function Panel({ children }: any) {
 
 function Header() {
   return (
-    <div className="text-[9px] tracking-[0.25em] text-blue-500 font-black uppercase">
+    <div className="text-[10px] tracking-[0.3em] text-blue-500 font-black mb-4 uppercase">
       FXHEDZ <span className="text-white">LIVE</span>
     </div>
   )
 }
 
 function Title({ children }: any) {
-  return (
-    <h2 className="text-[clamp(14px,2.8vw,18px)] font-semibold text-white leading-tight">
-      {children}
-    </h2>
-  )
+  return <h2 className="text-[clamp(14px,3vw,20px)] font-bold text-white tracking-tight mb-2">{children}</h2>
 }
 
 function Description({ children }: any) {
-  return (
-    <p className="text-[10px] sm:text-[11px] text-neutral-400 leading-snug">
-      {children}
-    </p>
-  )
+  return <p className="text-[clamp(10px,2.5vw,14px)] leading-[1.3] text-neutral-400 leading-relaxed mb-4">{children}</p>
 }
 
 function GoogleLogoutButton() {
   return (
     <button
       onClick={() => signOut()}
-      className="py-1 px-3 bg-white hover:bg-neutral-100 text-neutral-800 font-bold text-[9px] rounded border border-neutral-200 transition uppercase"
+      className="flex items-center justify-center py-1.5 px-4 bg-white hover:bg-neutral-100 text-neutral-800 font-bold text-[10px] rounded border border-neutral-200 shadow-sm transition-all uppercase"
     >
       Logout
     </button>
