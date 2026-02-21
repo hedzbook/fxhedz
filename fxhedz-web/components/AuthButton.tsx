@@ -1,33 +1,7 @@
 "use client"
 
 import { signIn, signOut, useSession } from "next-auth/react"
-
-function getDeviceId() {
-  if (typeof window === "undefined") return null
-
-  let id = localStorage.getItem("fxhedz_device_id")
-
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem("fxhedz_device_id", id)
-  }
-
-  return id
-}
-
-function getFingerprint() {
-  if (typeof window === "undefined") return null
-
-  let fp = localStorage.getItem("fxhedz_fp")
-
-  if (!fp) {
-    const raw = navigator.userAgent + navigator.platform + screen.width + screen.height
-    fp = crypto.randomUUID() + "-" + btoa(raw).slice(0, 12)
-    localStorage.setItem("fxhedz_fp", fp)
-  }
-
-  return fp
-}
+import { ensureDeviceIdentity } from "@/lib/device"
 
 export default function AuthButton() {
   const { data: session, status } = useSession()
@@ -45,20 +19,10 @@ export default function AuthButton() {
   if (!session) {
     return (
       <button
-        onClick={() => {
-          const deviceId = getDeviceId()
-          const fingerprint = getFingerprint()
-
-          if (deviceId) {
-            document.cookie = `fx_device=${deviceId}; path=/; max-age=31536000`
-          }
-
-          if (fingerprint) {
-            document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
-          }
-
-          signIn("google")
-        }}
+onClick={() => {
+  ensureDeviceIdentity()
+  signIn("google")
+}}
         className="
           flex items-center justify-center gap-3 
           w-full max-w-[240px] py-2 px-4 

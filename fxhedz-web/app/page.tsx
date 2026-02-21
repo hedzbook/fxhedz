@@ -8,19 +8,10 @@ import PairDetail from "@/components/PairDetail"
 import AuthButton from "@/components/AuthButton"
 import { useSession } from "next-auth/react"
 import AccessOverlay from "@/components/AccessOverlay"
-
 import { generateDummySignals } from "@/lib/dummySignals"
+import { ensureDeviceIdentity } from "@/lib/device"
 
 const pairs: any = {}
-
-async function sha256(text: string) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(text)
-  const hash = await crypto.subtle.digest("SHA-256", data)
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("")
-}
 
 const PAIRS = [
   "XAUUSD",
@@ -53,17 +44,17 @@ export default function Page() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const hamburgerRef = useRef<HTMLButtonElement | null>(null)
   const daysLeft = useMemo(() => {
-    
-  if (!accessMeta?.expiry) return null
 
-  const now = new Date()
-  const expiry = new Date(accessMeta.expiry)
+    if (!accessMeta?.expiry) return null
 
-  const diff = expiry.getTime() - now.getTime()
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+    const now = new Date()
+    const expiry = new Date(accessMeta.expiry)
 
-  return days > 0 ? days : 0
-}, [accessMeta])
+    const diff = expiry.getTime() - now.getTime()
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+
+    return days > 0 ? days : 0
+  }, [accessMeta])
 
   useEffect(() => {
 
@@ -111,41 +102,10 @@ export default function Page() {
   }, [session])
 
   useEffect(() => {
-
-    async function generateFingerprint() {
-
-      try {
-
-        const raw = [
-          navigator.userAgent,
-          screen.width,
-          screen.height,
-          Intl.DateTimeFormat().resolvedOptions().timeZone,
-          navigator.language
-        ].join("|")
-
-        let hash = ""
-
-        if (window.crypto?.subtle) {
-          const encoder = new TextEncoder()
-          const data = encoder.encode(raw)
-          const buffer = await window.crypto.subtle.digest("SHA-256", data)
-          hash = Array.from(new Uint8Array(buffer))
-            .map(b => b.toString(16).padStart(2, "0"))
-            .join("")
-        } else {
-          hash = btoa(raw).slice(0, 64)
-        }
-
-        setFingerprint(hash)
-
-      } catch {
-        setFingerprint("fallback_" + Date.now())
-      }
+    const result = ensureDeviceIdentity()
+    if (result?.fingerprint) {
+      setFingerprint(result.fingerprint)
     }
-
-    generateFingerprint()
-
   }, [])
 
   useEffect(() => {
@@ -201,82 +161,82 @@ export default function Page() {
       return
     }
 
-async function init() {
+    async function init() {
 
-const params = new URLSearchParams(window.location.search)
+      const params = new URLSearchParams(window.location.search)
 
-const urlPlatform = params.get("platform")
-const urlDeviceId = params.get("device_id")
+      const urlPlatform = params.get("platform")
+      const urlDeviceId = params.get("device_id")
 
-// Determine platform
-let platform = "web"
+      // Determine platform
+      let platform = "web"
 
-if (urlPlatform === "android") {
-  platform = "android"
-}
+      if (urlPlatform === "android") {
+        platform = "android"
+      }
 
-// Telegram override
-try {
-  const tg = (window as any)?.Telegram?.WebApp
-  if (tg?.initDataUnsafe?.user?.id) {
-    platform = "telegram"
-    const tgUser = tg.initDataUnsafe.user
-    document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
-  }
-} catch {}
+      // Telegram override
+      try {
+        const tg = (window as any)?.Telegram?.WebApp
+        if (tg?.initDataUnsafe?.user?.id) {
+          platform = "telegram"
+          const tgUser = tg.initDataUnsafe.user
+          document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
+        }
+      } catch { }
 
-// Determine device ID
-let id = urlDeviceId || localStorage.getItem("fxhedz_device_id")
+      // Determine device ID
+      let id = urlDeviceId || localStorage.getItem("fxhedz_device_id")
 
-if (!id) {
-  id = crypto.randomUUID()
-  localStorage.setItem("fxhedz_device_id", id)
-}
+      if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem("fxhedz_device_id", id)
+      }
 
-document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
-document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
+      document.cookie = `fx_device=${id}; path=/; max-age=31536000`
+      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
+      document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
 
-  // 🔥 PLATFORM DETECTION
-  try {
-    const tg = (window as any)?.Telegram?.WebApp
+      // 🔥 PLATFORM DETECTION
+      try {
+        const tg = (window as any)?.Telegram?.WebApp
 
-    if (tg?.initDataUnsafe?.user?.id) {
-      const tgUser = tg.initDataUnsafe.user
+        if (tg?.initDataUnsafe?.user?.id) {
+          const tgUser = tg.initDataUnsafe.user
 
-      document.cookie = `fx_platform=telegram; path=/; max-age=31536000`
-      document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
-    } else {
-      document.cookie = `fx_platform=web; path=/; max-age=31536000`
+          document.cookie = `fx_platform=telegram; path=/; max-age=31536000`
+          document.cookie = `fx_tg_id=${tgUser.id}; path=/; max-age=31536000`
+        } else {
+          document.cookie = `fx_platform=web; path=/; max-age=31536000`
+        }
+      } catch {
+        document.cookie = `fx_platform=web; path=/; max-age=31536000`
+      }
+
+      try {
+        const res = await fetch(
+          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          { cache: "no-store" }
+        )
+
+        const data = await res.json()
+
+        if (data?.blocked && data?.reason === "device_limit_exceeded") {
+          setSubActive(false)
+          setAccessMeta({
+            ...data,
+            deviceLimit: true
+          })
+          return
+        }
+
+        setSubActive(Boolean(data?.active))
+        setAccessMeta(data)
+
+      } catch {
+        setSubActive(false)
+      }
     }
-  } catch {
-    document.cookie = `fx_platform=web; path=/; max-age=31536000`
-  }
-
-  try {
-const res = await fetch(
-  `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
-  { cache: "no-store" }
-)
-
-const data = await res.json()
-
-if (data?.blocked && data?.reason === "device_limit_exceeded") {
-  setSubActive(false)
-  setAccessMeta({
-    ...data,
-    deviceLimit: true
-  })
-  return
-}
-
-setSubActive(Boolean(data?.active))
-setAccessMeta(data)
-
-  } catch {
-    setSubActive(false)
-  }
-}
 
     init()
 
@@ -476,10 +436,10 @@ setAccessMeta(data)
             height: "clamp(26px,3vh,40px)"
           }}
         >
-{menuOpen && (
-  <div
-    ref={menuRef}
-    className="
+          {menuOpen && (
+            <div
+              ref={menuRef}
+              className="
       absolute
       bottom-[clamp(26px,3vh,40px)]
       left-0
@@ -492,80 +452,80 @@ setAccessMeta(data)
       space-y-4
       text-[12px]
     "
-  >
+            >
 
-    {/* SUBSCRIPTION STATUS */}
-    {session && (
-      <div className="space-y-2 text-neutral-400">
+              {/* SUBSCRIPTION STATUS */}
+              {session && (
+                <div className="space-y-2 text-neutral-400">
 
-        <div className="flex justify-between">
-          <span>Status</span>
-          <span className={subActive ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
-            {subActive ? "ACTIVE" : "INACTIVE"}
-          </span>
-        </div>
+                  <div className="flex justify-between">
+                    <span>Status</span>
+                    <span className={subActive ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
+                      {subActive ? "ACTIVE" : "INACTIVE"}
+                    </span>
+                  </div>
 
-        {daysLeft !== null && (
-          <div className="flex justify-between">
-            <span>Days Left</span>
-            <span className={daysLeft > 3 ? "text-sky-400 font-semibold" : "text-orange-400 font-semibold"}>
-              {daysLeft}
-            </span>
-          </div>
-        )}
+                  {daysLeft !== null && (
+                    <div className="flex justify-between">
+                      <span>Days Left</span>
+                      <span className={daysLeft > 3 ? "text-sky-400 font-semibold" : "text-orange-400 font-semibold"}>
+                        {daysLeft}
+                      </span>
+                    </div>
+                  )}
 
-      </div>
-    )}
+                </div>
+              )}
 
-    <div className="border-t border-neutral-800 pt-3 space-y-3">
+              <div className="border-t border-neutral-800 pt-3 space-y-3">
 
-      {/* VERSION */}
-      <div className="flex justify-between text-neutral-500">
-        <span>Version</span>
-        <span className="font-mono text-neutral-400">v0.1.0</span>
-      </div>
+                {/* VERSION */}
+                <div className="flex justify-between text-neutral-500">
+                  <span>Version</span>
+                  <span className="font-mono text-neutral-400">v0.1.0</span>
+                </div>
 
-      {/* UPGRADE */}
-      <a
-        href="https://t.me/fxhedzbot"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="
+                {/* UPGRADE */}
+                <a
+                  href="https://t.me/fxhedzbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
           block w-full text-center
           py-2 rounded-md
           bg-sky-600 hover:bg-sky-500
           text-white font-semibold
           transition-colors
         "
-      >
-        Upgrade
-      </a>
+                >
+                  Upgrade
+                </a>
 
-      {/* SUPPORT */}
-      <a
-        href="https://t.me/fxhedzbot"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="
+                {/* SUPPORT */}
+                <a
+                  href="https://t.me/fxhedzbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
           block w-full text-center
           py-2 rounded-md
           bg-neutral-800 hover:bg-neutral-700
           text-white font-semibold
           transition-colors
         "
-      >
-        Support
-      </a>
+                >
+                  Support
+                </a>
 
-      {/* AUTH BUTTON */}
-      <div className="border-t border-neutral-800 pt-3">
-        <AuthButton />
-      </div>
+                {/* AUTH BUTTON */}
+                <div className="border-t border-neutral-800 pt-3">
+                  <AuthButton />
+                </div>
 
-    </div>
+              </div>
 
-  </div>
-)}
+            </div>
+          )}
 
           {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
           <button
