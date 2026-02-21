@@ -110,26 +110,42 @@ export default function Page() {
     setSubActive(null)
   }, [session])
 
-  useEffect(() => {
+useEffect(() => {
 
-  // Only run after login
-  if (!session?.user?.email) return
+  async function bindTelegram() {
 
-  // Only if opened inside Telegram
-  const tg = (window as any)?.Telegram?.WebApp
-  if (!tg?.initDataUnsafe?.user?.id) return
+    if (!session?.user?.email) return
 
-  // Send Telegram ID directly to GAS
-  fetch(process.env.NEXT_PUBLIC_GAS_URL!, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: session.user.email,
-      telegram_chat_id: String(tg.initDataUnsafe.user.id)
-    })
-  })
+    const tg = (window as any)?.Telegram?.WebApp
+    if (!tg?.initDataUnsafe?.user?.id) return
 
-}, [session])
+    try {
+
+      const res = await fetch(process.env.NEXT_PUBLIC_GAS_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: session.user.email,
+          fingerprint,
+          platform: "web",
+          telegram_chat_id: String(tg.initDataUnsafe.user.id)
+        })
+      })
+
+      const data = await res.json()
+
+      if (data?.blocked && data?.reason === "telegram_mismatch") {
+        alert("Telegram account mismatch. Please login from original Telegram.")
+      }
+
+    } catch (err) {
+      console.error("Telegram binding failed", err)
+    }
+  }
+
+  bindTelegram()
+
+}, [session, fingerprint])
 
   useEffect(() => {
 
