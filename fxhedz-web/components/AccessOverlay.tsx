@@ -38,7 +38,7 @@ export default function AccessOverlay({
             <Header />
             <Title>Device Restricted</Title>
             <Description>
-              Maximum allowed terminals is 2.
+              Maximum 2 terminals allowed.
             </Description>
 
             <div className="space-y-2 w-full">
@@ -98,7 +98,7 @@ export default function AccessOverlay({
                 rel="noopener noreferrer"
                 className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
-                Upgrade Subscription
+                PRO+
               </a>
               <div className="w-full pt-2 border-t border-neutral-800 mt-2 flex justify-center">
                 <GoogleLogoutButton />
