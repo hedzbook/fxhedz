@@ -112,11 +112,6 @@ export default function Page() {
   }, [session, fingerprint, subActive])
 
   useEffect(() => {
-    setAccessMeta(null)
-    setSubActive(null)
-  }, [session])
-
-  useEffect(() => {
     const result = ensureDeviceIdentity()
     if (result?.fingerprint) {
       setFingerprint(result.fingerprint)
@@ -125,17 +120,19 @@ export default function Page() {
 
   useEffect(() => {
 
-    // If not logged in → show dummy
-    if (!session) {
-      setSignals(generateDummySignals())
-      return
-    }
+if (status === "loading") return
 
-    // If logged in but not active → no real signals
-    if (subActive !== true) {
-      setSignals(generateDummySignals())
-      return
-    }
+if (!session) {
+  setSignals(generateDummySignals())
+  return
+}
+
+if (subActive === false) {
+  setSignals(generateDummySignals())
+  return
+}
+
+if (subActive === null) return
     if (!fingerprint) return
 
     async function loadSignals() {
@@ -158,7 +155,7 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive, fingerprint, session])
+  }, [subActive, fingerprint, status])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -278,7 +275,9 @@ useEffect(() => {
 
   if (!openPair) return
 
-  const isGuest = !session || subActive !== true
+  const isGuest =
+  status !== "authenticated" ||
+  subActive === false
 
   if (isGuest) {
     loadPreview(openPair)
@@ -312,7 +311,7 @@ useEffect(() => {
       cancelled = true
       clearInterval(interval)
     }
-  }, [openPair, subActive, fingerprint])
+  }, [openPair, subActive, fingerprint, status])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -331,7 +330,9 @@ useEffect(() => {
     })
   }, [uiSignals, pairData])
 
-  const isGuest = !session || subActive !== true
+  const isGuest =
+  status !== "authenticated" ||
+  subActive === false
 
 const detailData = openPair
   ? (
