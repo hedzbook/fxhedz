@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 const GAS_BASE =
   "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const pair = req.nextUrl.searchParams.get("pair") || "XAUUSD"
+
     const res = await fetch(
-      `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=XAUUSD`,
-      {
-        next: { revalidate: 10 }
-      }
+      `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}`,
+      { next: { revalidate: 10 } }
     )
 
     const json = await res.json()
