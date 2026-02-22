@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { View, ActivityIndicator } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
-import * as AuthSession from "expo-auth-session"
 import * as SecureStore from "expo-secure-store"
+import * as Crypto from "expo-crypto"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -14,22 +14,25 @@ export default function HomeScreen() {
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const webViewRef = useRef<WebView>(null)
 
-  const redirectUri = "fxhedz://redirect"
-
+  // ===============================
+  // GOOGLE AUTH (ANDROID CLIENT)
+  // ===============================
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-    redirectUri
+    scopes: ["openid", "profile", "email"]
   })
 
   // ===============================
-  // INITIALIZE
+  // INITIAL LOAD
   // ===============================
   useEffect(() => {
     initialize()
   }, [])
 
   async function initialize() {
+
     const storedAccess = await SecureStore.getItemAsync("accessToken")
     const storedRefresh = await SecureStore.getItemAsync("refreshToken")
     const storedEmail = await SecureStore.getItemAsync("email")
@@ -52,25 +55,33 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // GOOGLE RESPONSE HANDLER
+  // HANDLE GOOGLE RESPONSE
   // ===============================
   useEffect(() => {
+
     if (response?.type === "success") {
+
       const idToken = response.authentication?.idToken
-      if (idToken) {
-        exchangeTokenWithBackend(idToken)
+
+      if (!idToken) {
+        console.log("No idToken returned from Google")
+        return
       }
+
+      exchangeTokenWithBackend(idToken)
     }
+
   }, [response])
 
   // ===============================
   // DEVICE ID
   // ===============================
   async function getDeviceId(): Promise<string> {
+
     let deviceId = await SecureStore.getItemAsync("deviceId")
 
     if (!deviceId) {
-      deviceId = crypto.randomUUID()
+      deviceId = Crypto.randomUUID()
       await SecureStore.setItemAsync("deviceId", deviceId)
     }
 
@@ -78,87 +89,112 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // EXCHANGE GOOGLE TOKEN
+  // EXCHANGE WITH BACKEND
   // ===============================
   async function exchangeTokenWithBackend(idToken: string) {
+
     const deviceId = await getDeviceId()
 
-    const res = await fetch(`${API_BASE}/api/native-auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idToken,
-        deviceId
+    try {
+
+      const res = await fetch(`${API_BASE}/api/native-auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          deviceId
+        })
       })
-    })
 
-    if (!res.ok) return
+      if (!res.ok) {
+        console.log("Backend auth failed")
+        return
+      }
 
-    const data = await res.json()
+      const data = await res.json()
 
-    await SecureStore.setItemAsync("accessToken", data.accessToken)
-    await SecureStore.setItemAsync("refreshToken", data.refreshToken)
-    await SecureStore.setItemAsync("email", data.email)
+      await SecureStore.setItemAsync("accessToken", data.accessToken)
+      await SecureStore.setItemAsync("refreshToken", data.refreshToken)
+      await SecureStore.setItemAsync("email", data.email)
 
-    setAccessToken(data.accessToken)
+      setAccessToken(data.accessToken)
+
+    } catch (error) {
+      console.log("Exchange Error:", error)
+    }
   }
 
   // ===============================
   // SILENT REFRESH
   // ===============================
   async function tryRefresh(): Promise<boolean> {
+
     const refreshToken = await SecureStore.getItemAsync("refreshToken")
     const email = await SecureStore.getItemAsync("email")
     const deviceId = await SecureStore.getItemAsync("deviceId")
 
     if (!refreshToken || !email || !deviceId) return false
 
-    const res = await fetch(`${API_BASE}/api/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        refreshToken,
-        email,
-        deviceId
+    try {
+
+      const res = await fetch(`${API_BASE}/api/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          refreshToken,
+          email,
+          deviceId
+        })
       })
-    })
 
-    if (!res.ok) return false
+      if (!res.ok) return false
 
-    const data = await res.json()
+      const data = await res.json()
 
-    await SecureStore.setItemAsync("accessToken", data.accessToken)
-    setAccessToken(data.accessToken)
+      await SecureStore.setItemAsync("accessToken", data.accessToken)
+      setAccessToken(data.accessToken)
 
-    return true
+      return true
+
+    } catch {
+      return false
+    }
   }
 
   // ===============================
   // LOGOUT
   // ===============================
   async function logout() {
+
     await SecureStore.deleteItemAsync("accessToken")
     await SecureStore.deleteItemAsync("refreshToken")
     await SecureStore.deleteItemAsync("email")
+
     setAccessToken(null)
   }
 
   // ===============================
-  // LOADING
+  // LOADING STATE
   // ===============================
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#000"
+      }}>
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     )
   }
 
   // ===============================
-  // ALWAYS LOAD WEBVIEW
+  // MAIN WEBVIEW
   // ===============================
   return (
     <WebView
+      ref={webViewRef}
       key={accessToken ?? "guest"}
       source={{
         uri: API_BASE,
@@ -166,7 +202,17 @@ export default function HomeScreen() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: "#000000" }}
+      containerStyle={{ backgroundColor: "#000000" }}
+
+      // Prevent Google login inside WebView
+      onShouldStartLoadWithRequest={(req) => {
+        if (req.url.includes("accounts.google.com")) {
+          promptAsync()
+          return false
+        }
+        return true
+      }}
 
       onMessage={async (event) => {
 
@@ -181,9 +227,9 @@ export default function HomeScreen() {
         }
       }}
 
-      onHttpError={async (syntheticEvent) => {
+      onHttpError={async (event) => {
 
-        const { statusCode } = syntheticEvent.nativeEvent
+        const { statusCode } = event.nativeEvent
 
         if (statusCode === 401) {
 
