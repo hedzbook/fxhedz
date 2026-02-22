@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { View, ActivityIndicator } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
 import * as AuthSession from "expo-auth-session"
 import * as SecureStore from "expo-secure-store"
+import * as Crypto from "expo-crypto" // Use expo-crypto for better compatibility
 
 WebBrowser.maybeCompleteAuthSession()
 
 const API_BASE = "https://fxhedz.vercel.app"
 
 export default function HomeScreen() {
-
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const webViewRef = useRef<WebView>(null)
 
   const redirectUri = AuthSession.makeRedirectUri({
     scheme: "fxhedz",
@@ -73,7 +74,7 @@ export default function HomeScreen() {
     let deviceId = await SecureStore.getItemAsync("deviceId")
 
     if (!deviceId) {
-      deviceId = crypto.randomUUID()
+      deviceId = Crypto.randomUUID()
       await SecureStore.setItemAsync("deviceId", deviceId)
     }
 
@@ -86,24 +87,28 @@ export default function HomeScreen() {
   async function exchangeTokenWithBackend(idToken: string) {
     const deviceId = await getDeviceId()
 
-    const res = await fetch(`${API_BASE}/api/native-auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idToken,
-        deviceId
+    try {
+      const res = await fetch(`${API_BASE}/api/native-auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          deviceId
+        })
       })
-    })
 
-    if (!res.ok) return
+      if (!res.ok) return
 
-    const data = await res.json()
+      const data = await res.json()
 
-    await SecureStore.setItemAsync("accessToken", data.accessToken)
-    await SecureStore.setItemAsync("refreshToken", data.refreshToken)
-    await SecureStore.setItemAsync("email", data.email)
+      await SecureStore.setItemAsync("accessToken", data.accessToken)
+      await SecureStore.setItemAsync("refreshToken", data.refreshToken)
+      await SecureStore.setItemAsync("email", data.email)
 
-    setAccessToken(data.accessToken)
+      setAccessToken(data.accessToken)
+    } catch (error) {
+      console.error("Token exchange failed:", error)
+    }
   }
 
   // ===============================
@@ -116,24 +121,26 @@ export default function HomeScreen() {
 
     if (!refreshToken || !email || !deviceId) return false
 
-    const res = await fetch(`${API_BASE}/api/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        refreshToken,
-        email,
-        deviceId
+    try {
+      const res = await fetch(`${API_BASE}/api/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          refreshToken,
+          email,
+          deviceId
+        })
       })
-    })
 
-    if (!res.ok) return false
+      if (!res.ok) return false
 
-    const data = await res.json()
-
-    await SecureStore.setItemAsync("accessToken", data.accessToken)
-    setAccessToken(data.accessToken)
-
-    return true
+      const data = await res.json()
+      await SecureStore.setItemAsync("accessToken", data.accessToken)
+      setAccessToken(data.accessToken)
+      return true
+    } catch (error) {
+      return false
+    }
   }
 
   // ===============================
@@ -151,17 +158,18 @@ export default function HomeScreen() {
   // ===============================
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" }}>
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     )
   }
 
   // ===============================
-  // ALWAYS LOAD WEBVIEW
+  // RENDER
   // ===============================
   return (
     <WebView
+      ref={webViewRef}
       key={accessToken ?? "guest"}
       source={{
         uri: API_BASE,
@@ -170,28 +178,31 @@ export default function HomeScreen() {
           : {}
       }}
       style={{ flex: 1 }}
+      backgroundColor="#000000"
+
+      // PREVENT 403 ERROR: Block Google login inside WebView
+      onShouldStartLoadWithRequest={(request) => {
+        if (request.url.includes("accounts.google.com")) {
+          promptAsync() // Trigger native Google Auth
+          return false // Stop WebView from loading the blocked page
+        }
+        return true
+      }}
 
       onMessage={async (event) => {
-
         const message = event.nativeEvent.data
-
         if (message === "LOGIN_REQUEST") {
           promptAsync()
         }
-
         if (message === "LOGOUT_REQUEST") {
           await logout()
         }
       }}
 
       onHttpError={async (syntheticEvent) => {
-
         const { statusCode } = syntheticEvent.nativeEvent
-
         if (statusCode === 401) {
-
           const refreshed = await tryRefresh()
-
           if (!refreshed) {
             promptAsync()
           }
