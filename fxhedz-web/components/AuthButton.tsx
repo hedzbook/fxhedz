@@ -19,22 +19,25 @@ export default function AuthButton() {
   if (!session) {
     return (
       <button
-// Update your onClick handler in AuthButton.tsx
-onClick={() => {
-  ensureDeviceIdentity();
+        onClick={() => {
 
-  // 1. Detect if we are inside the Android WebView
-  const isAndroid = typeof window !== "undefined" && (window as any).ReactNativeWebView;
+          ensureDeviceIdentity()
 
-  if (isAndroid) {
-    // 2. ONLY send the message and STOP. 
-    // Do not let NextAuth try to redirect the browser.
-    (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST");
-  } else {
-    // 3. Normal browser login
-    signIn("google");
-  }
-}}
+          // If inside Android WebView â†’ trigger native login
+          if (typeof window !== "undefined" &&
+            (window as any).ReactNativeWebView) {
+
+            (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST")
+            return
+          }
+
+          // Normal web login
+          if (typeof window !== "undefined" && (window as any).ReactNativeWebView) {
+            (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST")
+          } else {
+            signIn("google")
+          }
+        }}
         className="
           flex items-center justify-center gap-3 
           w-full max-w-[clamp(140px,65vw,200px)]

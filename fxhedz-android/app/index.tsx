@@ -1,20 +1,19 @@
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState } from "react"
 import { View, ActivityIndicator } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
 import * as AuthSession from "expo-auth-session"
 import * as SecureStore from "expo-secure-store"
-import * as Crypto from "expo-crypto"
 
 WebBrowser.maybeCompleteAuthSession()
 
 const API_BASE = "https://fxhedz.vercel.app"
 
 export default function HomeScreen() {
+
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const webViewRef = useRef<WebView>(null)
 
   const redirectUri = AuthSession.makeRedirectUri({
     scheme: "fxhedz",
@@ -27,7 +26,7 @@ export default function HomeScreen() {
   })
 
   // ===============================
-  // INITIALIZE (Original)
+  // INITIALIZE
   // ===============================
   useEffect(() => {
     initialize()
@@ -56,7 +55,7 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // GOOGLE RESPONSE HANDLER (Original)
+  // GOOGLE RESPONSE HANDLER
   // ===============================
   useEffect(() => {
     if (response?.type === "success") {
@@ -68,13 +67,13 @@ export default function HomeScreen() {
   }, [response])
 
   // ===============================
-  // DEVICE ID (Original - updated to Crypto)
+  // DEVICE ID
   // ===============================
   async function getDeviceId(): Promise<string> {
     let deviceId = await SecureStore.getItemAsync("deviceId")
 
     if (!deviceId) {
-      deviceId = Crypto.randomUUID()
+      deviceId = crypto.randomUUID()
       await SecureStore.setItemAsync("deviceId", deviceId)
     }
 
@@ -82,37 +81,33 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // EXCHANGE GOOGLE TOKEN (Original)
+  // EXCHANGE GOOGLE TOKEN
   // ===============================
   async function exchangeTokenWithBackend(idToken: string) {
     const deviceId = await getDeviceId()
 
-    try {
-      const res = await fetch(`${API_BASE}/api/native-auth`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idToken,
-          deviceId
-        })
+    const res = await fetch(`${API_BASE}/api/native-auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idToken,
+        deviceId
       })
+    })
 
-      if (!res.ok) return
+    if (!res.ok) return
 
-      const data = await res.json()
+    const data = await res.json()
 
-      await SecureStore.setItemAsync("accessToken", data.accessToken)
-      await SecureStore.setItemAsync("refreshToken", data.refreshToken)
-      await SecureStore.setItemAsync("email", data.email)
+    await SecureStore.setItemAsync("accessToken", data.accessToken)
+    await SecureStore.setItemAsync("refreshToken", data.refreshToken)
+    await SecureStore.setItemAsync("email", data.email)
 
-      setAccessToken(data.accessToken)
-    } catch (error) {
-      console.error("Exchange Error:", error)
-    }
+    setAccessToken(data.accessToken)
   }
 
   // ===============================
-  // SILENT REFRESH (Original)
+  // SILENT REFRESH
   // ===============================
   async function tryRefresh(): Promise<boolean> {
     const refreshToken = await SecureStore.getItemAsync("refreshToken")
@@ -121,30 +116,28 @@ export default function HomeScreen() {
 
     if (!refreshToken || !email || !deviceId) return false
 
-    try {
-      const res = await fetch(`${API_BASE}/api/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          refreshToken,
-          email,
-          deviceId
-        })
+    const res = await fetch(`${API_BASE}/api/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        refreshToken,
+        email,
+        deviceId
       })
+    })
 
-      if (!res.ok) return false
+    if (!res.ok) return false
 
-      const data = await res.json()
-      await SecureStore.setItemAsync("accessToken", data.accessToken)
-      setAccessToken(data.accessToken)
-      return true
-    } catch (e) {
-      return false
-    }
+    const data = await res.json()
+
+    await SecureStore.setItemAsync("accessToken", data.accessToken)
+    setAccessToken(data.accessToken)
+
+    return true
   }
 
   // ===============================
-  // LOGOUT (Original)
+  // LOGOUT
   // ===============================
   async function logout() {
     await SecureStore.deleteItemAsync("accessToken")
@@ -154,22 +147,21 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // LOADING STATE
+  // LOADING
   // ===============================
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" }}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
       </View>
     )
   }
 
   // ===============================
-  // WEBVIEW (Original + Interception Fix)
+  // ALWAYS LOAD WEBVIEW
   // ===============================
   return (
     <WebView
-      ref={webViewRef}
       key={accessToken ?? "guest"}
       source={{
         uri: API_BASE,
@@ -177,33 +169,29 @@ export default function HomeScreen() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-      style={{ flex: 1, backgroundColor: "#000000" }}
-      containerStyle={{ backgroundColor: "#000000" }}
-
-      // THIS IS THE FIX FOR THE 403 ERROR
-      onShouldStartLoadWithRequest={(request) => {
-        // If the web app tries to navigate to Google, block it
-        if (request.url.includes("accounts.google.com")) {
-          promptAsync() // Trigger native popup instead
-          return false // Stop the WebView from loading the blocked page
-        }
-        return true
-      }}
+      style={{ flex: 1 }}
 
       onMessage={async (event) => {
+
         const message = event.nativeEvent.data
+
         if (message === "LOGIN_REQUEST") {
           promptAsync()
         }
+
         if (message === "LOGOUT_REQUEST") {
           await logout()
         }
       }}
 
       onHttpError={async (syntheticEvent) => {
+
         const { statusCode } = syntheticEvent.nativeEvent
+
         if (statusCode === 401) {
+
           const refreshed = await tryRefresh()
+
           if (!refreshed) {
             promptAsync()
           }
