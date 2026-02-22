@@ -592,7 +592,7 @@ export default function Page() {
               <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
                 ZEROLOSS COMPOUNDED
               </div>
-              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[11px] tracking-[0.1em]">
+              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[10px] tracking-[0.14em]">
                 HEDGING SYSTEM
               </div>
             </div>
