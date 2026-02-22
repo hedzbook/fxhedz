@@ -96,9 +96,9 @@ export default function AccessOverlay({
         {sessionExists && active === false && !blocked && (
           <>
             <Header />
-            <Title>Trial Concluded</Title>
+            <Title>Plan Concluded</Title>
             <Description>
-              Your institutional trial has ended. Please upgrade for continued access.
+              Your institutional terminal plan has ended.
             </Description>
             <div className="space-y-2 w-full flex flex-col items-center">
               {/* FIXED: Direct Tailwind classes for the blue button */}

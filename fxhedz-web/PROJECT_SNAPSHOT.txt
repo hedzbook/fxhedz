@@ -1097,7 +1097,7 @@ export default function AccessOverlay({
                     await signOut({ callbackUrl: "/" })
                   }
                 }}
-                className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
+                className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
               >
                 Logout of All Devices
               </button>
@@ -1116,7 +1116,7 @@ export default function AccessOverlay({
             <Header />
             <Title>Institutional Sign-in</Title>
             <Description>
-              Sign in to activate your 14-day terminal trial.
+              Sign in to access FXHEDZ LIVE Terminal
             </Description>
             <div className="w-full flex justify-center">
               <AuthButton />
@@ -1138,7 +1138,7 @@ export default function AccessOverlay({
                 href="https://t.me/fxhedzbot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
+                className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
                 Get LIVE+
               </a>
@@ -1158,9 +1158,10 @@ export default function AccessOverlay({
 function OverlayContainer({ children }: any) {
   return (
     <div className="
-      fixed inset-0 z-[999]
-      flex items-end justify-center
-      pb-[clamp(20px,3vh,40px)]
+      fixed inset-x-0
+      bottom-[clamp(26px,3vh,40px)]
+      z-[999]
+      flex justify-center
       px-4
       pointer-events-none
     ">
@@ -1172,12 +1173,13 @@ function OverlayContainer({ children }: any) {
 function Panel({ children }: any) {
   return (
     <div className="
-      w-full max-w-[320px]
+      w-full max-w-[clamp(220px,80vw,340px)]
+px-[clamp(12px,3vw,22px)]
+py-[clamp(12px,3vh,24px)]
       bg-[#0d0d0d]
       border border-neutral-800
       rounded-xl
       shadow-[0_10px_40px_rgba(0,0,0,0.7)]
-      px-5 py-6
       flex flex-col items-center text-center
       pointer-events-auto
     ">
@@ -1195,11 +1197,11 @@ function Header() {
 }
 
 function Title({ children }: any) {
-  return <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-2">{children}</h2>
+  return <h2 className="text-[clamp(14px,3vw,20px)] font-bold text-white tracking-tight mb-2">{children}</h2>
 }
 
 function Description({ children }: any) {
-  return <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-4">{children}</p>
+  return <p className="text-[clamp(10px,2.5vw,14px)] leading-[1.3] text-neutral-400 leading-relaxed mb-4">{children}</p>
 }
 
 function GoogleLogoutButton() {
@@ -1332,9 +1334,11 @@ onClick={() => {
 }}
         className="
           flex items-center justify-center gap-3 
-          w-full max-w-[240px] py-2 px-4 
+          w-full max-w-[clamp(140px,65vw,200px)]
+py-[clamp(6px,1.8vh,10px)]
+px-[clamp(10px,3vw,18px)]
+text-[clamp(11px,2.6vw,15px)]
           bg-white hover:bg-neutral-50 
-          text-neutral-700 font-semibold text-sm
           rounded-md border border-neutral-300
           shadow-sm transition-all duration-200
           active:scale-[0.98]
@@ -1370,7 +1374,11 @@ onClick={() => {
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      className="w-[clamp(14px,3vw,20px)] h-[clamp(14px,3vw,20px)] shrink-0"
+      viewBox="0 0 18 18"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
       <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853" />
       <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.173.282-1.712V4.956H.957a8.996 8.996 0 000 8.088l3.007-2.332z" fill="#FBBC05" />
