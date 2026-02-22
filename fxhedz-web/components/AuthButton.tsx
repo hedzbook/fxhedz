@@ -32,7 +32,11 @@ export default function AuthButton() {
           }
 
           // Normal web login
-          signIn("google")
+          if (typeof window !== "undefined" && (window as any).ReactNativeWebView) {
+            (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST")
+          } else {
+            signIn("google")
+          }
         }}
         className="
           flex items-center justify-center gap-3 
