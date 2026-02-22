@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
+import * as AuthSession from "expo-auth-session"
 import * as SecureStore from "expo-secure-store"
 
 WebBrowser.maybeCompleteAuthSession()
@@ -13,10 +14,14 @@ export default function HomeScreen() {
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const redirectUri = AuthSession.makeRedirectUri({
+    scheme: "fxhedz"
+  })
 
-const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com"
-})
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
+    redirectUri
+  })
 
   // ===============================
   // INITIALIZE
@@ -154,42 +159,42 @@ const [request, response, promptAsync] = Google.useAuthRequest({
   // ALWAYS LOAD WEBVIEW
   // ===============================
   return (
-<WebView
-  key={accessToken ?? "guest"}
-  source={{
-    uri: API_BASE,
-    headers: accessToken
-      ? { Authorization: `Bearer ${accessToken}` }
-      : {}
-  }}
-  style={{ flex: 1 }}
+    <WebView
+      key={accessToken ?? "guest"}
+      source={{
+        uri: API_BASE,
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : {}
+      }}
+      style={{ flex: 1 }}
 
-  onMessage={async (event) => {
+      onMessage={async (event) => {
 
-    const message = event.nativeEvent.data
+        const message = event.nativeEvent.data
 
-    if (message === "LOGIN_REQUEST") {
-      promptAsync()
-    }
+        if (message === "LOGIN_REQUEST") {
+          promptAsync()
+        }
 
-    if (message === "LOGOUT_REQUEST") {
-      await logout()
-    }
-  }}
+        if (message === "LOGOUT_REQUEST") {
+          await logout()
+        }
+      }}
 
-  onHttpError={async (syntheticEvent) => {
+      onHttpError={async (syntheticEvent) => {
 
-    const { statusCode } = syntheticEvent.nativeEvent
+        const { statusCode } = syntheticEvent.nativeEvent
 
-    if (statusCode === 401) {
+        if (statusCode === 401) {
 
-      const refreshed = await tryRefresh()
+          const refreshed = await tryRefresh()
 
-      if (!refreshed) {
-        promptAsync()
-      }
-    }
-  }}
-/>
+          if (!refreshed) {
+            promptAsync()
+          }
+        }
+      }}
+    />
   )
 }
