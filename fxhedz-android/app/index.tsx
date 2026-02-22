@@ -5,7 +5,7 @@ import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
 import * as AuthSession from "expo-auth-session"
 import * as SecureStore from "expo-secure-store"
-import * as Crypto from "expo-crypto" // Use expo-crypto for better compatibility
+import * as Crypto from "expo-crypto"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -27,7 +27,7 @@ export default function HomeScreen() {
   })
 
   // ===============================
-  // INITIALIZE
+  // INITIALIZE (Original)
   // ===============================
   useEffect(() => {
     initialize()
@@ -56,7 +56,7 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // GOOGLE RESPONSE HANDLER
+  // GOOGLE RESPONSE HANDLER (Original)
   // ===============================
   useEffect(() => {
     if (response?.type === "success") {
@@ -68,7 +68,7 @@ export default function HomeScreen() {
   }, [response])
 
   // ===============================
-  // DEVICE ID
+  // DEVICE ID (Original - updated to Crypto)
   // ===============================
   async function getDeviceId(): Promise<string> {
     let deviceId = await SecureStore.getItemAsync("deviceId")
@@ -82,7 +82,7 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // EXCHANGE GOOGLE TOKEN
+  // EXCHANGE GOOGLE TOKEN (Original)
   // ===============================
   async function exchangeTokenWithBackend(idToken: string) {
     const deviceId = await getDeviceId()
@@ -107,12 +107,12 @@ export default function HomeScreen() {
 
       setAccessToken(data.accessToken)
     } catch (error) {
-      console.error("Token exchange failed:", error)
+      console.error("Exchange Error:", error)
     }
   }
 
   // ===============================
-  // SILENT REFRESH
+  // SILENT REFRESH (Original)
   // ===============================
   async function tryRefresh(): Promise<boolean> {
     const refreshToken = await SecureStore.getItemAsync("refreshToken")
@@ -138,13 +138,13 @@ export default function HomeScreen() {
       await SecureStore.setItemAsync("accessToken", data.accessToken)
       setAccessToken(data.accessToken)
       return true
-    } catch (error) {
+    } catch (e) {
       return false
     }
   }
 
   // ===============================
-  // LOGOUT
+  // LOGOUT (Original)
   // ===============================
   async function logout() {
     await SecureStore.deleteItemAsync("accessToken")
@@ -154,7 +154,7 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // LOADING
+  // LOADING STATE
   // ===============================
   if (loading) {
     return (
@@ -165,7 +165,7 @@ export default function HomeScreen() {
   }
 
   // ===============================
-  // RENDER
+  // WEBVIEW (Original + Interception Fix)
   // ===============================
   return (
     <WebView
@@ -177,14 +177,15 @@ export default function HomeScreen() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-      style={{ flex: 1 }}
-      backgroundColor="#000000"
+      style={{ flex: 1, backgroundColor: "#000000" }}
+      containerStyle={{ backgroundColor: "#000000" }}
 
-      // PREVENT 403 ERROR: Block Google login inside WebView
+      // THIS IS THE FIX FOR THE 403 ERROR
       onShouldStartLoadWithRequest={(request) => {
+        // If the web app tries to navigate to Google, block it
         if (request.url.includes("accounts.google.com")) {
-          promptAsync() // Trigger native Google Auth
-          return false // Stop WebView from loading the blocked page
+          promptAsync() // Trigger native popup instead
+          return false // Stop the WebView from loading the blocked page
         }
         return true
       }}
