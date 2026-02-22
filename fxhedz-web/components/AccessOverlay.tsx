@@ -92,13 +92,13 @@ export default function AccessOverlay({
           </>
         )}
 
-        {/* 4️⃣ LIVE EXPIRED */}
+        {/* 4️⃣ LIVE/ LIVE+ EXPIRED */}
         {sessionExists && active === false && !blocked && (
           <>
             <Header />
-            <Title>Plan Concluded</Title>
+            <Title>Access Ended</Title>
             <Description>
-              Your institutional terminal plan has ended.
+              Terminal access has expired.
             </Description>
             <div className="space-y-2 w-full flex flex-col items-center">
               {/* FIXED: Direct Tailwind classes for the blue button */}
