@@ -14,8 +14,10 @@ export default function HomeScreen() {
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
   const redirectUri = AuthSession.makeRedirectUri({
-    scheme: "fxhedz"
+    scheme: "fxhedz",
+    path: "redirect"
   })
 
   const [request, response, promptAsync] = Google.useAuthRequest({
