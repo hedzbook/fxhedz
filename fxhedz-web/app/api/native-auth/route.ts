@@ -3,8 +3,6 @@ import { OAuth2Client } from "google-auth-library"
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
-
 const ACCESS_EXPIRES_IN = "15m"
 const REFRESH_EXPIRES_DAYS = 14
 
@@ -13,19 +11,30 @@ export async function POST(req: NextRequest) {
     const { idToken, deviceId } = await req.json()
 
     if (!idToken || !deviceId) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing fields" },
+        { status: 400 }
+      )
     }
 
-    // 🔹 Verify Google token
+    // 🔹 Verify Google token (accept Web + Android)
+    const client = new OAuth2Client()
+
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: [
+        process.env.GOOGLE_CLIENT_ID!,
+        process.env.GOOGLE_ANDROID_CLIENT_ID!
+      ]
     })
 
     const payload = ticket.getPayload()
 
     if (!payload?.email) {
-      return NextResponse.json({ error: "Invalid Google token" }, { status: 401 })
+      return NextResponse.json(
+        { error: "Invalid Google token" },
+        { status: 401 }
+      )
     }
 
     const email = payload.email.toLowerCase()
@@ -39,27 +48,29 @@ export async function POST(req: NextRequest) {
       .digest("hex")
 
     const refreshExpires = new Date()
-    refreshExpires.setDate(refreshExpires.getDate() + REFRESH_EXPIRES_DAYS)
+    refreshExpires.setDate(
+      refreshExpires.getDate() + REFRESH_EXPIRES_DAYS
+    )
 
-    // 🔹 Call GAS to register device + refresh token
-const gasRes = await fetch(process.env.GAS_AUTH_URL!, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    email,
-    device_id: deviceId,
-    fingerprint: deviceId, // 🔥 use deviceId as fingerprint for android
-    platform: "android",
-    refresh_token_hash: refreshHash,
-    refresh_expires: refreshExpires.toISOString()
-  })
-})
+    // 🔹 Register device in GAS
+    const gasRes = await fetch(process.env.GAS_AUTH_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        device_id: deviceId,
+        fingerprint: deviceId,
+        platform: "android",
+        refresh_token_hash: refreshHash,
+        refresh_expires: refreshExpires.toISOString()
+      })
+    })
 
     const gasData = await gasRes.json()
 
     if (gasData.blocked) {
       return NextResponse.json(
-        { error: "Device blocked or limit exceeded" },
+        { error: "Device blocked" },
         { status: 403 }
       )
     }
@@ -85,6 +96,9 @@ const gasRes = await fetch(process.env.GAS_AUTH_URL!, {
     })
 
   } catch (err) {
-    return NextResponse.json({ error: "Auth failed" }, { status: 401 })
+    return NextResponse.json(
+      { error: "Auth failed" },
+      { status: 401 }
+    )
   }
 }
