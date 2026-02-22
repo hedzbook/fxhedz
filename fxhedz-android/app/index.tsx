@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
 import * as SecureStore from "expo-secure-store"
 import * as Crypto from "expo-crypto"
+import * as AuthSession from "expo-auth-session"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -19,10 +20,13 @@ export default function HomeScreen() {
   // ===============================
   // GOOGLE AUTH (ANDROID CLIENT)
   // ===============================
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-    scopes: ["openid", "profile", "email"]
-  })
+const [request, response, promptAsync] = Google.useAuthRequest({
+  androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
+  // Fixed: simplified redirect calculation for Android
+  redirectUri: AuthSession.makeRedirectUri({
+    native: "com.googleusercontent.apps.314350994918-8vshj6jmsggen1tdiejho7bp912n83iu:/oauth2redirect",
+  }),
+});
 
   // ===============================
   // INITIAL LOAD
