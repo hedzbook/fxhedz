@@ -27,8 +27,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Grant Gradle permission
-        run: chmod +x fxhedz-android/android/gradlew
+      - name: Generate Gradle Wrapper
+        run: |
+          cd fxhedz-android/android
+          if [ ! -f gradlew ]; then
+            gradle wrapper
+          fi
+          chmod +x gradlew
 
       - name: Build Release APK
         run: |
