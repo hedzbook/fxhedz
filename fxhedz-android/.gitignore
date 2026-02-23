@@ -8,7 +8,7 @@ node_modules/
 # Build outputs
 dist/
 build/
-android/
+# android/
 ios/
 
 # Logs
