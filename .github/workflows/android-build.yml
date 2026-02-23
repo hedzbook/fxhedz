@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Release APK
         run: |
-          cd fxhedz-android/android
+          cd chmod +x gradlew
           ./gradlew assembleRelease
 
       - name: Upload APK
