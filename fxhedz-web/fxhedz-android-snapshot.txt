@@ -360,10 +360,7 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      "expo-web-browser",
-      "expo-auth-session"
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true,
