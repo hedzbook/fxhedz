@@ -97,7 +97,7 @@ function setMarketNotes(data) {
         .setProperty("MARKET_NOTES", JSON.stringify(data))
 }
 
-function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId, refreshTokenHash, refreshExpires) {
+function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) {
 
     if (!email || !fingerprint) {
         return {
@@ -207,11 +207,6 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId, 
     const existing = devices.find(d => d.fingerprint === fingerprint);
     if (existing) {
         existing.last_active = now.toISOString();
-
-if (refreshTokenHash) {
-    existing.refresh_token_hash = refreshTokenHash;
-    existing.refresh_expires = refreshExpires;
-}
         sheet.getRange(rowIndex + 1, 9)
             .setValue(JSON.stringify(devicePayload));
         return {
@@ -224,14 +219,12 @@ if (refreshTokenHash) {
     // 2️⃣ Under device limit → add
     if (devices.length < 2) {
 
-devices.push({
-    device_id: deviceId,
-    fingerprint: fingerprint,
-    platform: platform,
-    last_active: now.toISOString(),
-    refresh_token_hash: refreshTokenHash || "",
-    refresh_expires: refreshExpires || ""
-});
+        devices.push({
+            device_id: deviceId,
+            fingerprint: fingerprint,
+            platform: platform,
+            last_active: now.toISOString()
+        });
 
         sheet.getRange(rowIndex + 1, 9)
             .setValue(JSON.stringify(devicePayload));
@@ -397,50 +390,6 @@ function checkAuthUser(email) {
     };
 }
 
-function validateRefreshToken(email, deviceId, refreshTokenHash) {
-
-    const sheet = mustGetSheet();
-    const rows = sheet.getDataRange().getValues();
-    const now = new Date();
-
-    email = String(email || "").toLowerCase().trim();
-
-    for (let i = 1; i < rows.length; i++) {
-
-        if (String(rows[i][0] || "").toLowerCase() !== email) continue;
-
-        let devicePayload;
-        try {
-            devicePayload = JSON.parse(rows[i][8] || "{}");
-        } catch {
-            return { valid: false };
-        }
-
-        const devices = devicePayload.devices || [];
-
-        const device = devices.find(d =>
-            d.device_id === deviceId &&
-            d.refresh_token_hash === refreshTokenHash
-        );
-
-        if (!device) return { valid: false };
-
-        if (!device.refresh_expires) return { valid: false };
-
-        const expiry = new Date(device.refresh_expires);
-
-        if (expiry <= now) return { valid: false };
-
-        return {
-            valid: true,
-            plan: rows[i][3],
-            expiry: rows[i][2]
-        };
-    }
-
-    return { valid: false };
-}
-
 // ======================================================
 // SINGLE WEBHOOK ENTRY - WRITE pipeline (MT5 → GAS)
 // ======================================================
@@ -486,41 +435,24 @@ function doPost(e) {
                     .setMimeType(ContentService.MimeType.JSON);
             }
 
-// ===============================
-// REFRESH VALIDATION
-// ===============================
-if (data.refresh_validate && data.email) {
+            // ===============================
+            // APP LOGIN
+            // ===============================
+            if (data.email) {
 
-    const result = validateRefreshToken(
-        data.email,
-        data.device_id || "",
-        data.refresh_token_hash || ""
-    );
+                const result = handleAuthUser(
+                    data.email,
+                    data.device_id || "",
+                    data.fingerprint || "",
+                    data.platform || "web",
+                    data.telegram_chat_id || ""
+                );
 
-    return ContentService
-        .createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-}
-
-// ===============================
-// APP LOGIN
-// ===============================
-if (data.email) {
-
-    const result = handleAuthUser(
-        data.email,
-        data.device_id || "",
-        data.fingerprint || "",
-        data.platform || "web",
-        data.telegram_chat_id || "",
-        data.refresh_token_hash || "",
-        data.refresh_expires || ""
-    );
-
-    return ContentService
-        .createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-}
+                return ContentService
+                    .createTextOutput(JSON.stringify(result))
+                    .setMimeType(ContentService.MimeType.JSON);
+            }
+        }
 
         const type = e.postData.type || "";
 
@@ -1336,7 +1268,7 @@ function onStart(chatId) {
 
     sendMenu(
         chatId,
-        "👋 <b>Welcome </b> " + chatId + "\n\n" +
+        "👋 <b>Welcome back</b> " + chatId + "\n\n" +
         "Plan: " + row.plan.toUpperCase() + "\n" +
         "Valid till: " + formatDate(row.expiry)
     );
