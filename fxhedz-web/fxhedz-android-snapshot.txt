@@ -308,15 +308,17 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     "icon": "./assets/images/icon.png",
     "scheme": "fxhedz",
     "userInterfaceStyle": "automatic",
+
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "package": "com.fxhedz.live",
       "versionCode": 2,
@@ -329,50 +331,38 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       "intentFilters": [
         {
           "action": "VIEW",
+          "autoVerify": true,
           "data": [
             {
               "scheme": "com.googleusercontent.apps.314350994918-8vshj6jmsggen1tdiejho7bp912n83iu",
               "host": "oauth2redirect"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
-      "edgeToEdgeEnabled": false,
-      "softwareKeyboardLayoutMode": "resize",
-      "predictiveBackGestureEnabled": false,
-      "statusBar": {
-        "backgroundColor": "#000000",
-        "barStyle": "light-content",
-        "translucent": false
-      },
-      "navigationBar": {
-        "backgroundColor": "#000000",
-        "barStyle": "light-content",
-        "visible": "visible"
-      }
+      "softwareKeyboardLayoutMode": "resize"
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router"
     ],
+
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
+
     "extra": {
-      "router": {},
       "eas": {
-        "router": {},
         "projectId": "8c0c92a4-0d29-438b-85db-4fa1a6ec54a8"
       }
     },
+
     "owner": "hedz-cefi"
   }
 }
@@ -394,40 +384,26 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     "web": "expo start --web",
     "lint": "expo lint"
   },
-  "dependencies": {
-    "@expo/vector-icons": "^15.0.3",
-    "@react-navigation/bottom-tabs": "^7.4.0",
-    "@react-navigation/elements": "^2.6.3",
-    "@react-navigation/native": "^7.1.8",
-    "expo": "^51.0.39",
-    "expo-auth-session": "~5.5.2",
-    "expo-constants": "~18.0.13",
-    "expo-crypto": "~13.0.2",
-    "expo-device": "~8.0.10",
-    "expo-font": "~14.0.11",
-    "expo-haptics": "~15.0.8",
-    "expo-image": "~3.0.11",
-    "expo-linking": "~8.0.11",
-    "expo-router": "~6.0.23",
-    "expo-secure-store": "~15.0.8",
-    "expo-splash-screen": "~31.0.13",
-    "expo-status-bar": "~3.0.9",
-    "expo-symbols": "~1.0.8",
-    "expo-system-ui": "~6.0.9",
-    "expo-web-browser": "~13.0.3",
-    "google-auth-library": "^10.5.0",
-    "jsonwebtoken": "^9.0.3",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-native": "0.74.5",
-    "react-native-gesture-handler": "~2.28.0",
-    "react-native-reanimated": "~4.1.1",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-web": "~0.21.0",
-    "react-native-webview": "13.15.0",
-    "react-native-worklets": "0.5.1"
-  },
+"dependencies": {
+  "expo": "~51.0.39",
+  "expo-auth-session": "~5.5.2",
+  "expo-constants": "~16.0.2",
+  "expo-crypto": "~13.0.2",
+  "expo-device": "~6.0.2",
+  "expo-font": "~12.0.10",
+  "expo-haptics": "~13.0.1",
+  "expo-image": "~1.13.0",
+  "expo-linking": "~6.3.1",
+  "expo-router": "~3.5.24",
+  "expo-secure-store": "~13.0.2",
+  "expo-splash-screen": "~0.27.7",
+  "expo-status-bar": "~1.12.1",
+  "expo-system-ui": "~3.0.7",
+  "expo-web-browser": "~13.0.3",
+  "react": "18.2.0",
+  "react-native": "0.74.5",
+  "react-native-webview": "13.8.6"
+},
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react": "~18.2.45",
