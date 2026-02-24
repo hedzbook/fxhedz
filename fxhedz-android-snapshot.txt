@@ -316,7 +316,7 @@ useEffect(() => {
     "name": "FXHEDZ",
     "slug": "fxhedz",
     "version": "1.0.0",
-    "scheme": "fxhedz",
+    "scheme": "com.fxhedz.live",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
