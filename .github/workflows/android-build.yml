@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # REMOVED: global defaults/run/working-directory to prevent the "No such directory" error
 
     steps:
       - name: Checkout repository
@@ -17,7 +16,6 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          # Path relative to repo root
           cache-dependency-path: fxhedz-android/package-lock.json
 
       - name: Install dependencies
@@ -30,15 +28,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # This creates the /android folder fresh
-      - name: Prebuild Android
+      - name: Generate Android Folder and Build
         working-directory: fxhedz-android
-        run: npx expo prebuild --platform android
-
-      - name: Build Release APK
-        # This now works because Prebuild just created this folder
-        working-directory: fxhedz-android/android
         run: |
+          # 1. Generate the android folder (non-interactive)
+          npx expo prebuild --platform android --no-install
+          
+          # 2. Move into the newly created folder and build
+          cd android
           chmod +x gradlew
           ./gradlew assembleRelease
 
@@ -46,7 +43,6 @@ jobs:
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
-          # Paths relative to the repository root
           releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
           alias: ${{ secrets.ANDROID_ALIAS }}
@@ -56,7 +52,6 @@ jobs:
           BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Extract Final SHA1
-        # No working-directory needed here, we use the full path
         run: |
           echo "--- FINAL SHA1 VERIFICATION ---"
           keytool -printcert -jarfile ${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
