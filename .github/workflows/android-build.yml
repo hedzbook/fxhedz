@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fxhedz-android
 
     steps:
       - name: Checkout repository
@@ -16,10 +19,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          # Path relative to the ROOT of the repo
           cache-dependency-path: fxhedz-android/package-lock.json
 
       - name: Install dependencies
-        working-directory: fxhedz-android
         run: npm install
 
       - name: Setup Java
@@ -28,14 +31,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Generate Android Folder and Build
-        working-directory: fxhedz-android
+      - name: Build Release APK
+        working-directory: fxhedz-android/android
         run: |
-          # 1. Generate the android folder
-          npx expo prebuild --platform android --no-install
-          
-          # 2. Navigate and Build
-          cd android
           chmod +x gradlew
           ./gradlew assembleRelease
 
@@ -43,20 +41,22 @@ jobs:
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
-          # Use the path from the ROOT of the repo
+          # Path relative to the ROOT of the repo
           releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
           alias: ${{ secrets.ANDROID_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
         env:
+          # This fixes the "Unable to locate zipalign" error on ubuntu-latest
           BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Extract Final SHA1
         run: |
           echo "--- FINAL SHA1 VERIFICATION ---"
-          # The sign-android-release action provides the absolute path
-          keytool -printcert -jarfile ${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
+          # Using ../ because steps.run default is fxhedz-android, 
+          # but signedReleaseFile returns path from root
+          keytool -printcert -jarfile ../${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
