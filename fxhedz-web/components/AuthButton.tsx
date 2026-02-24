@@ -24,14 +24,6 @@ export default function AuthButton() {
           ensureDeviceIdentity()
 
           // If inside Android WebView â†’ trigger native login
-          if (typeof window !== "undefined" &&
-            (window as any).ReactNativeWebView) {
-
-            (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST")
-            return
-          }
-
-          // Normal web login
           if (typeof window !== "undefined" && (window as any).ReactNativeWebView) {
             (window as any).ReactNativeWebView.postMessage("LOGIN_REQUEST")
           } else {

@@ -6,9 +6,6 @@ import * as Google from "expo-auth-session/providers/google"
 import * as SecureStore from "expo-secure-store"
 import * as Crypto from "expo-crypto"
 import * as AuthSession from "expo-auth-session"
-const redirectUri = AuthSession.makeRedirectUri({
-  scheme: "fxhedz"
-})
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -23,11 +20,15 @@ export default function HomeScreen() {
   // ===============================
   // GOOGLE AUTH (ANDROID CLIENT)
   // ===============================
+const redirectUri = AuthSession.makeRedirectUri({
+  native: "fxhedz://redirect"
+})
+
 const [request, response, promptAsync] = Google.useAuthRequest({
   androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
   webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
   redirectUri
-});
+})
   // ===============================
   // INITIAL LOAD
   // ===============================
