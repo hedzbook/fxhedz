@@ -7,28 +7,42 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    defaults:
+      run:
+        working-directory: fxhedz-android
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: npm
 
-      - run: |
-          cd fxhedz-android
-          npm install
+      - name: Install dependencies
+        run: npm install
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - run: |
-          cd fxhedz-android/android
-          chmod +x gradlew
-          ./gradlew assembleRelease
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - uses: actions/upload-artifact@v4
+      - name: Grant Gradle Permission
+        run: chmod +x android/gradlew
+
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: fxhedz-android/android/app/build/outputs/apk/release/app-release.apk
