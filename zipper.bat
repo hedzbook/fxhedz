@@ -9,10 +9,7 @@ set BACKUP_FOLDER=__backup__fxhedz
 set ZIP_NAME=fxhedz_backup_%NOW%.zip
 set TEMP_DIR=__backup_temp__
 
-REM Ensure backup folder exists
 if not exist "%BACKUP_FOLDER%" mkdir "%BACKUP_FOLDER%"
-
-REM Clean old temp
 if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
 
 mkdir "%TEMP_DIR%"
@@ -58,13 +55,42 @@ copy fxhedz-web\GAS.txt "%TEMP_DIR%\fxhedz-web\" >nul
 copy fxhedz-web\MT5.txt "%TEMP_DIR%\fxhedz-web\" >nul
 
 REM ==========================
-REM ZIP USING TAR (CORRECT ROOT STRUCTURE)
+REM ZIP USING TAR
 REM ==========================
 
 tar -a -c -f "%BACKUP_FOLDER%\%ZIP_NAME%" -C "%TEMP_DIR%" fxhedz-android fxhedz-web
 
-REM Cleanup temp
 rmdir /s /q "%TEMP_DIR%"
 
-echo Backup created: %BACKUP_FOLDER%\%ZIP_NAME%
+echo Backup created.
+
+REM =====================================================
+REM SNAPSHOT GENERATION (INLINE POWERSHELL)
+REM =====================================================
+
+echo Generating structured snapshots...
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+"$root = Get-Location; ^
+$webRoot = Join-Path $root 'fxhedz-web'; ^
+$androidRoot = Join-Path $root 'fxhedz-android'; ^
+$webOutput = Join-Path $root 'fxhedz-web-snapshot.txt'; ^
+$androidOutput = Join-Path $root 'fxhedz-android-snapshot.txt'; ^
+
+'' | Out-File $webOutput -Encoding utf8; ^
+Get-ChildItem $webRoot -Recurse -File | ^
+Where-Object { $_.FullName -notmatch '\\node_modules\\|\\.git\\|\\.next\\|\\dist\\|\\build\\' } | ^
+Sort-Object FullName | ^
+ForEach-Object { $_.FullName.Substring($webRoot.Length + 1) } | ^
+Add-Content $webOutput; ^
+
+'' | Out-File $androidOutput -Encoding utf8; ^
+$appPath = Join-Path $androidRoot 'app'; ^
+if (Test-Path $appPath) { ^
+Get-ChildItem $appPath -Recurse -File | ^
+Sort-Object FullName | ^
+ForEach-Object { $_.FullName.Substring($androidRoot.Length + 1) } | ^
+Add-Content $androidOutput };"
+
+echo Snapshots created in root folder.
 exit
