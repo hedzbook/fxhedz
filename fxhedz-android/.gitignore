@@ -9,6 +9,7 @@ node_modules/
 dist/
 build/
 ios/
+android/
 
 # Logs
 npm-debug.log*
