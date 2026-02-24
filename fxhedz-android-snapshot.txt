@@ -44,8 +44,10 @@ export default function RootLayout() {
 // app\index.tsx
 // --------------------------------------------------
 
+import CookieManager from '@react-native-cookies/cookies'
 import React, { useEffect, useState, useRef } from "react"
 import { View, ActivityIndicator } from "react-native"
+import { Platform } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
@@ -67,21 +69,21 @@ export default function HomeScreen() {
   // GOOGLE AUTH (ANDROID CLIENT)
   // ===============================
 
-const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-  webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
-  redirectUri: AuthSession.makeRedirectUri({
-    scheme: "com.fxhedz.live",
-    path: "", // IMPORTANT
-  }),
-});
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
+    webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
+    redirectUri: AuthSession.makeRedirectUri({
+      scheme: "com.fxhedz.live",
+      path: "", // IMPORTANT
+    }),
+  });
 
-// ðŸ” DEBUG
-useEffect(() => {
-  if (request?.redirectUri) {
-    console.log("Redirect URI:", request.redirectUri);
-  }
-}, [request]);
+  // ðŸ” DEBUG
+  useEffect(() => {
+    if (request?.redirectUri) {
+      console.log("Redirect URI:", request.redirectUri);
+    }
+  }, [request]);
 
   // ===============================
   // INITIAL LOAD
@@ -229,6 +231,10 @@ useEffect(() => {
     await SecureStore.deleteItemAsync("refreshToken")
     await SecureStore.deleteItemAsync("email")
 
+    if (Platform.OS === "android") {
+      await CookieManager.clearAll(true)
+    }
+
     setAccessToken(null)
   }
 
@@ -365,6 +371,7 @@ useEffect(() => {
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-cookies/cookies": "^6.2.1",
     "@types/react": "~19.1.10",
     "expo": "~54.0.0",
     "expo-auth-session": "~7.0.10",
