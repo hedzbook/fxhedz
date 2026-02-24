@@ -6,9 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: fxhedz-android
 
     steps:
       - name: Checkout repository
@@ -18,10 +15,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: fxhedz-android/package-lock.json
 
       - name: Install dependencies
+        working-directory: fxhedz-android
         run: npm install
 
       - name: Setup Java
@@ -30,8 +26,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 🔥 Ensure completely fresh native project every build
-      - name: Clean Native Project
+      - name: Generate Native Android Project
+        working-directory: fxhedz-android
         run: |
           rm -rf android
           npx expo prebuild --platform android --clean
