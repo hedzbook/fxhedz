@@ -42,13 +42,18 @@ export default function Page() {
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
   const isAndroid =
-  typeof window !== "undefined" &&
-  !!(window as any).ReactNativeWebView
+    typeof window !== "undefined" &&
+    !!(window as any).ReactNativeWebView
 
-const isAuthenticated =
-  isAndroid
-    ? true
-    : status === "authenticated"
+  const isAuthenticated =
+    isAndroid
+      ? true
+      : status === "authenticated"
+
+  const sessionExists =
+    isAndroid
+      ? true
+      : !!session
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
@@ -126,19 +131,19 @@ const isAuthenticated =
     }
   }, [])
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (status === "loading") return
+    if (status === "loading") return
 
-  if (!isAuthenticated) {
-    setSignals(generateDummySignals())
-    return
-  }
+    if (!isAuthenticated) {
+      setSignals(generateDummySignals())
+      return
+    }
 
-  if (subActive === false) {
-    setSignals(generateDummySignals())
-    return
-  }
+    if (subActive === false) {
+      setSignals(generateDummySignals())
+      return
+    }
 
     if (subActive === null) return
     if (!fingerprint) return
@@ -262,9 +267,9 @@ useEffect(() => {
 
     if (!openPair) return
 
-const isGuest =
-  !isAuthenticated ||
-  subActive === false
+    const isGuest =
+      !isAuthenticated ||
+      subActive === false
 
     if (isGuest) {
       loadPreview(openPair)
@@ -317,9 +322,9 @@ const isGuest =
     })
   }, [uiSignals, pairData])
 
-const isGuest =
-  !isAuthenticated ||
-  subActive === false
+  const isGuest =
+    !isAuthenticated ||
+    subActive === false
 
   const detailData = openPair
     ? (
@@ -612,7 +617,7 @@ const isGuest =
       {status !== "loading" && (
         <AccessOverlay
           active={subActive}
-          sessionExists={!!session}
+          sessionExists={sessionExists}
           status={accessMeta?.status}
           expiry={accessMeta?.expiry}
           blocked={accessMeta?.blocked}

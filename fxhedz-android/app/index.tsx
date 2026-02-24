@@ -218,22 +218,6 @@ useEffect(() => {
       style={{ flex: 1, backgroundColor: "#000000" }}
       containerStyle={{ backgroundColor: "#000000" }}
 
-      onShouldStartLoadWithRequest={(req) => {
-        const url = req.url;
-
-        // If the webview tries to go to Google Login
-        if (url.includes("accounts.google.com/o/oauth2") || url.includes("auth/google")) {
-          if (request) {
-            // Use setImmediate or setTimeout to ensure the 
-            // prompt starts after the WebView navigation is cancelled
-            setTimeout(() => promptAsync(), 0);
-          }
-          return false; // Stop the WebView from opening it
-        }
-
-        return true;
-      }}
-
       onMessage={async (event) => {
 
         const message = event.nativeEvent.data
