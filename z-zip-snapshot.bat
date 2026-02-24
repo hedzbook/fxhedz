@@ -60,6 +60,11 @@ REM ==========================
 
 tar -a -c -f "%BACKUP_FOLDER%\%ZIP_NAME%" -C "%TEMP_DIR%" fxhedz-android fxhedz-web
 
+if errorlevel 1 (
+    echo Backup failed.
+    exit /b 1
+)
+
 rmdir /s /q "%TEMP_DIR%"
 
 echo Backup created.
