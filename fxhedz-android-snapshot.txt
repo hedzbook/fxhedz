@@ -66,11 +66,18 @@ export default function HomeScreen() {
   // ===============================
   // GOOGLE AUTH (ANDROID CLIENT)
   // ===============================
+// Replace your current Google.useAuthRequest block with this:
 const [request, response, promptAsync] = Google.useAuthRequest({
+  // From your Android Client ID in Google Console
   androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-  // Fixed: simplified redirect calculation for Android
+  
+  // ADD THIS: From your Web Client ID in Google Console
+  webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com", 
+  
+  // Use your app's custom scheme to ensure the window closes
   redirectUri: AuthSession.makeRedirectUri({
-    native: "com.googleusercontent.apps.314350994918-8vshj6jmsggen1tdiejho7bp912n83iu:/oauth2redirect",
+    scheme: "fxhedz",
+    path: "oauth2redirect",
   }),
 });
 
@@ -340,7 +347,7 @@ onShouldStartLoadWithRequest={(req) => {
           "autoVerify": true,
           "data": [
             {
-              "scheme": "com.googleusercontent.apps.314350994918-8vshj6jmsggen1tdiejho7bp912n83iu",
+              "scheme": "fxhedz",
               "host": "oauth2redirect"
             }
           ],
