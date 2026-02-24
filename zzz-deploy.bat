@@ -10,8 +10,8 @@ REM 1. Clean prebuild (regenerates android/)
 call z-prebuild-clean.bat
 if errorlevel 1 exit /b 1
 
-REM 2. Zip snapshot (optional)
-call z-zip-snapshot.bat
+REM 2. Generate snapshot via PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0snapshot.ps1"
 if errorlevel 1 exit /b 1
 
 REM 3. Commit and push regenerated files
@@ -24,5 +24,4 @@ echo Deploy completed successfully.
 echo ============================================
 echo.
 
-pause
 exit /b 0
