@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # This sets the base folder for all 'run' commands in this job
     defaults:
       run:
         working-directory: fxhedz-android
@@ -20,6 +19,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          # This must stay relative to the ROOT of the repo
           cache-dependency-path: fxhedz-android/package-lock.json
 
       - name: Install dependencies
@@ -32,13 +32,31 @@ jobs:
           java-version: 17
 
       - name: Build Release APK
-        working-directory: fxhedz-android/android # Nested further for Gradle
+        working-directory: fxhedz-android/android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Upload APK
+      - name: Sign APK
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          # Note: This path is relative to the repo ROOT, not the working-directory
+          releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
+          alias: ${{ secrets.ANDROID_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Extract Final SHA1
+        run: |
+          echo "--- FINAL SHA1 VERIFICATION ---"
+          keytool -printcert -jarfile ../${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
+        # Added ../ because signedReleaseFile gives a path from the root, 
+        # but this step runs inside fxhedz-android
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: fxhedz-android/android/app/build/outputs/apk/release/app-release.apk
+          name: app-release-signed
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
