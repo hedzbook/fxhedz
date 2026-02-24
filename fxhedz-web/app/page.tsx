@@ -41,6 +41,14 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
+  const isAndroid =
+  typeof window !== "undefined" &&
+  !!(window as any).ReactNativeWebView
+
+const isAuthenticated =
+  isAndroid
+    ? true
+    : status === "authenticated"
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
@@ -118,19 +126,19 @@ export default function Page() {
     }
   }, [])
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (status === "loading") return
+  if (status === "loading") return
 
-    if (!session) {
-      setSignals(generateDummySignals())
-      return
-    }
+  if (!isAuthenticated) {
+    setSignals(generateDummySignals())
+    return
+  }
 
-    if (subActive === false) {
-      setSignals(generateDummySignals())
-      return
-    }
+  if (subActive === false) {
+    setSignals(generateDummySignals())
+    return
+  }
 
     if (subActive === null) return
     if (!fingerprint) return
@@ -254,9 +262,9 @@ export default function Page() {
 
     if (!openPair) return
 
-    const isGuest =
-      status !== "authenticated" ||
-      subActive === false
+const isGuest =
+  !isAuthenticated ||
+  subActive === false
 
     if (isGuest) {
       loadPreview(openPair)
@@ -309,9 +317,9 @@ export default function Page() {
     })
   }, [uiSignals, pairData])
 
-  const isGuest =
-    status !== "authenticated" ||
-    subActive === false
+const isGuest =
+  !isAuthenticated ||
+  subActive === false
 
   const detailData = openPair
     ? (
@@ -333,7 +341,7 @@ export default function Page() {
     <div className="relative">
 
       <main
-        className={`h-[100dvh] bg-black text-white flex flex-col ${session && subActive === false ? "pointer-events-none" : ""
+        className={`h-[100dvh] bg-black text-white flex flex-col ${isAuthenticated && subActive === false ? "pointer-events-none" : ""
           }`}
         style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
       >
