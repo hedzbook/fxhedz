@@ -22,17 +22,8 @@ export default function HomeScreen() {
   // ===============================
 // Replace your current Google.useAuthRequest block with this:
 const [request, response, promptAsync] = Google.useAuthRequest({
-  // From your Android Client ID in Google Console
   androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-  
-  // ADD THIS: From your Web Client ID in Google Console
-  webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com", 
-  
-  // Use your app's custom scheme to ensure the window closes
-  redirectUri: AuthSession.makeRedirectUri({
-    scheme: "fxhedz",
-    path: "oauth2redirect",
-  }),
+  webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
 });
 
   // ===============================
@@ -218,15 +209,13 @@ const [request, response, promptAsync] = Google.useAuthRequest({
 
       // Prevent Google login inside WebView
 onShouldStartLoadWithRequest={(req) => {
-
   const url = req.url
 
-  const isGoogleAuth =
-    url.includes("accounts.google.com") ||
-    url.includes("oauth2.googleapis.com") ||
-    url.includes("google.com")
+  const isGoogleOAuth =
+    url.includes("accounts.google.com") &&
+    url.includes("oauth")
 
-  if (isGoogleAuth) {
+  if (isGoogleOAuth && request) {
     promptAsync()
     return false
   }
