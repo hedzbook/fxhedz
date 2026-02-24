@@ -210,13 +210,22 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       containerStyle={{ backgroundColor: "#000000" }}
 
       // Prevent Google login inside WebView
-      onShouldStartLoadWithRequest={(req) => {
-        if (req.url.includes("accounts.google.com")) {
-          promptAsync()
-          return false
-        }
-        return true
-      }}
+onShouldStartLoadWithRequest={(req) => {
+
+  const url = req.url
+
+  const isGoogleAuth =
+    url.includes("accounts.google.com") ||
+    url.includes("oauth2.googleapis.com") ||
+    url.includes("google.com")
+
+  if (isGoogleAuth) {
+    promptAsync()
+    return false
+  }
+
+  return true
+}}
 
       onMessage={async (event) => {
 
