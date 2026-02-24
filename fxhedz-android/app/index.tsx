@@ -1,3 +1,4 @@
+import CookieManager from '@react-native-cookies/cookies'
 import React, { useEffect, useState, useRef } from "react"
 import { View, ActivityIndicator } from "react-native"
 import { Platform } from "react-native"
@@ -22,21 +23,21 @@ export default function HomeScreen() {
   // GOOGLE AUTH (ANDROID CLIENT)
   // ===============================
 
-const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
-  webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
-  redirectUri: AuthSession.makeRedirectUri({
-    scheme: "com.fxhedz.live",
-    path: "", // IMPORTANT
-  }),
-});
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "314350994918-8vshj6jmsggen1tdiejho7bp912n83iu.apps.googleusercontent.com",
+    webClientId: "314350994918-hofgc5ccq4kctiernfr1ms5nns5r7sjs.apps.googleusercontent.com",
+    redirectUri: AuthSession.makeRedirectUri({
+      scheme: "com.fxhedz.live",
+      path: "", // IMPORTANT
+    }),
+  });
 
-// 🔍 DEBUG
-useEffect(() => {
-  if (request?.redirectUri) {
-    console.log("Redirect URI:", request.redirectUri);
-  }
-}, [request]);
+  // 🔍 DEBUG
+  useEffect(() => {
+    if (request?.redirectUri) {
+      console.log("Redirect URI:", request.redirectUri);
+    }
+  }, [request]);
 
   // ===============================
   // INITIAL LOAD
@@ -178,20 +179,18 @@ useEffect(() => {
   // ===============================
   // LOGOUT
   // ===============================
-async function logout() {
+  async function logout() {
 
-  await SecureStore.deleteItemAsync("accessToken")
-  await SecureStore.deleteItemAsync("refreshToken")
-  await SecureStore.deleteItemAsync("email")
+    await SecureStore.deleteItemAsync("accessToken")
+    await SecureStore.deleteItemAsync("refreshToken")
+    await SecureStore.deleteItemAsync("email")
 
-  // CLEAR WEBVIEW COOKIES
-  if (Platform.OS === "android") {
-    const CookieManager = require('@react-native-cookies/cookies')
-    await CookieManager.clearAll(true)
+    if (Platform.OS === "android") {
+      await CookieManager.clearAll(true)
+    }
+
+    setAccessToken(null)
   }
-
-  setAccessToken(null)
-}
 
   // ===============================
   // LOADING STATE
