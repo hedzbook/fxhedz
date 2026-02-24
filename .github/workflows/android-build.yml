@@ -6,9 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: fxhedz-android
+    # REMOVED: global defaults/run/working-directory to prevent the "No such directory" error
 
     steps:
       - name: Checkout repository
@@ -19,10 +17,11 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          # Path relative to the ROOT of the repo
+          # Path relative to repo root
           cache-dependency-path: fxhedz-android/package-lock.json
 
       - name: Install dependencies
+        working-directory: fxhedz-android
         run: npm install
 
       - name: Setup Java
@@ -31,7 +30,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # This creates the /android folder fresh
+      - name: Prebuild Android
+        working-directory: fxhedz-android
+        run: npx expo prebuild --platform android
+
       - name: Build Release APK
+        # This now works because Prebuild just created this folder
         working-directory: fxhedz-android/android
         run: |
           chmod +x gradlew
@@ -41,22 +46,20 @@ jobs:
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
-          # Path relative to the ROOT of the repo
+          # Paths relative to the repository root
           releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
           alias: ${{ secrets.ANDROID_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
         env:
-          # This fixes the "Unable to locate zipalign" error on ubuntu-latest
           BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Extract Final SHA1
+        # No working-directory needed here, we use the full path
         run: |
           echo "--- FINAL SHA1 VERIFICATION ---"
-          # Using ../ because steps.run default is fxhedz-android, 
-          # but signedReleaseFile returns path from root
-          keytool -printcert -jarfile ../${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
+          keytool -printcert -jarfile ${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
