@@ -25,7 +25,6 @@ components\PairDetail.tsx
 components\Providers.tsx
 components\VerticalSymbolButton.tsx
 eslint.config.mjs
-fxhedz-android-snapshot.txt
 GAS.txt
 lib\device.ts
 lib\dummyDetail.ts
