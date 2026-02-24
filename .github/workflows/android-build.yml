@@ -39,7 +39,7 @@ jobs:
 
       - name: Sign APK
         id: sign_app
-        uses: r0adkll/sign-android-release@v1
+        uses: r0adkll/sign-android-release@v1.0.4
         with:
           # Path relative to the ROOT of the repo
           releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
