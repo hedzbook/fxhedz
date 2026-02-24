@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import { View, ActivityIndicator } from "react-native"
+import { Platform } from "react-native"
 import { WebView } from "react-native-webview"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
@@ -177,14 +178,20 @@ useEffect(() => {
   // ===============================
   // LOGOUT
   // ===============================
-  async function logout() {
+async function logout() {
 
-    await SecureStore.deleteItemAsync("accessToken")
-    await SecureStore.deleteItemAsync("refreshToken")
-    await SecureStore.deleteItemAsync("email")
+  await SecureStore.deleteItemAsync("accessToken")
+  await SecureStore.deleteItemAsync("refreshToken")
+  await SecureStore.deleteItemAsync("email")
 
-    setAccessToken(null)
+  // CLEAR WEBVIEW COOKIES
+  if (Platform.OS === "android") {
+    const CookieManager = require('@react-native-cookies/cookies')
+    await CookieManager.clearAll(true)
   }
+
+  setAccessToken(null)
+}
 
   // ===============================
   // LOADING STATE
