@@ -12,37 +12,30 @@ jobs:
         working-directory: fxhedz-android
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: fxhedz-android/package-lock.json
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
 
-      - name: Grant Gradle Permission
-        run: chmod +x android/gradlew
+      - run: chmod +x android/gradlew
 
-      - name: Build Release APK
-        run: |
+      - run: |
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: fxhedz-android/android/app/build/outputs/apk/release/app-release.apk
