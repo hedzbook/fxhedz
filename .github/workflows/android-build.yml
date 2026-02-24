@@ -31,10 +31,10 @@ jobs:
       - name: Generate Android Folder and Build
         working-directory: fxhedz-android
         run: |
-          # 1. Generate the android folder (non-interactive)
+          # 1. Generate the android folder
           npx expo prebuild --platform android --no-install
           
-          # 2. Move into the newly created folder and build
+          # 2. Navigate and Build
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
@@ -43,6 +43,7 @@ jobs:
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
+          # Use the path from the ROOT of the repo
           releaseDirectory: fxhedz-android/android/app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
           alias: ${{ secrets.ANDROID_ALIAS }}
@@ -54,6 +55,7 @@ jobs:
       - name: Extract Final SHA1
         run: |
           echo "--- FINAL SHA1 VERIFICATION ---"
+          # The sign-android-release action provides the absolute path
           keytool -printcert -jarfile ${{ steps.sign_app.outputs.signedReleaseFile }} | grep SHA1
 
       - name: Upload Signed APK
