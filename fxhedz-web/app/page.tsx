@@ -408,28 +408,29 @@ export default function Page() {
       </div>
     )
   }
-  function SortableRow({ id, children }: any) {
-    const {
-      setNodeRef,
-      transform,
-      transition
-    } = useSortable({ id })
+function SortableRow({ id, children }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition
+  } = useSortable({ id })
 
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      willChange: "transform"
-    }
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-      >
-        {children}
-      </div>
-    )
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    willChange: "transform"
   }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {typeof children === "function"
+        ? children({ attributes, listeners })
+        : children}
+    </div>
+  )
+}
   return (
     <div className="relative">
 
