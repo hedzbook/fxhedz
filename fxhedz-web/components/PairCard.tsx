@@ -17,6 +17,7 @@ type Props = {
   performance?: any
   notes?: string
   onToggle: () => void
+  isGuest?: boolean
 }
 
 function PairCard({
@@ -91,12 +92,12 @@ py-[clamp(2px,0.6vh,6px)]
               </div>
 
               <div className={`font-bold text-[clamp(10px,1.8vh,22px)] ${liveDir === "BUY"
-                  ? "text-green-400"
-                  : liveDir === "SELL"
-                    ? "text-red-400"
-                    : liveDir === "HEDGED"
-                      ? "text-sky-400"
-                      : "text-neutral-500"
+                ? "text-green-400"
+                : liveDir === "SELL"
+                  ? "text-red-400"
+                  : liveDir === "HEDGED"
+                    ? "text-sky-400"
+                    : "text-neutral-500"
                 }`}>
                 {liveDir}
               </div>
@@ -353,6 +354,16 @@ function Metric({ label, value }: any) {
 ======================================================= */
 
 function InlineTradeStrip({ signal, direction }: any) {
+
+  // 🔒 LOCKED PAIRS (LIVE plan viewing LIVE+ instruments)
+  if (direction === "LIVE+") {
+    return (
+      <div className="flex justify-center text-neutral-500 text-[clamp(8px,1vw,14px)] py-1">
+        LIVE+ ACCESS REQUIRED
+      </div>
+    )
+  }
+
   if (!signal?.entry || direction === "EXIT") return null
 
   const sl = Number(signal?.sl)
@@ -366,7 +377,11 @@ function InlineTradeStrip({ signal, direction }: any) {
 
   let pricePercent = 50
 
-  if (!isHedged) {
+  if (direction === "LIVE+") {
+    pricePercent = 50
+  }
+
+  if (!isHedged && direction !== "LIVE+") {
     if (direction === "BUY") {
       const leftRange = Math.abs(entry - sl)
       const rightRange = Math.abs(tp - entry)
@@ -409,16 +424,16 @@ function InlineTradeStrip({ signal, direction }: any) {
         {/* LEFT HALF */}
         <div
           className={`absolute left-0 h-full w-1/2 ${isHedged
-              ? "bg-sky-500/70"
-              : "bg-red-500/70"
+            ? "bg-sky-500/70"
+            : "bg-red-500/70"
             }`}
         />
 
         {/* RIGHT HALF */}
         <div
           className={`absolute right-0 h-full w-1/2 ${isHedged
-              ? "bg-sky-500/70"
-              : "bg-green-500/70"
+            ? "bg-sky-500/70"
+            : "bg-green-500/70"
             }`}
         />
 

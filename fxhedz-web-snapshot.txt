@@ -627,13 +627,9 @@ import { generateDummySignals } from "@/lib/dummySignals"
 import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
-
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors
 } from "@dnd-kit/core"
 
 import {
@@ -645,9 +641,7 @@ import {
 
 import { CSS } from "@dnd-kit/utilities"
 
-const pairs: any = {}
-
-const PAIRS = [
+const DEFAULT_ORDER = [
   "ETHUSD",
   "USDCHF",
   "USDJPY",
@@ -658,7 +652,16 @@ const PAIRS = [
   "USOIL",
   "BTCUSD"
 ]
-
+type PairKey =
+  | "ETHUSD"
+  | "USDCHF"
+  | "USDJPY"
+  | "XAUUSD"
+  | "EURUSD"
+  | "GBPUSD"
+  | "AUDUSD"
+  | "USOIL"
+  | "BTCUSD"
 const SIGNAL_API = "/api/signals"
 
 type ViewMode = "MIN" | "MAX"
@@ -673,24 +676,24 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
-const isAndroid =
-  typeof window !== "undefined" &&
-  !!(window as any).ReactNativeWebView
+  const isAndroid =
+    typeof window !== "undefined" &&
+    !!(window as any).ReactNativeWebView
 
-const hasNativeToken =
-  isAndroid &&
-  typeof window !== "undefined" &&
-  (window as any).__HAS_NATIVE_TOKEN__ === true
+  const hasNativeToken =
+    isAndroid &&
+    typeof window !== "undefined" &&
+    (window as any).__HAS_NATIVE_TOKEN__ === true
 
-const isAuthenticated =
-  isAndroid
-    ? hasNativeToken
-    : status === "authenticated"
+  const isAuthenticated =
+    isAndroid
+      ? hasNativeToken
+      : status === "authenticated"
 
-const sessionExists =
-  isAndroid
-    ? hasNativeToken
-    : !!session
+  const sessionExists =
+    isAndroid
+      ? hasNativeToken
+      : !!session
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
@@ -706,6 +709,18 @@ const sessionExists =
       console.error("Preview load failed", e)
     }
   }
+  const [instrumentOrder, setInstrumentOrder] =
+  useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
+  useEffect(() => {
+    const saved = localStorage.getItem("fxhedz_order")
+    if (saved) {
+      setInstrumentOrder(JSON.parse(saved))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("fxhedz_order", JSON.stringify(instrumentOrder))
+  }, [instrumentOrder])
   const menuRef = useRef<HTMLDivElement | null>(null)
   const hamburgerRef = useRef<HTMLButtonElement | null>(null)
   const daysLeft = useMemo(() => {
@@ -904,9 +919,9 @@ const sessionExists =
 
     if (!openPair) return
 
-    const isGuest =
-      !isAuthenticated ||
-      subActive === false
+const isGuest =
+  !isAuthenticated ||
+  subActive === false
 
     if (isGuest) {
       loadPreview(openPair)
@@ -950,62 +965,31 @@ const sessionExists =
       setOpenPair(pair) // Expand the specific pair
     }
   }
+  function handleDragEnd(event: any) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
 
-  // =============================
-// CARD ORDER STATE
-// =============================
-const DEFAULT_PAIR_ORDER = [
-  "ETHUSD",
-  "USDCHF",
-  "USDJPY",
-  "XAUUSD",
-  "EURUSD",
-  "GBPUSD",
-  "AUDUSD",
-  "USOIL",
-  "BTCUSD"
-]
+    const oldIndex = instrumentOrder.indexOf(active.id)
+    const newIndex = instrumentOrder.indexOf(over.id)
 
-const [cardOrder, setCardOrder] = useState<string[]>(DEFAULT_PAIR_ORDER)
-
-useEffect(() => {
-  const saved = localStorage.getItem("fx_card_order")
-  if (saved) {
-    setCardOrder(JSON.parse(saved))
+    setInstrumentOrder(arrayMove(instrumentOrder, oldIndex, newIndex))
   }
-}, [])
-
-useEffect(() => {
-  localStorage.setItem("fx_card_order", JSON.stringify(cardOrder))
-}, [cardOrder])
-
   const pairsData = useMemo(() => {
-    return PAIRS.map((pair) => {
+    return instrumentOrder.map((pair) => {
       const signal = uiSignals?.[pair]
       const extra = pairData?.[pair] || {}
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
+const dummySignals = useMemo(() => generateDummySignals(), [])
+  const isGuest =
+    !isAuthenticated ||
+    subActive === false
 
-const isGuest =
-  !isAuthenticated ||
-  subActive === false
+const plan = accessMeta?.status
 
-// =============================
-// LOCKING LOGIC (ADD HERE)
-// =============================
-const allowedPairs =
-  accessMeta?.plan === "live+"
-    ? DEFAULT_PAIR_ORDER
-    : ["ETHUSD", "USDCHF"]
-
-function getDummyPrice(pair: string) {
-  if (pair.includes("JPY")) return "150.000"
-  if (pair === "XAUUSD") return "2000.00"
-  if (pair === "USOIL") return "75.00"
-  if (pair === "BTCUSD") return "60000.00"
-  return "1.0000"
-}
+const isLivePlus = plan === "live+"
+const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -1019,24 +1003,30 @@ function getDummyPrice(pair: string) {
     )
     : undefined
 
-    // =============================
-// DRAG HANDLER
-// =============================
-function handleDragEnd(event: any) {
-  const { active, over } = event
-
-  if (!over || active.id === over.id) return
-
-  const oldIndex = cardOrder.indexOf(active.id)
-  const newIndex = cardOrder.indexOf(over.id)
-
-  setCardOrder(arrayMove(cardOrder, oldIndex, newIndex))
-}
-
   if (openPair) {
     console.log("DETAIL DATA:", detailData)
   }
-function SortableItem({ id, children }: any) {
+  function SortableButton({ id, children }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition
+    }
+
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        {children}
+      </div>
+    )
+  }
+  function SortableRow({ id, children }: any) {
   const {
     attributes,
     listeners,
@@ -1051,18 +1041,19 @@ function SortableItem({ id, children }: any) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className="contents"
+      >
+        {children}
+      </div>
+    </>
   )
 }
-const sensors = useSensors(
-  useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 5
-    }
-  })
-)
   return (
     <div className="relative">
 
@@ -1129,10 +1120,10 @@ const sensors = useSensors(
               {/* LEFT RAIL */}
               <div className="grid"
                 style={{
-                  gridTemplateRows: "repeat(9, 1fr)"
+                  gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`
                 }}
               >
-                {PAIRS.map((pair) => (
+                {instrumentOrder.map((pair) => (
                   <VerticalSymbolButton
                     key={pair}
                     pair={pair}
@@ -1155,67 +1146,52 @@ const sensors = useSensors(
 
           ) : (
 
-<div
-  className="h-full flex flex-col"
-  style={{
-    rowGap: "0px"
+            <DndContext
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={instrumentOrder}
+                strategy={verticalListSortingStrategy}
+              >
+                <div
+                  className="h-full grid"
+                  style={{
+                    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                    gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`,
+                    rowGap: "0px"
+                  }}
+                >
+{instrumentOrder.map((pair: PairKey) => {
+  const signal = uiSignals?.[pair]
+
+  return (
+    <SortableRow key={pair} id={pair}>
+      <VerticalSymbolButton
+        pair={pair}
+        active={false}
+        onClick={() => setOpenPair(pair)}
+      />
+
+<PairCard
+  pair={pair}
+  direction={isLivePlus ? signal?.direction : "LIVE+"}
+  signal={isLivePlus ? signal : dummySignals[pair]}
+  onToggle={() => {
+    if (isLivePlus) {
+      setOpenPair(pair)
+    } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
+      setOpenPair(pair)
+    }
   }}
->
-<DndContext
-  sensors={sensors}
-  collisionDetection={closestCenter}
-  onDragEnd={handleDragEnd}
->
-  <SortableContext
-    items={cardOrder}
-    strategy={verticalListSortingStrategy}
-  >
-    {cardOrder.map((pair) => {
-
-      const signal = uiSignals?.[pair]
-      const isAllowed = allowedPairs.includes(pair)
-
-      const displayDirection = isAllowed
-        ? signal?.direction
-        : "LIVE+"
-
-      const displaySignal = isAllowed
-        ? signal
-        : {
-            ...signal,
-            price: getDummyPrice(pair),
-            direction: "LIVE+"
-          }
-
-      return (
-        <SortableItem key={pair} id={pair}>
-
-          <VerticalSymbolButton
-            pair={pair}
-            active={false}
-            onClick={() => {
-              if (!isAllowed) return
-              setOpenPair(pair)
-            }}
-          />
-
-          <PairCard
-            pair={pair}
-            direction={displayDirection}
-            signal={displaySignal}
-            locked={!isAllowed}
-            onToggle={() => {
-              if (!isAllowed) return
-              setOpenPair(pair)
-            }}
-          />
-
-        </SortableItem>
-      )
-    })}
-  </SortableContext>
-</DndContext>
-            </div>
+  isGuest={!isLivePlus}
+/>
+    </SortableRow>
+  )
+})}
+                </div>
+              </SortableContext>
+            </DndContext>
 
           )}
 
@@ -2112,8 +2088,8 @@ type Props = {
   orders?: any[]
   performance?: any
   notes?: string
-  locked?: boolean
   onToggle: () => void
+  isGuest?: boolean
 }
 
 function PairCard({
@@ -2126,8 +2102,7 @@ function PairCard({
   history,
   orders,
   performance,
-  notes,
-  locked = false
+  notes
 }: Props) {
 
   const dir: TradeDirection = direction ?? "--"
@@ -2150,8 +2125,8 @@ function PairCard({
   }, [liveOrders])
 
   return (
-<div
-  className={`
+    <div
+      className={`
     text-[clamp(10px,1.1vw,20px)]
     relative
     transition-all duration-300
@@ -2160,9 +2135,8 @@ function PairCard({
     ${viewMode === "MIN" && !expanded ? "justify-center" : ""}
     flex-none
     ${expanded ? "z-20 shadow-xl" : "z-0"}
-    ${locked ? "opacity-60" : ""}
   `}
->
+    >
 
       {/* ================= HEADER ================== */}
       <div
@@ -2190,12 +2164,12 @@ py-[clamp(2px,0.6vh,6px)]
               </div>
 
               <div className={`font-bold text-[clamp(10px,1.8vh,22px)] ${liveDir === "BUY"
-                  ? "text-green-400"
-                  : liveDir === "SELL"
-                    ? "text-red-400"
-                    : liveDir === "HEDGED"
-                      ? "text-sky-400"
-                      : "text-neutral-500"
+                ? "text-green-400"
+                : liveDir === "SELL"
+                  ? "text-red-400"
+                  : liveDir === "HEDGED"
+                    ? "text-sky-400"
+                    : "text-neutral-500"
                 }`}>
                 {liveDir}
               </div>
@@ -2216,11 +2190,10 @@ py-[clamp(2px,0.6vh,6px)]
 
             {/* ROW 3 â€” TRADE BAR */}
             <div className="mt-[clamp(1px,0.8vw,10px)]">
-<InlineTradeStrip
-  signal={signal}
-  direction={liveDir}
-  locked={locked}
-/>
+              <InlineTradeStrip
+                signal={signal}
+                direction={liveDir}
+              />
             </div>
 
           </div>
@@ -2452,7 +2425,7 @@ function Metric({ label, value }: any) {
    INLINE STRIP (MIN MODE)
 ======================================================= */
 
-function InlineTradeStrip({ signal, direction, locked }: any) {
+function InlineTradeStrip({ signal, direction }: any) {
   if (!signal?.entry || direction === "EXIT") return null
 
   const sl = Number(signal?.sl)
@@ -2466,7 +2439,11 @@ function InlineTradeStrip({ signal, direction, locked }: any) {
 
   let pricePercent = 50
 
-  if (!isHedged) {
+  if (direction === "LIVE+") {
+    pricePercent = 50
+  }
+
+  if (!isHedged && direction !== "LIVE+") {
     if (direction === "BUY") {
       const leftRange = Math.abs(entry - sl)
       const rightRange = Math.abs(tp - entry)
@@ -2509,16 +2486,16 @@ function InlineTradeStrip({ signal, direction, locked }: any) {
         {/* LEFT HALF */}
         <div
           className={`absolute left-0 h-full w-1/2 ${isHedged
-              ? "bg-sky-500/70"
-              : "bg-red-500/70"
+            ? "bg-sky-500/70"
+            : "bg-red-500/70"
             }`}
         />
 
         {/* RIGHT HALF */}
         <div
           className={`absolute right-0 h-full w-1/2 ${isHedged
-              ? "bg-sky-500/70"
-              : "bg-green-500/70"
+            ? "bg-sky-500/70"
+            : "bg-green-500/70"
             }`}
         />
 
@@ -2535,7 +2512,7 @@ function InlineTradeStrip({ signal, direction, locked }: any) {
         <div
           className="absolute top-1/2 flex items-center justify-center"
           style={{
-            left: `${locked ? 50 : pricePercent}%`,
+            left: `${pricePercent}%`,
             transform: "translate(-50%, -50%)",
             transition: "left 300ms ease",
             width: "1px", // Minimal anchor point

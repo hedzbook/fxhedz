@@ -37,7 +37,16 @@ const DEFAULT_ORDER = [
   "USOIL",
   "BTCUSD"
 ]
-
+type PairKey =
+  | "ETHUSD"
+  | "USDCHF"
+  | "USDJPY"
+  | "XAUUSD"
+  | "EURUSD"
+  | "GBPUSD"
+  | "AUDUSD"
+  | "USOIL"
+  | "BTCUSD"
 const SIGNAL_API = "/api/signals"
 
 type ViewMode = "MIN" | "MAX"
@@ -85,7 +94,8 @@ export default function Page() {
       console.error("Preview load failed", e)
     }
   }
-  const [instrumentOrder, setInstrumentOrder] = useState<string[]>(DEFAULT_ORDER)
+  const [instrumentOrder, setInstrumentOrder] =
+    useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -356,10 +366,15 @@ export default function Page() {
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
-
+  const dummySignals = useMemo(() => generateDummySignals(), [])
   const isGuest =
     !isAuthenticated ||
     subActive === false
+
+  const plan = accessMeta?.status
+
+  const isLivePlus = plan === "live+"
+  const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -394,6 +409,34 @@ export default function Page() {
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
         {children}
       </div>
+    )
+  }
+  function SortableRow({ id, children }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition
+    }
+
+    return (
+      <>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className="contents"
+        >
+          {children}
+        </div>
+      </>
     )
   }
   return (
@@ -470,7 +513,16 @@ export default function Page() {
                     key={pair}
                     pair={pair}
                     active={openPair === pair}
-                    onClick={() => setOpenPair(pair)}
+                    onClick={() => {
+                      const isAllowed =
+                        isLivePlus ||
+                        (isLive && (pair === "ETHUSD" || pair === "USDCHF"))
+
+                      if (isAllowed) {
+                        setOpenPair(pair)
+                      }
+
+                    }}
                   />
                 ))}
               </div>
@@ -504,26 +556,55 @@ export default function Page() {
                     rowGap: "0px"
                   }}
                 >
-                  {instrumentOrder.map((pair) => {
+                  {instrumentOrder.map((pair: PairKey) => {
                     const signal = uiSignals?.[pair]
 
                     return (
-                      <React.Fragment key={pair}>
-                        <SortableButton id={pair}>
-                          <VerticalSymbolButton
-                            pair={pair}
-                            active={false}
-                            onClick={() => setOpenPair(pair)}
-                          />
-                        </SortableButton>
-
-                        <PairCard
+                      <SortableRow key={pair} id={pair}>
+                        <VerticalSymbolButton
                           pair={pair}
-                          direction={signal?.direction}
-                          signal={signal}
-                          onToggle={() => setOpenPair(pair)}
+                          active={false}
+                          onClick={() => setOpenPair(pair)}
                         />
-                      </React.Fragment>
+
+                        {instrumentOrder.map((pair: PairKey) => {
+
+                          const signal = uiSignals?.[pair]
+
+                          const isAllowed =
+                            isLivePlus ||
+                            (isLive && (pair === "ETHUSD" || pair === "USDCHF"))
+
+                          const displaySignal = isAllowed
+                            ? signal
+                            : dummySignals[pair]
+
+                          const displayDirection = isAllowed
+                            ? signal?.direction
+                            : "LIVE+"
+
+                          return (
+                            <SortableRow key={pair} id={pair}>
+                              <VerticalSymbolButton
+                                pair={pair}
+                                active={false}
+                                onClick={() => setOpenPair(pair)}
+                              />
+
+                              <PairCard
+                                pair={pair}
+                                direction={displayDirection}
+                                signal={displaySignal}
+                                onToggle={() => {
+                                  if (isAllowed) {
+                                    setOpenPair(pair)
+                                  }
+                                }}
+                              />
+                            </SortableRow>
+                          )
+                        })}
+                      </SortableRow>
                     )
                   })}
                 </div>
