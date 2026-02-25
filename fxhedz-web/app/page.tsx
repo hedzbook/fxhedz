@@ -408,29 +408,29 @@ export default function Page() {
       </div>
     )
   }
-function SortableRow({ id, children }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id })
+  function SortableRow({ id, children }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    willChange: "transform"
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      willChange: "transform"
+    }
+
+    return (
+      <div ref={setNodeRef} style={style}>
+        {typeof children === "function"
+          ? children({ attributes, listeners })
+          : children}
+      </div>
+    )
   }
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      {typeof children === "function"
-        ? children({ attributes, listeners })
-        : children}
-    </div>
-  )
-}
   return (
     <div className="relative">
 
@@ -573,14 +573,14 @@ function SortableRow({ id, children }: any) {
                           <div className="flex h-full">
 
                             <div
-                              className="h-full"
+                              className="h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
                               style={{ width: "clamp(30px, 3.5vw, 46px)" }}
+                              {...attributes}
+                              {...listeners}
                             >
                               <VerticalSymbolButton
                                 pair={pair}
                                 active={false}
-                                {...attributes}
-                                {...listeners}
                                 onClick={() => {
                                   if (!canAccess) return
                                   setOpenPair(prev => prev === pair ? null : pair)

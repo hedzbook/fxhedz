@@ -1039,13 +1039,10 @@ export default function Page() {
     }
 
     return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-      >
-        {children}
+      <div ref={setNodeRef} style={style}>
+        {typeof children === "function"
+          ? children({ attributes, listeners })
+          : children}
       </div>
     )
   }
@@ -1187,41 +1184,41 @@ export default function Page() {
 
                     return (
                       <SortableRow key={pair} id={pair}>
+                        {({ attributes, listeners }: any) => (
+                          <div className="flex h-full">
 
-                        <div className="flex h-full">
+                            <div
+                              className="h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+                              style={{ width: "clamp(30px, 3.5vw, 46px)" }}
+                              {...attributes}
+                              {...listeners}
+                            >
+                              <VerticalSymbolButton
+                                pair={pair}
+                                active={false}
+                                onClick={() => {
+                                  if (!canAccess) return
+                                  setOpenPair(prev => prev === pair ? null : pair)
+                                }}
+                              />
+                            </div>
 
-                          <div
-                            className="h-full"
-                            style={{
-                              width: "clamp(30px, 3.5vw, 46px)"
-                            }}
-                          >
-                            <VerticalSymbolButton
-                              pair={pair}
-                              active={false}
-                              onClick={() => {
-                                if (!canAccess) return
-                                setOpenPair(prev => prev === pair ? null : pair)
-                              }}
-                            />
+                            <div className="flex-1 h-full">
+                              <PairCard
+                                pair={pair}
+                                open={openPair === pair}
+                                direction={displayDirection}
+                                signal={displaySignal}
+                                onToggle={() => {
+                                  if (!canAccess) return
+                                  setOpenPair(prev => prev === pair ? null : pair)
+                                }}
+                                isGuest={!canAccess}
+                              />
+                            </div>
+
                           </div>
-
-                          <div className="flex-1 h-full">
-                            <PairCard
-                              pair={pair}
-                              open={openPair === pair}
-                              direction={displayDirection}
-                              signal={displaySignal}
-                              onToggle={() => {
-                                if (!canAccess) return
-                                setOpenPair(prev => prev === pair ? null : pair)
-                              }}
-                              isGuest={!canAccess}
-                            />
-                          </div>
-
-                        </div>
-
+                        )}
                       </SortableRow>
                     )
                   })}
