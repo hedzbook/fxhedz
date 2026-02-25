@@ -557,56 +557,43 @@ export default function Page() {
                   }}
                 >
                   {instrumentOrder.map((pair: PairKey) => {
+
                     const signal = uiSignals?.[pair]
+
+                    const isAllowed =
+                      isLivePlus ||
+                      (isLive && (pair === "ETHUSD" || pair === "USDCHF"))
+
+                    const displaySignal = isAllowed
+                      ? signal
+                      : dummySignals[pair]
+
+                    const displayDirection = isAllowed
+                      ? signal?.direction
+                      : "LIVE+"
 
                     return (
                       <SortableRow key={pair} id={pair}>
                         <VerticalSymbolButton
                           pair={pair}
                           active={false}
-                          onClick={() => setOpenPair(pair)}
+                          onClick={() => {
+                            if (isAllowed) {
+                              setOpenPair(pair)
+                            }
+                          }}
                         />
-                        {instrumentOrder.map((pair: PairKey) => {
 
-                          const signal = uiSignals?.[pair]
-
-                          const isAllowed =
-                            isLivePlus ||
-                            (isLive && (pair === "ETHUSD" || pair === "USDCHF"))
-
-                          const displaySignal = isAllowed
-                            ? signal
-                            : dummySignals[pair]
-
-                          const displayDirection = isAllowed
-                            ? signal?.direction
-                            : "LIVE+"
-
-                          return (
-                            <SortableRow key={pair} id={pair}>
-                              <VerticalSymbolButton
-                                pair={pair}
-                                active={false}
-                                onClick={() => {
-                                  if (isAllowed) {
-                                    setOpenPair(pair)
-                                  }
-                                }}
-                              />
-
-                              <PairCard
-                                pair={pair}
-                                direction={displayDirection}
-                                signal={displaySignal}
-                                onToggle={() => {
-                                  if (isAllowed) {
-                                    setOpenPair(pair)
-                                  }
-                                }}
-                              />
-                            </SortableRow>
-                          )
-                        })}
+                        <PairCard
+                          pair={pair}
+                          direction={displayDirection}
+                          signal={displaySignal}
+                          onToggle={() => {
+                            if (isAllowed) {
+                              setOpenPair(pair)
+                            }
+                          }}
+                        />
                       </SortableRow>
                     )
                   })}
