@@ -95,7 +95,7 @@ export default function Page() {
     }
   }
   const [instrumentOrder, setInstrumentOrder] =
-  useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
+    useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -304,10 +304,6 @@ export default function Page() {
 
     if (!openPair) return
 
-const isGuest =
-  !isAuthenticated ||
-  subActive === false
-
     if (isGuest) {
       loadPreview(openPair)
       return
@@ -366,15 +362,15 @@ const isGuest =
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
-const dummySignals = useMemo(() => generateDummySignals(), [])
+  const dummySignals = useMemo(() => generateDummySignals(), [])
   const isGuest =
     !isAuthenticated ||
     subActive === false
 
-const plan = accessMeta?.status
+  const plan = accessMeta?.status
 
-const isLivePlus = plan === "live+"
-const isLive = plan === "live"
+  const isLivePlus = plan === "live+"
+  const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -412,33 +408,33 @@ const isLive = plan === "live"
     )
   }
   function SortableRow({ id, children }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id })
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition
+    }
+
+    return (
+      <>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className="contents"
+        >
+          {children}
+        </div>
+      </>
+    )
   }
-
-  return (
-    <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className="contents"
-      >
-        {children}
-      </div>
-    </>
-  )
-}
   return (
     <div className="relative">
 
@@ -547,33 +543,33 @@ const isLive = plan === "live"
                     rowGap: "0px"
                   }}
                 >
-{instrumentOrder.map((pair: PairKey) => {
-  const signal = uiSignals?.[pair]
+                  {instrumentOrder.map((pair: PairKey) => {
+                    const signal = uiSignals?.[pair]
 
-  return (
-    <SortableRow key={pair} id={pair}>
-      <VerticalSymbolButton
-        pair={pair}
-        active={false}
-        onClick={() => setOpenPair(pair)}
-      />
+                    return (
+                      <SortableRow key={pair} id={pair}>
+                        <VerticalSymbolButton
+                          pair={pair}
+                          active={false}
+                          onClick={() => setOpenPair(pair)}
+                        />
 
-      <PairCard
-        pair={pair}
-        direction={isLivePlus ? signal?.direction : "LIVE+"}
-        signal={isLivePlus ? signal : dummySignals[pair]}
-        onToggle={() => {
-          if (isLivePlus) {
-            setOpenPair(pair)
-          } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
-            setOpenPair(pair)
-          }
-        }}
-        isGuest={!isLivePlus}
-      />
-    </SortableRow>
-  )
-})}
+                        <PairCard
+                          pair={pair}
+                          direction={isLivePlus ? signal?.direction : "LIVE+"}
+                          signal={isLivePlus ? signal : dummySignals[pair]}
+                          onToggle={() => {
+                            if (isLivePlus) {
+                              setOpenPair(pair)
+                            } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
+                              setOpenPair(pair)
+                            }
+                          }}
+                          isGuest={!isLivePlus}
+                        />
+                      </SortableRow>
+                    )
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
