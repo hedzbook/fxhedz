@@ -2693,7 +2693,7 @@ function TradeBar({
         <div
           className="absolute"
           style={{
-            left: `${locked ? 50 : pricePercent}%`,
+            left: `${pricePercent}%`,
             transform: "translateX(-50%)",
             transition: "left 380ms cubic-bezier(0.22,1,0.36,1)"
           }}
