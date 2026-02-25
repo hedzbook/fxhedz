@@ -410,8 +410,6 @@ export default function Page() {
   }
   function SortableRow({ id, children }: any) {
     const {
-      attributes,
-      listeners,
       setNodeRef,
       transform,
       transition
@@ -427,8 +425,6 @@ export default function Page() {
       <div
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
       >
         {children}
       </div>
@@ -535,8 +531,12 @@ export default function Page() {
                 strategy={verticalListSortingStrategy}
               >
 
-                <div className="flex flex-col h-full">
-
+                <div
+                  className="grid h-full"
+                  style={{
+                    gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`
+                  }}
+                >
                   {instrumentOrder.map((pair: PairKey) => {
 
                     const realSignal = uiSignals?.[pair]
@@ -568,38 +568,41 @@ export default function Page() {
 
                     return (
                       <SortableRow key={pair} id={pair}>
+                        {({ attributes, listeners }: any) => (
+                          <div className="flex h-full">
 
-                        <div className="flex flex-1 min-h-0">
+                            <div
+                              className="h-full"
+                              style={{ width: "clamp(30px, 3.5vw, 46px)" }}
+                            >
+                              <VerticalSymbolButton
+                                pair={pair}
+                                active={false}
+                                {...attributes}
+                                {...listeners}
+                                onClick={() => {
+                                  if (!canAccess) return
+                                  setOpenPair(prev => prev === pair ? null : pair)
+                                }}
+                              />
+                            </div>
 
-                          <div
-                            className="flex items-stretch"
-                            style={{
-                              width: "clamp(30px, 3.5vw, 46px)"
-                            }}
-                          >
-                            <VerticalSymbolButton
-                              pair={pair}
-                              active={false}
-                              onClick={() => {
-                                if (canAccess) setOpenPair(pair)
-                              }}
-                            />
+                            <div className="flex-1 h-full">
+                              <PairCard
+                                pair={pair}
+                                open={openPair === pair}
+                                direction={displayDirection}
+                                signal={displaySignal}
+                                onToggle={() => {
+                                  if (!canAccess) return
+                                  setOpenPair(prev => prev === pair ? null : pair)
+                                }}
+                                isGuest={!canAccess}
+                              />
+                            </div>
+
                           </div>
-
-                          <div className="flex-1 flex">
-                            <PairCard
-                              pair={pair}
-                              direction={displayDirection}
-                              signal={displaySignal}
-                              onToggle={() => {
-                                if (canAccess) setOpenPair(pair)
-                              }}
-                              isGuest={!canAccess}
-                            />
-                          </div>
-
-                        </div>
-
+                        )}
                       </SortableRow>
                     )
                   })}

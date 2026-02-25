@@ -53,18 +53,18 @@ function PairCard({
   }, [liveOrders])
 
   return (
-    <div
-      className={`
+<div
+  className={`
+    h-full
     text-[clamp(10px,1.1vw,20px)]
     relative
     transition-all duration-300
     border border-neutral-800 rounded-none
     overflow-hidden flex flex-col
     ${viewMode === "MIN" && !expanded ? "justify-center" : ""}
-    flex-none
     ${expanded ? "z-20 shadow-xl" : "z-0"}
   `}
-    >
+>
 
       {/* ================= HEADER ================== */}
       <div
