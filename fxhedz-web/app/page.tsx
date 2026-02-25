@@ -278,7 +278,7 @@ export default function Page() {
           return
         }
 
-        setSubActive(Boolean(data?.active))
+        setSubActive(data?.active === true)
         setAccessMeta(data)
 
       } catch {
@@ -408,32 +408,32 @@ export default function Page() {
       </div>
     )
   }
-function SortableRow({ id, children }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id })
+  function SortableRow({ id, children }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
 
-const style = {
-  transform: CSS.Transform.toString(transform),
-  transition,
-  willChange: "transform"
-}
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      willChange: "transform"
+    }
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-    >
-      {children}
-    </div>
-  )
-}
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+      >
+        {children}
+      </div>
+    )
+  }
   return (
     <div className="relative">
 
@@ -526,89 +526,88 @@ const style = {
 
           ) : (
 
-<DndContext
-  collisionDetection={closestCenter}
-  onDragEnd={handleDragEnd}
->
-  <SortableContext
-    items={instrumentOrder}
-    strategy={verticalListSortingStrategy}
-  >
-
-    <div className="flex flex-col h-full">
-
-      {instrumentOrder.map((pair: PairKey) => {
-
-        const realSignal = uiSignals?.[pair]
-        const dummySignal = dummySignals[pair]
-
-        const isLivePair =
-          pair === "ETHUSD" || pair === "USDCHF"
-
-        const canAccess =
-          isLivePlus ||
-          (isLive && isLivePair)
-
-        const displaySignal =
-          !isAuthenticated
-            ? dummySignal
-            : canAccess
-              ? realSignal
-              : dummySignal
-
-        const displayDirection =
-          !isAuthenticated
-            ? dummySignal?.direction
-            : canAccess
-              ? realSignal?.direction
-              : "LIVE+"
-
-        return (
-          <SortableRow key={pair} id={pair}>
-
-            <div
-              className="flex"
-              style={{
-                minHeight: "clamp(60px, 10vh, 120px)"
-              }}
+            <DndContext
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-
-              <div
-                style={{
-                  width: "clamp(30px, 3.5vw, 46px)"
-                }}
+              <SortableContext
+                items={instrumentOrder}
+                strategy={verticalListSortingStrategy}
               >
-                <VerticalSymbolButton
-                  pair={pair}
-                  active={false}
-                  onClick={() => {
-                    if (canAccess) setOpenPair(pair)
-                  }}
-                />
-              </div>
 
-              <div className="flex-1">
-                <PairCard
-                  pair={pair}
-                  direction={displayDirection}
-                  signal={displaySignal}
-                  onToggle={() => {
-                    if (canAccess) setOpenPair(pair)
-                  }}
-                  isGuest={!canAccess}
-                />
-              </div>
+                <div className="flex flex-col h-full">
 
-            </div>
+                  {instrumentOrder.map((pair: PairKey) => {
 
-          </SortableRow>
-        )
-      })}
+                    const realSignal = uiSignals?.[pair]
+                    const dummySignal = dummySignals[pair]
 
-    </div>
+                    const isLivePair =
+                      pair === "ETHUSD" || pair === "USDCHF"
 
-  </SortableContext>
-</DndContext>
+                    const canAccess =
+                      subActive === true &&
+                      (
+                        isLivePlus ||
+                        (isLive && isLivePair)
+                      )
+
+                    const displaySignal =
+                      !isAuthenticated
+                        ? dummySignal
+                        : canAccess
+                          ? realSignal
+                          : dummySignal
+
+                    const displayDirection =
+                      !isAuthenticated
+                        ? dummySignal?.direction
+                        : canAccess
+                          ? realSignal?.direction
+                          : "LIVE+"
+
+                    return (
+                      <SortableRow key={pair} id={pair}>
+
+                        <div className="flex flex-1 min-h-0">
+
+                          <div
+                            className="flex items-stretch"
+                            style={{
+                              width: "clamp(30px, 3.5vw, 46px)"
+                            }}
+                          >
+                            <VerticalSymbolButton
+                              pair={pair}
+                              active={false}
+                              onClick={() => {
+                                if (canAccess) setOpenPair(pair)
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex-1 flex">
+                            <PairCard
+                              pair={pair}
+                              direction={displayDirection}
+                              signal={displaySignal}
+                              onToggle={() => {
+                                if (canAccess) setOpenPair(pair)
+                              }}
+                              isGuest={!canAccess}
+                            />
+                          </div>
+
+                        </div>
+
+                      </SortableRow>
+                    )
+                  })}
+
+                </div>
+
+              </SortableContext>
+            </DndContext>
 
           )}
 
