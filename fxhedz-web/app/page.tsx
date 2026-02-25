@@ -211,18 +211,17 @@ export default function Page() {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-  useEffect(() => {
+useEffect(() => {
 
-    if (status === "loading") return
+  if (status === "loading") return
 
-    // If definitely not authenticated
-    if (status === "unauthenticated") {
-      setSubActive(false)
-      return
-    }
+  // 🔥 FIX: Only block unauthenticated for WEB
+  if (!isAndroid && status === "unauthenticated") {
+    setSubActive(false)
+    return
+  }
 
-    // If authenticated but fingerprint not ready
-    if (!fingerprint) return
+  if (!fingerprint) return
 
     async function init() {
 
@@ -271,6 +270,7 @@ export default function Page() {
         )
 
         const data = await res.json()
+        console.log("SUB DATA:", data)
 
         if (data?.blocked) {
           setSubActive(false)

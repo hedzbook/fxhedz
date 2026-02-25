@@ -510,11 +510,13 @@ export async function GET(req: NextRequest) {
   const jwtUser = verifyAccessToken(req)
 
   let deviceId: string | undefined
+  let email: string | undefined
 
   // ðŸ”¹ Android (JWT)
-  if (jwtUser && typeof jwtUser === "object") {
-    deviceId = (jwtUser as any).deviceId
-  }
+if (jwtUser && typeof jwtUser === "object") {
+  deviceId = (jwtUser as any).deviceId
+  email = (jwtUser as any).email
+}
 
   // ðŸ”¹ Web / Telegram fallback
   if (!deviceId) {
@@ -534,7 +536,10 @@ if (!deviceId) {
   try {
 
     const res = await fetch(
-      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`,
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}
+&device_id=${deviceId}
+&email=${encodeURIComponent(email ?? "")}
+&fingerprint=${encodeURIComponent(fingerprint)}`,
       { cache: "no-store" }
     )
 
@@ -826,18 +831,17 @@ export default function Page() {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-  useEffect(() => {
+useEffect(() => {
 
-    if (status === "loading") return
+  if (status === "loading") return
 
-    // If definitely not authenticated
-    if (status === "unauthenticated") {
-      setSubActive(false)
-      return
-    }
+  // ðŸ”¥ FIX: Only block unauthenticated for WEB
+  if (!isAndroid && status === "unauthenticated") {
+    setSubActive(false)
+    return
+  }
 
-    // If authenticated but fingerprint not ready
-    if (!fingerprint) return
+  if (!fingerprint) return
 
     async function init() {
 
@@ -886,6 +890,7 @@ export default function Page() {
         )
 
         const data = await res.json()
+        console.log("SUB DATA:", data)
 
         if (data?.blocked) {
           setSubActive(false)

@@ -75,7 +75,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!gasData.active) {
+ console.log("GAS DATA:", gasData)
+
+if (!gasData.active) {
       return NextResponse.json(
         { error: "Subscription inactive" },
         { status: 403 }

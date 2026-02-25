@@ -6,11 +6,13 @@ export async function GET(req: NextRequest) {
   const jwtUser = verifyAccessToken(req)
 
   let deviceId: string | undefined
+  let email: string | undefined
 
   // 🔹 Android (JWT)
-  if (jwtUser && typeof jwtUser === "object") {
-    deviceId = (jwtUser as any).deviceId
-  }
+if (jwtUser && typeof jwtUser === "object") {
+  deviceId = (jwtUser as any).deviceId
+  email = (jwtUser as any).email
+}
 
   // 🔹 Web / Telegram fallback
   if (!deviceId) {
@@ -30,7 +32,10 @@ if (!deviceId) {
   try {
 
     const res = await fetch(
-      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`,
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}
+&device_id=${deviceId}
+&email=${encodeURIComponent(email ?? "")}
+&fingerprint=${encodeURIComponent(fingerprint)}`,
       { cache: "no-store" }
     )
 
