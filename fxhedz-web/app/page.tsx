@@ -15,9 +15,6 @@ import { generateDummyDetail } from "@/lib/dummyDetail"
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors
 } from "@dnd-kit/core"
 
 import {
@@ -28,8 +25,6 @@ import {
 } from "@dnd-kit/sortable"
 
 import { CSS } from "@dnd-kit/utilities"
-
-const pairs: any = {}
 
 const DEFAULT_ORDER = [
   "ETHUSD",
@@ -467,7 +462,7 @@ export default function Page() {
               {/* LEFT RAIL */}
               <div className="grid"
                 style={{
-                  gridTemplateRows: "repeat(9, 1fr)"
+                  gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`
                 }}
               >
                 {instrumentOrder.map((pair) => (
@@ -493,21 +488,21 @@ export default function Page() {
 
           ) : (
 
-            <div
-              className="h-full grid"
-              style={{
-                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-                gridTemplateRows: "repeat(9, 1fr)",
-                rowGap: "0px"
-              }}
+            <DndContext
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <DndContext
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+              <SortableContext
+                items={instrumentOrder}
+                strategy={verticalListSortingStrategy}
               >
-                <SortableContext
-                  items={instrumentOrder}
-                  strategy={verticalListSortingStrategy}
+                <div
+                  className="h-full grid"
+                  style={{
+                    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
+                    gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`,
+                    rowGap: "0px"
+                  }}
                 >
                   {instrumentOrder.map((pair) => {
                     const signal = uiSignals?.[pair]
@@ -531,9 +526,9 @@ export default function Page() {
                       </React.Fragment>
                     )
                   })}
-                </SortableContext>
-              </DndContext>
-            </div>
+                </div>
+              </SortableContext>
+            </DndContext>
 
           )}
 
