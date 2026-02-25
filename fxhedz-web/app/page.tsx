@@ -53,7 +53,8 @@ type ViewMode = "MIN" | "MAX"
 
 export default function Page() {
 
-  const [signals, setSignals] = useState<any>({})
+  const dummySignals = useMemo(() => generateDummySignals(), [])
+  const [signals, setSignals] = useState<any>(dummySignals)
   const [pairData, setPairData] = useState<any>({})
   const [openPair, setOpenPair] = useState<string | null>(null)
   const [uiSignals, setUiSignals] = useState<any>({})
@@ -362,7 +363,7 @@ export default function Page() {
       return { pair, signal, orders: extra?.orders || [] }
     })
   }, [uiSignals, pairData])
-  const dummySignals = useMemo(() => generateDummySignals(), [])
+
   const isGuest =
     !isAuthenticated ||
     subActive === false
@@ -407,34 +408,32 @@ export default function Page() {
       </div>
     )
   }
-  function SortableRow({ id, children }: any) {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition
-    } = useSortable({ id })
+function SortableRow({ id, children }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition
+  } = useSortable({ id })
 
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition
-    }
+const style = {
+  transform: CSS.Transform.toString(transform),
+  transition,
+  willChange: "transform"
+}
 
-    return (
-      <>
-        <div
-          ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
-          className="contents"
-        >
-          {children}
-        </div>
-      </>
-    )
-  }
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  )
+}
   return (
     <div className="relative">
 
@@ -527,52 +526,89 @@ export default function Page() {
 
           ) : (
 
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+<DndContext
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
+>
+  <SortableContext
+    items={instrumentOrder}
+    strategy={verticalListSortingStrategy}
+  >
+
+    <div className="flex flex-col h-full">
+
+      {instrumentOrder.map((pair: PairKey) => {
+
+        const realSignal = uiSignals?.[pair]
+        const dummySignal = dummySignals[pair]
+
+        const isLivePair =
+          pair === "ETHUSD" || pair === "USDCHF"
+
+        const canAccess =
+          isLivePlus ||
+          (isLive && isLivePair)
+
+        const displaySignal =
+          !isAuthenticated
+            ? dummySignal
+            : canAccess
+              ? realSignal
+              : dummySignal
+
+        const displayDirection =
+          !isAuthenticated
+            ? dummySignal?.direction
+            : canAccess
+              ? realSignal?.direction
+              : "LIVE+"
+
+        return (
+          <SortableRow key={pair} id={pair}>
+
+            <div
+              className="flex"
+              style={{
+                minHeight: "clamp(60px, 10vh, 120px)"
+              }}
             >
-              <SortableContext
-                items={instrumentOrder}
-                strategy={verticalListSortingStrategy}
+
+              <div
+                style={{
+                  width: "clamp(30px, 3.5vw, 46px)"
+                }}
               >
-                <div
-                  className="h-full grid"
-                  style={{
-                    gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-                    gridTemplateRows: `repeat(${instrumentOrder.length}, 1fr)`,
-                    rowGap: "0px"
+                <VerticalSymbolButton
+                  pair={pair}
+                  active={false}
+                  onClick={() => {
+                    if (canAccess) setOpenPair(pair)
                   }}
-                >
-                  {instrumentOrder.map((pair: PairKey) => {
-                    const signal = uiSignals?.[pair]
+                />
+              </div>
 
-                    return (
-                      <SortableRow key={pair} id={pair}>
-                        <VerticalSymbolButton
-                          pair={pair}
-                          active={false}
-                          onClick={() => setOpenPair(pair)}
-                        />
+              <div className="flex-1">
+                <PairCard
+                  pair={pair}
+                  direction={displayDirection}
+                  signal={displaySignal}
+                  onToggle={() => {
+                    if (canAccess) setOpenPair(pair)
+                  }}
+                  isGuest={!canAccess}
+                />
+              </div>
 
-                        <PairCard
-                          pair={pair}
-                          direction={isLivePlus ? signal?.direction : "LIVE+"}
-                          signal={isLivePlus ? signal : dummySignals[pair]}
-                          onToggle={() => {
-                            if (isLivePlus) {
-                              setOpenPair(pair)
-                            } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
-                              setOpenPair(pair)
-                            }
-                          }}
-                          isGuest={!isLivePlus}
-                        />
-                      </SortableRow>
-                    )
-                  })}
-                </div>
-              </SortableContext>
-            </DndContext>
+            </div>
+
+          </SortableRow>
+        )
+      })}
+
+    </div>
+
+  </SortableContext>
+</DndContext>
 
           )}
 
