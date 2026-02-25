@@ -13,18 +13,35 @@ import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core"
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove
+} from "@dnd-kit/sortable"
+
+import { CSS } from "@dnd-kit/utilities"
+
 const pairs: any = {}
 
 const PAIRS = [
-  "XAUUSD",
-  "BTCUSD",
   "ETHUSD",
+  "USDCHF",
+  "USDJPY",
+  "XAUUSD",
   "EURUSD",
   "GBPUSD",
-  "USDJPY",
   "AUDUSD",
-  "USDCHF",
-  "USOIL"
+  "USOIL",
+  "BTCUSD"
 ]
 
 const SIGNAL_API = "/api/signals"
@@ -319,6 +336,34 @@ const sessionExists =
     }
   }
 
+  // =============================
+// CARD ORDER STATE
+// =============================
+const DEFAULT_PAIR_ORDER = [
+  "ETHUSD",
+  "USDCHF",
+  "USDJPY",
+  "XAUUSD",
+  "EURUSD",
+  "GBPUSD",
+  "AUDUSD",
+  "USOIL",
+  "BTCUSD"
+]
+
+const [cardOrder, setCardOrder] = useState<string[]>(DEFAULT_PAIR_ORDER)
+
+useEffect(() => {
+  const saved = localStorage.getItem("fx_card_order")
+  if (saved) {
+    setCardOrder(JSON.parse(saved))
+  }
+}, [])
+
+useEffect(() => {
+  localStorage.setItem("fx_card_order", JSON.stringify(cardOrder))
+}, [cardOrder])
+
   const pairsData = useMemo(() => {
     return PAIRS.map((pair) => {
       const signal = uiSignals?.[pair]
@@ -327,9 +372,25 @@ const sessionExists =
     })
   }, [uiSignals, pairData])
 
-  const isGuest =
-    !isAuthenticated ||
-    subActive === false
+const isGuest =
+  !isAuthenticated ||
+  subActive === false
+
+// =============================
+// LOCKING LOGIC (ADD HERE)
+// =============================
+const allowedPairs =
+  accessMeta?.plan === "live+"
+    ? DEFAULT_PAIR_ORDER
+    : ["ETHUSD", "USDCHF"]
+
+function getDummyPrice(pair: string) {
+  if (pair.includes("JPY")) return "150.000"
+  if (pair === "XAUUSD") return "2000.00"
+  if (pair === "USOIL") return "75.00"
+  if (pair === "BTCUSD") return "60000.00"
+  return "1.0000"
+}
 
   const detailData = openPair
     ? (
@@ -343,10 +404,50 @@ const sessionExists =
     )
     : undefined
 
+    // =============================
+// DRAG HANDLER
+// =============================
+function handleDragEnd(event: any) {
+  const { active, over } = event
+
+  if (!over || active.id === over.id) return
+
+  const oldIndex = cardOrder.indexOf(active.id)
+  const newIndex = cardOrder.indexOf(over.id)
+
+  setCardOrder(arrayMove(cardOrder, oldIndex, newIndex))
+}
+
   if (openPair) {
     console.log("DETAIL DATA:", detailData)
   }
+function SortableItem({ id, children }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition
+  } = useSortable({ id })
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  )
+}
+const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 5
+    }
+  })
+)
   return (
     <div className="relative">
 
@@ -439,34 +540,66 @@ const sessionExists =
 
           ) : (
 
-            <div
-              className="h-full grid"
-              style={{
-                gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-                gridTemplateRows: "repeat(9, 1fr)",
-                rowGap: "0px"
-              }}
-            >
-              {PAIRS.map((pair) => {
-                const signal = uiSignals?.[pair]
+<div
+  className="h-full flex flex-col"
+  style={{
+    rowGap: "0px"
+  }}
+>
+<DndContext
+  sensors={sensors}
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
+>
+  <SortableContext
+    items={cardOrder}
+    strategy={verticalListSortingStrategy}
+  >
+    {cardOrder.map((pair) => {
 
-                return (
-                  <React.Fragment key={pair}>
-                    <VerticalSymbolButton
-                      pair={pair}
-                      active={false}
-                      onClick={() => setOpenPair(pair)}
-                    />
+      const signal = uiSignals?.[pair]
+      const isAllowed = allowedPairs.includes(pair)
 
-                    <PairCard
-                      pair={pair}
-                      direction={signal?.direction}
-                      signal={signal}
-                      onToggle={() => setOpenPair(pair)}
-                    />
-                  </React.Fragment>
-                )
-              })}
+      const displayDirection = isAllowed
+        ? signal?.direction
+        : "LIVE+"
+
+      const displaySignal = isAllowed
+        ? signal
+        : {
+            ...signal,
+            price: getDummyPrice(pair),
+            direction: "LIVE+"
+          }
+
+      return (
+        <SortableItem key={pair} id={pair}>
+
+          <VerticalSymbolButton
+            pair={pair}
+            active={false}
+            onClick={() => {
+              if (!isAllowed) return
+              setOpenPair(pair)
+            }}
+          />
+
+          <PairCard
+            pair={pair}
+            direction={displayDirection}
+            signal={displaySignal}
+            locked={!isAllowed}
+            onToggle={() => {
+              if (!isAllowed) return
+              setOpenPair(pair)
+            }}
+          />
+
+        </SortableItem>
+      )
+    })}
+  </SortableContext>
+</DndContext>
             </div>
 
           )}

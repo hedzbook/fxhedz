@@ -16,6 +16,7 @@ type Props = {
   orders?: any[]
   performance?: any
   notes?: string
+  locked?: boolean
   onToggle: () => void
 }
 
@@ -29,7 +30,8 @@ function PairCard({
   history,
   orders,
   performance,
-  notes
+  notes,
+  locked = false
 }: Props) {
 
   const dir: TradeDirection = direction ?? "--"
@@ -52,8 +54,8 @@ function PairCard({
   }, [liveOrders])
 
   return (
-    <div
-      className={`
+<div
+  className={`
     text-[clamp(10px,1.1vw,20px)]
     relative
     transition-all duration-300
@@ -62,8 +64,9 @@ function PairCard({
     ${viewMode === "MIN" && !expanded ? "justify-center" : ""}
     flex-none
     ${expanded ? "z-20 shadow-xl" : "z-0"}
+    ${locked ? "opacity-60" : ""}
   `}
-    >
+>
 
       {/* ================= HEADER ================== */}
       <div
@@ -117,10 +120,11 @@ py-[clamp(2px,0.6vh,6px)]
 
             {/* ROW 3 — TRADE BAR */}
             <div className="mt-[clamp(1px,0.8vw,10px)]">
-              <InlineTradeStrip
-                signal={signal}
-                direction={liveDir}
-              />
+<InlineTradeStrip
+  signal={signal}
+  direction={liveDir}
+  locked={locked}
+/>
             </div>
 
           </div>
@@ -352,7 +356,7 @@ function Metric({ label, value }: any) {
    INLINE STRIP (MIN MODE)
 ======================================================= */
 
-function InlineTradeStrip({ signal, direction }: any) {
+function InlineTradeStrip({ signal, direction, locked }: any) {
   if (!signal?.entry || direction === "EXIT") return null
 
   const sl = Number(signal?.sl)
@@ -435,7 +439,7 @@ function InlineTradeStrip({ signal, direction }: any) {
         <div
           className="absolute top-1/2 flex items-center justify-center"
           style={{
-            left: `${pricePercent}%`,
+            left: `${locked ? 50 : pricePercent}%`,
             transform: "translate(-50%, -50%)",
             transition: "left 300ms ease",
             width: "1px", // Minimal anchor point
@@ -593,7 +597,7 @@ function TradeBar({
         <div
           className="absolute"
           style={{
-            left: `${pricePercent}%`,
+            left: `${locked ? 50 : pricePercent}%`,
             transform: "translateX(-50%)",
             transition: "left 380ms cubic-bezier(0.22,1,0.36,1)"
           }}
