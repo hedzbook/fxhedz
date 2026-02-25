@@ -269,8 +269,9 @@ useEffect(() => {
           { cache: "no-store" }
         )
 
-        const data = await res.json()
-        console.log("SUB DATA:", data)
+const data = await res.json()
+alert("SUB DATA: " + JSON.stringify(data))
+console.log("SUB DATA:", data)
 
         if (data?.blocked) {
           setSubActive(false)
