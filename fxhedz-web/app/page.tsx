@@ -566,7 +566,6 @@ export default function Page() {
                           active={false}
                           onClick={() => setOpenPair(pair)}
                         />
-
                         {instrumentOrder.map((pair: PairKey) => {
 
                           const signal = uiSignals?.[pair]
@@ -588,7 +587,11 @@ export default function Page() {
                               <VerticalSymbolButton
                                 pair={pair}
                                 active={false}
-                                onClick={() => setOpenPair(pair)}
+                                onClick={() => {
+                                  if (isAllowed) {
+                                    setOpenPair(pair)
+                                  }
+                                }}
                               />
 
                               <PairCard
