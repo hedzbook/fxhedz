@@ -18,6 +18,7 @@ export default function HomeScreen() {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const webViewRef = useRef<WebView>(null)
+  const [deviceIdState, setDeviceIdState] = useState<string | null>(null)
 
   // ===============================
   // GOOGLE AUTH (ANDROID CLIENT)
@@ -45,7 +46,11 @@ export default function HomeScreen() {
   useEffect(() => {
     initialize()
   }, [])
-
+  useEffect(() => {
+    SecureStore.getItemAsync("deviceId").then(id => {
+      if (id) setDeviceIdState(id)
+    })
+  }, [])
   async function initialize() {
 
     const storedAccess = await SecureStore.getItemAsync("accessToken")
@@ -212,21 +217,22 @@ export default function HomeScreen() {
   // MAIN WEBVIEW
   // ===============================
   return (
-<WebView
-  ref={webViewRef}
-  key={accessToken ?? "guest"}
-  source={{
-    uri: API_BASE,
-    headers: accessToken
-      ? { Authorization: `Bearer ${accessToken}` }
-      : {}
-  }}
-  injectedJavaScript={`
-    window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
-    true;
-  `}
-  style={{ flex: 1, backgroundColor: "#000000" }}
-  containerStyle={{ backgroundColor: "#000000" }}
+    <WebView
+      ref={webViewRef}
+      key={accessToken ?? "guest"}
+      source={{
+        uri: API_BASE,
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : {}
+      }}
+injectedJavaScript={`
+  window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
+  window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
+  true;
+`}
+      style={{ flex: 1, backgroundColor: "#000000" }}
+      containerStyle={{ backgroundColor: "#000000" }}
 
       onMessage={async (event) => {
 

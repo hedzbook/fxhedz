@@ -656,19 +656,24 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
-  const isAndroid =
-    typeof window !== "undefined" &&
-    !!(window as any).ReactNativeWebView
+const isAndroid =
+  typeof window !== "undefined" &&
+  !!(window as any).ReactNativeWebView
 
-  const isAuthenticated =
-    isAndroid
-      ? true
-      : status === "authenticated"
+const hasNativeToken =
+  isAndroid &&
+  typeof window !== "undefined" &&
+  (window as any).__HAS_NATIVE_TOKEN__ === true
 
-  const sessionExists =
-    isAndroid
-      ? true
-      : !!session
+const isAuthenticated =
+  isAndroid
+    ? hasNativeToken
+    : status === "authenticated"
+
+const sessionExists =
+  isAndroid
+    ? hasNativeToken
+    : !!session
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {

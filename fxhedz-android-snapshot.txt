@@ -258,17 +258,21 @@ export default function HomeScreen() {
   // MAIN WEBVIEW
   // ===============================
   return (
-    <WebView
-      ref={webViewRef}
-      key={accessToken ?? "guest"}
-      source={{
-        uri: API_BASE,
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : {}
-      }}
-      style={{ flex: 1, backgroundColor: "#000000" }}
-      containerStyle={{ backgroundColor: "#000000" }}
+<WebView
+  ref={webViewRef}
+  key={accessToken ?? "guest"}
+  source={{
+    uri: API_BASE,
+    headers: accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {}
+  }}
+  injectedJavaScript={`
+    window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
+    true;
+  `}
+  style={{ flex: 1, backgroundColor: "#000000" }}
+  containerStyle={{ backgroundColor: "#000000" }}
 
       onMessage={async (event) => {
 
