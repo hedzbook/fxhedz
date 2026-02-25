@@ -12,19 +12,35 @@ import { generateDummySignals } from "@/lib/dummySignals"
 import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core"
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove
+} from "@dnd-kit/sortable"
+
+import { CSS } from "@dnd-kit/utilities"
 
 const pairs: any = {}
 
-const PAIRS = [
-  "XAUUSD",
-  "BTCUSD",
+const DEFAULT_ORDER = [
   "ETHUSD",
+  "USDCHF",
+  "USDJPY",
+  "XAUUSD",
   "EURUSD",
   "GBPUSD",
-  "USDJPY",
   "AUDUSD",
-  "USDCHF",
-  "USOIL"
+  "USOIL",
+  "BTCUSD"
 ]
 
 const SIGNAL_API = "/api/signals"
@@ -41,24 +57,24 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
-const isAndroid =
-  typeof window !== "undefined" &&
-  !!(window as any).ReactNativeWebView
+  const isAndroid =
+    typeof window !== "undefined" &&
+    !!(window as any).ReactNativeWebView
 
-const hasNativeToken =
-  isAndroid &&
-  typeof window !== "undefined" &&
-  (window as any).__HAS_NATIVE_TOKEN__ === true
+  const hasNativeToken =
+    isAndroid &&
+    typeof window !== "undefined" &&
+    (window as any).__HAS_NATIVE_TOKEN__ === true
 
-const isAuthenticated =
-  isAndroid
-    ? hasNativeToken
-    : status === "authenticated"
+  const isAuthenticated =
+    isAndroid
+      ? hasNativeToken
+      : status === "authenticated"
 
-const sessionExists =
-  isAndroid
-    ? hasNativeToken
-    : !!session
+  const sessionExists =
+    isAndroid
+      ? hasNativeToken
+      : !!session
   const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
@@ -74,6 +90,17 @@ const sessionExists =
       console.error("Preview load failed", e)
     }
   }
+  const [instrumentOrder, setInstrumentOrder] = useState<string[]>(DEFAULT_ORDER)
+  useEffect(() => {
+    const saved = localStorage.getItem("fxhedz_order")
+    if (saved) {
+      setInstrumentOrder(JSON.parse(saved))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("fxhedz_order", JSON.stringify(instrumentOrder))
+  }, [instrumentOrder])
   const menuRef = useRef<HTMLDivElement | null>(null)
   const hamburgerRef = useRef<HTMLButtonElement | null>(null)
   const daysLeft = useMemo(() => {
@@ -318,9 +345,17 @@ const sessionExists =
       setOpenPair(pair) // Expand the specific pair
     }
   }
+  function handleDragEnd(event: any) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
 
+    const oldIndex = instrumentOrder.indexOf(active.id)
+    const newIndex = instrumentOrder.indexOf(over.id)
+
+    setInstrumentOrder(arrayMove(instrumentOrder, oldIndex, newIndex))
+  }
   const pairsData = useMemo(() => {
-    return PAIRS.map((pair) => {
+    return instrumentOrder.map((pair) => {
       const signal = uiSignals?.[pair]
       const extra = pairData?.[pair] || {}
       return { pair, signal, orders: extra?.orders || [] }
@@ -346,7 +381,26 @@ const sessionExists =
   if (openPair) {
     console.log("DETAIL DATA:", detailData)
   }
+  function SortableButton({ id, children }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition
+    } = useSortable({ id })
 
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition
+    }
+
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        {children}
+      </div>
+    )
+  }
   return (
     <div className="relative">
 
@@ -416,7 +470,7 @@ const sessionExists =
                   gridTemplateRows: "repeat(9, 1fr)"
                 }}
               >
-                {PAIRS.map((pair) => (
+                {instrumentOrder.map((pair) => (
                   <VerticalSymbolButton
                     key={pair}
                     pair={pair}
@@ -447,26 +501,38 @@ const sessionExists =
                 rowGap: "0px"
               }}
             >
-              {PAIRS.map((pair) => {
-                const signal = uiSignals?.[pair]
+              <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={instrumentOrder}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {instrumentOrder.map((pair) => {
+                    const signal = uiSignals?.[pair]
 
-                return (
-                  <React.Fragment key={pair}>
-                    <VerticalSymbolButton
-                      pair={pair}
-                      active={false}
-                      onClick={() => setOpenPair(pair)}
-                    />
+                    return (
+                      <React.Fragment key={pair}>
+                        <SortableButton id={pair}>
+                          <VerticalSymbolButton
+                            pair={pair}
+                            active={false}
+                            onClick={() => setOpenPair(pair)}
+                          />
+                        </SortableButton>
 
-                    <PairCard
-                      pair={pair}
-                      direction={signal?.direction}
-                      signal={signal}
-                      onToggle={() => setOpenPair(pair)}
-                    />
-                  </React.Fragment>
-                )
-              })}
+                        <PairCard
+                          pair={pair}
+                          direction={signal?.direction}
+                          signal={signal}
+                          onToggle={() => setOpenPair(pair)}
+                        />
+                      </React.Fragment>
+                    )
+                  })}
+                </SortableContext>
+              </DndContext>
             </div>
 
           )}
