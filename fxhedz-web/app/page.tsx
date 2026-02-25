@@ -558,19 +558,19 @@ const isLive = plan === "live"
         onClick={() => setOpenPair(pair)}
       />
 
-<PairCard
-  pair={pair}
-  direction={isLivePlus ? signal?.direction : "LIVE+"}
-  signal={isLivePlus ? signal : dummySignals[pair]}
-  onToggle={() => {
-    if (isLivePlus) {
-      setOpenPair(pair)
-    } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
-      setOpenPair(pair)
-    }
-  }}
-  isGuest={!isLivePlus}
-/>
+      <PairCard
+        pair={pair}
+        direction={isLivePlus ? signal?.direction : "LIVE+"}
+        signal={isLivePlus ? signal : dummySignals[pair]}
+        onToggle={() => {
+          if (isLivePlus) {
+            setOpenPair(pair)
+          } else if (isLive && (pair === "ETHUSD" || pair === "USDCHF")) {
+            setOpenPair(pair)
+          }
+        }}
+        isGuest={!isLivePlus}
+      />
     </SortableRow>
   )
 })}
@@ -740,3 +740,4 @@ const isLive = plan === "live"
     </div>
   )
 }
+
