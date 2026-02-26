@@ -82,10 +82,10 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-  const isAuthenticated =
-    isAndroid
-      ? hasNativeToken
-      : status === "authenticated"
+const isAuthenticated =
+  isAndroid
+    ? true
+    : status === "authenticated"
 
   const sessionExists =
     isAndroid
@@ -274,7 +274,7 @@ export default function Page() {
         )
 
         const data = await res.json()
-        // alert("SUB DATA: " + JSON.stringify(data))
+         alert("SUB DATA: " + JSON.stringify(data))
         console.log("SUB DATA:", data)
 
         setAccessMeta(data)
@@ -292,9 +292,9 @@ export default function Page() {
   // =============================
   // SUBSCRIPTION POLLING (LIVE SYNC)
   // =============================
-  useEffect(() => {
+useEffect(() => {
 
-    if (!isAuthenticated) return
+  if (!isAndroid && !isAuthenticated) return
 
     async function checkSubscription() {
       try {

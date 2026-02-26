@@ -562,6 +562,10 @@ import { generateDummyDetail } from "@/lib/dummyDetail"
 import {
   DndContext,
   closestCenter,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors
 } from "@dnd-kit/core"
 
 import {
@@ -625,17 +629,17 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-  const isAuthenticated =
-    isAndroid
-      ? hasNativeToken
-      : status === "authenticated"
+const isAuthenticated =
+  isAndroid
+    ? true
+    : status === "authenticated"
 
   const sessionExists =
     isAndroid
       ? hasNativeToken
       : !!session
   const [accessMeta, setAccessMeta] =
-  useState<SubscriptionMeta | null>(null)
+    useState<SubscriptionMeta | null>(null)
   async function loadPreview(pair: string) {
     try {
       const res = await fetch(`/api/public-preview?pair=${pair}`)
@@ -651,6 +655,20 @@ export default function Page() {
   }
   const [instrumentOrder, setInstrumentOrder] =
     useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8
+      }
+    })
+  )
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -732,7 +750,7 @@ export default function Page() {
         const json = await res.json()
         const incoming = json?.signals ?? {}
 
-setSignals(incoming)
+        setSignals(incoming)
       } catch { }
     }
 
@@ -740,7 +758,7 @@ setSignals(incoming)
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
- }, [subActive, status, accessMeta])
+  }, [subActive, status, accessMeta])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -818,41 +836,41 @@ setSignals(incoming)
 
   }, [status])
 
-// =============================
-// SUBSCRIPTION POLLING (LIVE SYNC)
-// =============================
+  // =============================
+  // SUBSCRIPTION POLLING (LIVE SYNC)
+  // =============================
 useEffect(() => {
 
-  if (!isAuthenticated) return
+  if (!isAndroid && !isAuthenticated) return
 
-  async function checkSubscription() {
-    try {
-      const res = await fetch("/api/subscription", {
-        cache: "no-store"
-      })
+    async function checkSubscription() {
+      try {
+        const res = await fetch("/api/subscription", {
+          cache: "no-store"
+        })
 
-      const data = await res.json()
+        const data = await res.json()
 
-      setAccessMeta(prev => {
-        if (JSON.stringify(prev) === JSON.stringify(data)) return prev
-        return data
-      })
+        setAccessMeta(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev
+          return data
+        })
 
-      setSubActive(Boolean(data?.active))
+        setSubActive(Boolean(data?.active))
 
-    } catch {}
-  }
+      } catch { }
+    }
 
-  // poll every 10 seconds
-  const interval = setInterval(checkSubscription, 10000)
+    // poll every 10 seconds
+    const interval = setInterval(checkSubscription, 10000)
 
-  return () => clearInterval(interval)
+    return () => clearInterval(interval)
 
-}, [isAuthenticated])
+  }, [isAuthenticated])
 
-useEffect(() => {
-  setUiSignals(signals)
-}, [signals])
+  useEffect(() => {
+    setUiSignals(signals)
+  }, [signals])
 
   useEffect(() => {
 
@@ -919,10 +937,10 @@ useEffect(() => {
     !isAuthenticated ||
     subActive === false
 
-const plan = accessMeta?.status?.toLowerCase()
+  const plan = accessMeta?.status?.toLowerCase()
 
-const isLivePlus = plan === "live+"
-const isLive = plan === "live"
+  const isLivePlus = plan === "live+"
+  const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -1073,6 +1091,7 @@ const isLive = plan === "live"
           ) : (
 
             <DndContext
+              sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
@@ -1130,7 +1149,8 @@ const isLive = plan === "live"
 
                             <div
                               className="h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                              style={{ width: "clamp(30px, 3.5vw, 46px)" }}
+                              style={{ width: "clamp(30px, 3.5vw, 46px)",
+                              touchAction: "none" }}
                               {...attributes}
                               {...listeners}
                             >
@@ -1524,6 +1544,14 @@ import { ensureDeviceIdentity } from "@/lib/device"
 
 export default function AuthButton() {
   const { data: session, status } = useSession()
+  const isAndroid =
+  typeof window !== "undefined" &&
+  (window as any).ReactNativeWebView
+
+const hasNativeToken =
+  isAndroid &&
+  typeof window !== "undefined" &&
+  Boolean((window as any).__HAS_NATIVE_TOKEN__)
 
   if (status === "loading") {
     return (
@@ -1535,7 +1563,7 @@ export default function AuthButton() {
   }
 
   // LOGIN STATE (Colorful Google Style)
-  if (!session) {
+  if (!session && (!isAndroid || !hasNativeToken)) {
     return (
       <button
         onClick={() => {
@@ -1568,23 +1596,23 @@ text-[clamp(11px,2.6vw,15px)]
   }
 
   // LOGOUT STATE (Clean & Minimal)
+if (session || (isAndroid && hasNativeToken)) {
   return (
     <div className="flex flex-col items-center gap-3 w-full">
-      <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
-        <span className="text-[11px] text-neutral-400 font-mono truncate max-w-[180px] block">
-          {session.user?.email}
-        </span>
-      </div>
+      {!isAndroid && (
+        <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
+          <span className="text-[11px] text-neutral-400 font-mono truncate max-w-[180px] block">
+            {session?.user?.email}
+          </span>
+        </div>
+      )}
+
       <button
         onClick={() => {
-
-          if (typeof window !== "undefined" &&
-            (window as any).ReactNativeWebView) {
-
+          if (isAndroid) {
             (window as any).ReactNativeWebView.postMessage("LOGOUT_REQUEST")
             return
           }
-
           signOut()
         }}
         className="
@@ -1597,6 +1625,7 @@ text-[clamp(11px,2.6vw,15px)]
       </button>
     </div>
   )
+}
 }
 
 function GoogleIcon() {

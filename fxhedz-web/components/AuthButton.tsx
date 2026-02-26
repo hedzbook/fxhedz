@@ -5,6 +5,14 @@ import { ensureDeviceIdentity } from "@/lib/device"
 
 export default function AuthButton() {
   const { data: session, status } = useSession()
+  const isAndroid =
+  typeof window !== "undefined" &&
+  (window as any).ReactNativeWebView
+
+const hasNativeToken =
+  isAndroid &&
+  typeof window !== "undefined" &&
+  Boolean((window as any).__HAS_NATIVE_TOKEN__)
 
   if (status === "loading") {
     return (
@@ -16,7 +24,7 @@ export default function AuthButton() {
   }
 
   // LOGIN STATE (Colorful Google Style)
-  if (!session) {
+  if (!session && (!isAndroid || !hasNativeToken)) {
     return (
       <button
         onClick={() => {
@@ -49,23 +57,23 @@ text-[clamp(11px,2.6vw,15px)]
   }
 
   // LOGOUT STATE (Clean & Minimal)
+if (session || (isAndroid && hasNativeToken)) {
   return (
     <div className="flex flex-col items-center gap-3 w-full">
-      <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
-        <span className="text-[11px] text-neutral-400 font-mono truncate max-w-[180px] block">
-          {session.user?.email}
-        </span>
-      </div>
+      {!isAndroid && (
+        <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
+          <span className="text-[11px] text-neutral-400 font-mono truncate max-w-[180px] block">
+            {session?.user?.email}
+          </span>
+        </div>
+      )}
+
       <button
         onClick={() => {
-
-          if (typeof window !== "undefined" &&
-            (window as any).ReactNativeWebView) {
-
+          if (isAndroid) {
             (window as any).ReactNativeWebView.postMessage("LOGOUT_REQUEST")
             return
           }
-
           signOut()
         }}
         className="
@@ -78,6 +86,7 @@ text-[clamp(11px,2.6vw,15px)]
       </button>
     </div>
   )
+}
 }
 
 function GoogleIcon() {
