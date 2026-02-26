@@ -1,62 +1,28 @@
 "use client"
 
-import { signOut } from "next-auth/react"
 import AuthButton from "./AuthButton"
 
 type Props = {
-  active: boolean | null
   sessionExists: boolean
-  status?: string | null
-  expiry?: string | null
-  blocked?: boolean
 }
 
-export default function AccessOverlay({
-  active,
-  sessionExists,
-  status,
-  expiry,
-  blocked
-}: Props) {
+export default function AccessOverlay({ sessionExists }: Props) {
 
-  // 1️⃣ Still verifying → show ONLY verifying state
-  if (sessionExists && active === null) return null
-  if (active === null) {
-    return (
-      <OverlayContainer>
-        <Panel>
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-5 h-5 border-2 border-neutral-700 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-[10px] font-bold text-neutral-500 tracking-[0.2em]">
-              VERIFYING
-            </p>
-          </div>
-        </Panel>
-      </OverlayContainer>
-    )
-  }
+  // If logged in → no overlay at all
+  if (sessionExists) return null
 
-  // 2️⃣ Active → no overlay
-  if (active === true) return null
-
+  // If NOT logged in → show login panel
   return (
     <OverlayContainer>
       <Panel>
-
-        {/* 3️⃣ LOGIN REQUIRED */}
-        {!sessionExists && !blocked && (
-          <>
-            <Header />
-            <Title>Institutional Sign-in</Title>
-            <Description>
-              Sign in to access FXHEDZ LIVE Terminal
-            </Description>
-            <div className="w-full flex justify-center">
-              <AuthButton />
-            </div>
-          </>
-        )}
-
+        <Header />
+        <Title>Institutional Sign-in</Title>
+        <Description>
+          Sign in to access FXHEDZ LIVE Terminal
+        </Description>
+        <div className="w-full flex justify-center">
+          <AuthButton />
+        </div>
       </Panel>
     </OverlayContainer>
   )
@@ -66,14 +32,15 @@ export default function AccessOverlay({
 
 function OverlayContainer({ children }: any) {
   return (
-    <div className="
-      fixed inset-x-0
-      bottom-[clamp(26px,3vh,40px)]
-      z-[999]
-      flex justify-center
-      px-4
-      pointer-events-none
-    ">
+    <div
+      className="
+        fixed inset-x-0
+        bottom-[clamp(26px,3vh,40px)]
+        z-[999]
+        flex justify-center
+        px-4
+      "
+    >
       {children}
     </div>
   )
@@ -81,17 +48,18 @@ function OverlayContainer({ children }: any) {
 
 function Panel({ children }: any) {
   return (
-    <div className="
-      w-full max-w-[clamp(220px,80vw,340px)]
-px-[clamp(12px,3vw,22px)]
-py-[clamp(12px,3vh,24px)]
-      bg-[#0d0d0d]
-      border border-neutral-800
-      rounded-xl
-      shadow-[0_10px_40px_rgba(0,0,0,0.7)]
-      flex flex-col items-center text-center
-      pointer-events-auto
-    ">
+    <div
+      className="
+        w-full max-w-[clamp(220px,80vw,340px)]
+        px-[clamp(12px,3vw,22px)]
+        py-[clamp(12px,3vh,24px)]
+        bg-[#0d0d0d]
+        border border-neutral-800
+        rounded-xl
+        shadow-[0_10px_40px_rgba(0,0,0,0.7)]
+        flex flex-col items-center text-center
+      "
+    >
       {children}
     </div>
   )
@@ -106,20 +74,17 @@ function Header() {
 }
 
 function Title({ children }: any) {
-  return <h2 className="text-[clamp(14px,3vw,20px)] font-bold text-white tracking-tight mb-2">{children}</h2>
+  return (
+    <h2 className="text-[clamp(14px,3vw,20px)] font-bold text-white tracking-tight mb-2">
+      {children}
+    </h2>
+  )
 }
 
 function Description({ children }: any) {
-  return <p className="text-[clamp(10px,2.5vw,14px)] leading-[1.3] text-neutral-400 leading-relaxed mb-4">{children}</p>
-}
-
-function GoogleLogoutButton() {
   return (
-    <button
-      onClick={() => signOut()}
-      className="flex items-center justify-center py-1.5 px-4 bg-white hover:bg-neutral-100 text-neutral-800 font-bold text-[10px] rounded border border-neutral-200 shadow-sm transition-all uppercase"
-    >
-      Logout
-    </button>
+    <p className="text-[clamp(10px,2.5vw,14px)] leading-[1.3] text-neutral-400 mb-4">
+      {children}
+    </p>
   )
 }

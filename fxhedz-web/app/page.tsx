@@ -430,8 +430,10 @@ setSubActive(Boolean(data?.active))
     <div className="relative">
 
       <main
-  className="h-[100dvh] bg-black text-white flex flex-col"
->
+        className={`h-[100dvh] bg-black text-white flex flex-col ${isAuthenticated && subActive === false ? "pointer-events-none" : ""
+          }`}
+        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+      >
 
         {/* TOP BAR */}
         <div
@@ -756,14 +758,8 @@ setSubActive(Boolean(data?.active))
         </div>
 
       </main>
-{status !== "loading" && subActive !== null && (
-  <AccessOverlay
-    active={subActive}
-    sessionExists={sessionExists}
-    status={accessMeta?.status}
-    expiry={accessMeta?.expiry}
-    blocked={accessMeta?.blocked}
-  />
+{status !== "loading" && (
+  <AccessOverlay sessionExists={sessionExists} />
 )}
     </div>
   )
