@@ -363,7 +363,7 @@ setSubActive(Boolean(data?.active))
     !isAuthenticated ||
     subActive === false
 
-  const plan = accessMeta?.status
+  const plan = accessMeta?.plan
 
   const isLivePlus = plan === "live+"
   const isLive = plan === "live"
@@ -429,11 +429,9 @@ setSubActive(Boolean(data?.active))
   return (
     <div className="relative">
 
-      <main
-        className={`h-[100dvh] bg-black text-white flex flex-col ${isAuthenticated && subActive === false ? "pointer-events-none" : ""
-          }`}
-        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
-      >
+<main
+  className="h-[100dvh] bg-black text-white flex flex-col"
+>
 
         {/* TOP BAR */}
         <div
@@ -670,7 +668,7 @@ setSubActive(Boolean(data?.active))
                 </div>
 
                 {/* UPGRADE */}
-                {accessMeta?.status !== "live+" ? (
+                {accessMeta?.plan !== "live+" ? (
                   <a
                     href="https://t.me/fxhedzbot"
                     target="_blank"
