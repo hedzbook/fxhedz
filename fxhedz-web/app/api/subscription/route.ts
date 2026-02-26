@@ -11,47 +11,48 @@ export async function GET(req: NextRequest) {
   let deviceId: string | undefined
   let email: string | undefined
 
-  // Android (JWT)
+  // Android
   if (jwtUser && typeof jwtUser === "object") {
     deviceId = (jwtUser as any).deviceId
     email = (jwtUser as any).email
   }
 
-  // Web (NextAuth)
+  // Web
   if (!email && session?.user?.email) {
     email = session.user.email
   }
 
-  // Device fallback
   if (!deviceId) {
     deviceId = req.cookies.get("fx_device")?.value
   }
 
-  const fingerprint =
-    req.nextUrl.searchParams.get("fingerprint") || ""
-
-  if (!deviceId) {
+  // 🔐 require both identity factors
+  if (!email || !deviceId) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     )
   }
 
+  const fingerprint =
+    req.nextUrl.searchParams.get("fingerprint") || ""
+
   try {
 
     const res = await fetch(
-      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email ?? "")}&fingerprint=${encodeURIComponent(fingerprint)}`,
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`,
       { cache: "no-store" }
     )
 
     const data = await res.json()
 
-return NextResponse.json({
-  active: data?.plan === "live" || data?.plan === "live+",
-  blocked: false,
-  status: data?.plan ?? null,
-  expiry: data?.expiry ?? null
-})
+    // 🔥 TRUST GAS RESPONSE
+    return NextResponse.json({
+      active: data?.active ?? false,
+      blocked: false,
+      status: data?.plan ?? null,
+      expiry: data?.expiry ?? null
+    })
 
   } catch {
 

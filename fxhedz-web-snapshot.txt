@@ -376,62 +376,35 @@ const GAS_BASE =
 
 export async function GET(req: NextRequest) {
 
-  // ===============================
-  // UNIFIED AUTH (WEB + ANDROID)
-  // ===============================
-
   const jwtUser = verifyAccessToken(req)
 
   let email: string | null = null
-  let deviceId: string | undefined
 
-  // ðŸ”¹ Android (JWT)
   if (jwtUser && typeof jwtUser === "object") {
     email = (jwtUser as any).email
-    deviceId = (jwtUser as any).deviceId
   }
 
-  // ðŸ”¹ Web / Telegram fallback
   if (!email) {
     const session = await getServerSession(authOptions)
     email = session?.user?.email || null
-    deviceId = req.cookies.get("fx_device")?.value
   }
 
-  if (!email || !deviceId) {
+  if (!email) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     )
   }
 
-  const fingerprint =
-    req.nextUrl.searchParams.get("fingerprint") || ""
-
-  if (!fingerprint) {
-    return NextResponse.json(
-      { error: "No device fingerprint" },
-      { status: 401 }
-    )
-  }
-
   try {
-
     const pair = req.nextUrl.searchParams.get("pair")
 
     const url = pair
-      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
-      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
+      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}&pair=${pair}`
+      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`
 
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
-
-    if (!json?.active) {
-      return NextResponse.json(
-        { error: "Subscription required" },
-        { status: 403 }
-      )
-    }
 
     return NextResponse.json(json)
 
@@ -461,47 +434,48 @@ export async function GET(req: NextRequest) {
   let deviceId: string | undefined
   let email: string | undefined
 
-  // Android (JWT)
+  // Android
   if (jwtUser && typeof jwtUser === "object") {
     deviceId = (jwtUser as any).deviceId
     email = (jwtUser as any).email
   }
 
-  // Web (NextAuth)
+  // Web
   if (!email && session?.user?.email) {
     email = session.user.email
   }
 
-  // Device fallback
   if (!deviceId) {
     deviceId = req.cookies.get("fx_device")?.value
   }
 
-  const fingerprint =
-    req.nextUrl.searchParams.get("fingerprint") || ""
-
-  if (!deviceId) {
+  // ðŸ” require both identity factors
+  if (!email || !deviceId) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     )
   }
 
+  const fingerprint =
+    req.nextUrl.searchParams.get("fingerprint") || ""
+
   try {
 
     const res = await fetch(
-      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email ?? "")}&fingerprint=${encodeURIComponent(fingerprint)}`,
+      `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`,
       { cache: "no-store" }
     )
 
     const data = await res.json()
 
-return NextResponse.json({
-  active: data?.plan === "live" || data?.plan === "live+",
-  blocked: false,
-  status: data?.plan ?? null,
-  expiry: data?.expiry ?? null
-})
+    // ðŸ”¥ TRUST GAS RESPONSE
+    return NextResponse.json({
+      active: data?.active ?? false,
+      blocked: false,
+      status: data?.plan ?? null,
+      expiry: data?.expiry ?? null
+    })
 
   } catch {
 
@@ -651,7 +625,6 @@ export default function Page() {
     isAndroid
       ? hasNativeToken
       : !!session
-  const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
     try {
@@ -728,19 +701,6 @@ export default function Page() {
   }, [menuOpen])
 
   useEffect(() => {
-    console.log("SESSION:", session)
-    console.log("FINGERPRINT:", fingerprint)
-    console.log("SUBACTIVE:", subActive)
-  }, [session, fingerprint, subActive])
-
-  useEffect(() => {
-    const result = ensureDeviceIdentity()
-    if (result?.fingerprint) {
-      setFingerprint(result.fingerprint)
-    }
-  }, [])
-
-  useEffect(() => {
 
     if (status === "loading") return
 
@@ -755,21 +715,18 @@ export default function Page() {
     }
 
     if (subActive === null) return
-    if (!fingerprint) return
 
     async function loadSignals() {
       try {
-
-        const res = await fetch(
-          `${SIGNAL_API}?fingerprint=${encodeURIComponent(fingerprint)}`
-        )
+        const res = await fetch(SIGNAL_API)
         const json = await res.json()
-        const incoming = json?.signals ? json.signals : json
+        const incoming = json?.signals ?? {}
 
-        setSignals((prev: any) => {
-          if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
-          return incoming
-        })
+        setSignals((prev: any) =>
+          JSON.stringify(prev) === JSON.stringify(incoming)
+            ? prev
+            : incoming
+        )
       } catch { }
     }
 
@@ -777,22 +734,22 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive, fingerprint, status])
+  }, [subActive, status])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
+  useEffect(() => {
 
-  if (status === "loading") return
+    if (status === "loading") return
 
-  // ðŸ”¥ FIX: Only block unauthenticated for WEB
-  if (!isAndroid && status === "unauthenticated") {
-    setSubActive(false)
-    return
-  }
+    // ðŸ”¥ FIX: Only block unauthenticated for WEB
+    if (!isAndroid && status === "unauthenticated") {
+      setSubActive(false)
+      return
+    }
 
-  if (!fingerprint) return
+
 
     async function init() {
 
@@ -827,7 +784,6 @@ useEffect(() => {
       }
 
       document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
       document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
 
       // ===============================
@@ -836,16 +792,16 @@ useEffect(() => {
 
       try {
         const res = await fetch(
-          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          `/api/subscription`,
           { cache: "no-store" }
         )
 
-const data = await res.json()
-alert("SUB DATA: " + JSON.stringify(data))
-console.log("SUB DATA:", data)
+        const data = await res.json()
+        // alert("SUB DATA: " + JSON.stringify(data))
+        console.log("SUB DATA:", data)
 
-setAccessMeta(data)
-setSubActive(Boolean(data?.active))
+        setAccessMeta(data)
+        setSubActive(Boolean(data?.active))
 
       } catch {
         setSubActive(false)
@@ -854,7 +810,7 @@ setSubActive(Boolean(data?.active))
 
     init()
 
-  }, [status, fingerprint])
+  }, [status])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -875,7 +831,7 @@ setSubActive(Boolean(data?.active))
       loadPreview(openPair)
       return
     }
-    if (!fingerprint) return
+
 
     const pairKey = openPair
     let cancelled = false
@@ -883,9 +839,7 @@ setSubActive(Boolean(data?.active))
     async function refreshOpenPair() {
       try {
 
-        const res = await fetch(
-          `/api/signals?pair=${pairKey}&fingerprint=${encodeURIComponent(fingerprint)}`
-        )
+        const res = await fetch(`/api/signals?pair=${pairKey}`)
         const json = await res.json()
         if (cancelled) return
 
@@ -903,7 +857,7 @@ setSubActive(Boolean(data?.active))
       cancelled = true
       clearInterval(interval)
     }
-  }, [openPair, subActive, fingerprint, status])
+  }, [openPair, subActive, status])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -934,10 +888,10 @@ setSubActive(Boolean(data?.active))
     !isAuthenticated ||
     subActive === false
 
-  const plan = accessMeta?.plan
+const plan = accessMeta?.status?.toLowerCase()
 
-  const isLivePlus = plan === "live+"
-  const isLive = plan === "live"
+const isLivePlus = plan === "live+"
+const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -1000,9 +954,9 @@ setSubActive(Boolean(data?.active))
   return (
     <div className="relative">
 
-<main
-  className="h-[100dvh] bg-black text-white flex flex-col"
->
+      <main
+        className="h-[100dvh] bg-black text-white flex flex-col"
+      >
 
         {/* TOP BAR */}
         <div
@@ -1110,7 +1064,12 @@ setSubActive(Boolean(data?.active))
                     const isLivePair =
                       pair === "ETHUSD" || pair === "USDCHF"
 
+                    const subscriptionReady =
+                      subActive !== null &&
+                      accessMeta !== null
+
                     const canAccess =
+                      subscriptionReady &&
                       subActive === true &&
                       (
                         isLivePlus ||
@@ -1121,15 +1080,17 @@ setSubActive(Boolean(data?.active))
                       !isAuthenticated
                         ? dummySignal
                         : canAccess
-                          ? realSignal
+                          ? (realSignal ?? dummySignal)
                           : dummySignal
 
                     const displayDirection =
                       !isAuthenticated
                         ? dummySignal?.direction
-                        : canAccess
-                          ? realSignal?.direction
-                          : "LIVE+"
+                        : !subscriptionReady
+                          ? dummySignal?.direction
+                          : canAccess
+                            ? realSignal?.direction
+                            : "LIVE+"
 
                     return (
                       <SortableRow key={pair} id={pair}>
@@ -1146,6 +1107,7 @@ setSubActive(Boolean(data?.active))
                                 pair={pair}
                                 active={false}
                                 onClick={() => {
+                                  if (!subscriptionReady) return
                                   if (!canAccess) return
                                   setOpenPair(prev => prev === pair ? null : pair)
                                 }}
@@ -1159,6 +1121,7 @@ setSubActive(Boolean(data?.active))
                                 direction={displayDirection}
                                 signal={displaySignal}
                                 onToggle={() => {
+                                  if (!subscriptionReady) return
                                   if (!canAccess) return
                                   setOpenPair(prev => prev === pair ? null : pair)
                                 }}
@@ -1327,9 +1290,9 @@ setSubActive(Boolean(data?.active))
         </div>
 
       </main>
-{status !== "loading" && (
-  <AccessOverlay sessionExists={sessionExists} />
-)}
+      {status !== "loading" && (
+        <AccessOverlay sessionExists={sessionExists} />
+      )}
     </div>
   )
 }

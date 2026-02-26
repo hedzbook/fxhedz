@@ -8,61 +8,35 @@ const GAS_BASE =
 
 export async function GET(req: NextRequest) {
 
-  // ===============================
-  // UNIFIED AUTH (WEB + ANDROID)
-  // ===============================
-
   const jwtUser = verifyAccessToken(req)
 
   let email: string | null = null
-  let deviceId: string | undefined
 
-  // 🔹 Android (JWT)
   if (jwtUser && typeof jwtUser === "object") {
     email = (jwtUser as any).email
-    deviceId = (jwtUser as any).deviceId
   }
 
-  // 🔹 Web / Telegram fallback
   if (!email) {
     const session = await getServerSession(authOptions)
     email = session?.user?.email || null
-    deviceId = req.cookies.get("fx_device")?.value
   }
 
-  if (!email || !deviceId) {
+  if (!email) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     )
   }
 
-  const fingerprint =
-    req.nextUrl.searchParams.get("fingerprint") || ""
-
-  if (!fingerprint) {
-    return NextResponse.json(
-      { error: "No device fingerprint" },
-      { status: 401 }
-    )
-  }
-
   try {
-
     const pair = req.nextUrl.searchParams.get("pair")
 
-const url = pair
-  ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}&pair=${pair}`
-  : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`
+    const url = pair
+      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}&pair=${pair}`
+      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`
+
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
-
-    if (!json?.active) {
-      return NextResponse.json(
-        { error: "Subscription required" },
-        { status: 403 }
-      )
-    }
 
     return NextResponse.json(json)
 

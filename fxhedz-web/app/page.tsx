@@ -80,7 +80,6 @@ export default function Page() {
     isAndroid
       ? hasNativeToken
       : !!session
-  const [fingerprint, setFingerprint] = useState<string>("")
   const [accessMeta, setAccessMeta] = useState<any>(null)
   async function loadPreview(pair: string) {
     try {
@@ -157,19 +156,6 @@ export default function Page() {
   }, [menuOpen])
 
   useEffect(() => {
-    console.log("SESSION:", session)
-    console.log("FINGERPRINT:", fingerprint)
-    console.log("SUBACTIVE:", subActive)
-  }, [session, fingerprint, subActive])
-
-  useEffect(() => {
-    const result = ensureDeviceIdentity()
-    if (result?.fingerprint) {
-      setFingerprint(result.fingerprint)
-    }
-  }, [])
-
-  useEffect(() => {
 
     if (status === "loading") return
 
@@ -184,21 +170,18 @@ export default function Page() {
     }
 
     if (subActive === null) return
-    if (!fingerprint) return
 
     async function loadSignals() {
       try {
-
-        const res = await fetch(
-          `${SIGNAL_API}?fingerprint=${encodeURIComponent(fingerprint)}`
-        )
+        const res = await fetch(SIGNAL_API)
         const json = await res.json()
-        const incoming = json?.signals ? json.signals : json
+        const incoming = json?.signals ?? {}
 
-        setSignals((prev: any) => {
-          if (JSON.stringify(prev) === JSON.stringify(incoming)) return prev
-          return incoming
-        })
+        setSignals((prev: any) =>
+          JSON.stringify(prev) === JSON.stringify(incoming)
+            ? prev
+            : incoming
+        )
       } catch { }
     }
 
@@ -206,7 +189,7 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive, fingerprint, status])
+  }, [subActive, status])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -221,7 +204,7 @@ export default function Page() {
       return
     }
 
-    if (!fingerprint) return
+
 
     async function init() {
 
@@ -256,7 +239,6 @@ export default function Page() {
       }
 
       document.cookie = `fx_device=${id}; path=/; max-age=31536000`
-      document.cookie = `fx_fp=${fingerprint}; path=/; max-age=31536000`
       document.cookie = `fx_platform=${platform}; path=/; max-age=31536000`
 
       // ===============================
@@ -265,12 +247,12 @@ export default function Page() {
 
       try {
         const res = await fetch(
-          `/api/subscription?fingerprint=${encodeURIComponent(fingerprint)}`,
+          `/api/subscription`,
           { cache: "no-store" }
         )
 
         const data = await res.json()
-        alert("SUB DATA: " + JSON.stringify(data))
+        // alert("SUB DATA: " + JSON.stringify(data))
         console.log("SUB DATA:", data)
 
         setAccessMeta(data)
@@ -283,7 +265,7 @@ export default function Page() {
 
     init()
 
-  }, [status, fingerprint])
+  }, [status])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -304,7 +286,7 @@ export default function Page() {
       loadPreview(openPair)
       return
     }
-    if (!fingerprint) return
+
 
     const pairKey = openPair
     let cancelled = false
@@ -312,9 +294,7 @@ export default function Page() {
     async function refreshOpenPair() {
       try {
 
-        const res = await fetch(
-          `/api/signals?pair=${pairKey}&fingerprint=${encodeURIComponent(fingerprint)}`
-        )
+        const res = await fetch(`/api/signals?pair=${pairKey}`)
         const json = await res.json()
         if (cancelled) return
 
@@ -332,7 +312,7 @@ export default function Page() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [openPair, subActive, fingerprint, status])
+  }, [openPair, subActive, status])
 
   function togglePair(pair: string) {
     // Toggle between open/close pair expansion
@@ -363,10 +343,10 @@ export default function Page() {
     !isAuthenticated ||
     subActive === false
 
-  const plan = accessMeta?.status
+const plan = accessMeta?.status?.toLowerCase()
 
-  const isLivePlus = plan === "live+"
-  const isLive = plan === "live"
+const isLivePlus = plan === "live+"
+const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -539,7 +519,12 @@ export default function Page() {
                     const isLivePair =
                       pair === "ETHUSD" || pair === "USDCHF"
 
+                    const subscriptionReady =
+                      subActive !== null &&
+                      accessMeta !== null
+
                     const canAccess =
+                      subscriptionReady &&
                       subActive === true &&
                       (
                         isLivePlus ||
@@ -556,9 +541,11 @@ export default function Page() {
                     const displayDirection =
                       !isAuthenticated
                         ? dummySignal?.direction
-                        : canAccess
-                          ? realSignal?.direction
-                          : "LIVE+"
+                        : !subscriptionReady
+                          ? dummySignal?.direction
+                          : canAccess
+                            ? realSignal?.direction
+                            : "LIVE+"
 
                     return (
                       <SortableRow key={pair} id={pair}>
@@ -575,6 +562,7 @@ export default function Page() {
                                 pair={pair}
                                 active={false}
                                 onClick={() => {
+                                  if (!subscriptionReady) return
                                   if (!canAccess) return
                                   setOpenPair(prev => prev === pair ? null : pair)
                                 }}
@@ -588,6 +576,7 @@ export default function Page() {
                                 direction={displayDirection}
                                 signal={displaySignal}
                                 onToggle={() => {
+                                  if (!subscriptionReady) return
                                   if (!canAccess) return
                                   setOpenPair(prev => prev === pair ? null : pair)
                                 }}
