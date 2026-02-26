@@ -8,15 +8,15 @@ const SHEET_NAME = "USERS_AUTH";
 const ADMIN_CHAT_ID = "7115081072";
 
 const PAIRS = [
-    "XAUUSD",
-    "BTCUSD",
     "ETHUSD",
+    "USDCHF",
+    "USDJPY",
+    "XAUUSD",
     "EURUSD",
     "GBPUSD",
-    "USDJPY",
     "AUDUSD",
-    "USDCHF",
-    "USOIL"
+    "USOIL",
+    "BTCUSD"
 ];
 
 function getPairPerformanceCache() {
@@ -99,265 +99,62 @@ function setMarketNotes(data) {
 
 function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) {
 
-    if (!email || !fingerprint) {
+    if (!email) {
         return {
-            blocked: true
+            active: false,
+            plan: null,
+            expiry: null
         };
     }
 
     email = String(email).toLowerCase().trim();
-    platform = platform || "web";
-    telegramChatId = telegramChatId || "";
 
     const sheet = mustGetSheet();
     const rows = sheet.getDataRange().getValues();
     const now = new Date();
 
-    let rowIndex = -1;
-    let rowData = null;
-
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0] || "").toLowerCase() === email) {
-            rowIndex = i;
-            rowData = rows[i];
-            break;
-        }
-    }
 
-    // ============================
-    // NEW USER
-    // ============================
-    if (rowIndex === -1) {
+        if (String(rows[i][0] || "").toLowerCase() !== email) continue;
 
-        const expiry = new Date(now);
-        expiry.setDate(expiry.getDate() + 14);
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
+        const plan = String(rows[i][3] || "").toLowerCase();
+        const now = new Date();
 
-        const devicePayload = {
-            devices: [{
-                device_id: deviceId,
-                fingerprint: fingerprint,
-                platform: platform,
-                last_active: now.toISOString()
-            }]
-        };
-
-        sheet.appendRow([
-            email,
-            now,
-            expiry,
-            "live",
-            0,
-            "",
-            telegramChatId,
-            "",
-            JSON.stringify(devicePayload),
-            true,
-            "",
-            ""
-        ]);
+        const isLivePlusActive =
+            plan === "live+" &&
+            expiry &&
+            expiry > now;
 
         return {
-            active: true,
-            plan: "live",
-            expiry
+            active: plan === "live" || isLivePlusActive,
+            plan: isLivePlusActive ? "live+" : "live",
+            expiry: expiry || null
         };
     }
 
-    // ============================
-    // EXISTING USER
-    // ============================
-
-    const expiry = rowData[2] ? new Date(rowData[2]) : new Date(0);
-    const plan = String(rowData[3] || "").toLowerCase();
-    if (telegramChatId) {
-        const existingChatId = rowData[6] || "";
-        if (!existingChatId) {
-            sheet.getRange(rowIndex + 1, 7).setValue(telegramChatId);
-        } else if (existingChatId !== telegramChatId) {
-            return {
-                blocked: true,
-                reason: "telegram_mismatch"
-            };
-        }
-    }
-    const active = expiry > now;
-
-    if (!active) {
-        return {
-            active: false,
-            plan,
-            expiry
-        };
-    }
-
-    let devicePayload;
-    try {
-        devicePayload = JSON.parse(rowData[8] || "{}");
-    } catch {
-        devicePayload = {
-            devices: []
-        };
-    }
-
-    if (!devicePayload.devices) devicePayload.devices = [];
-
-    const devices = devicePayload.devices;
-
-    // 1️⃣ Fingerprint already exists → allow
-    const existing = devices.find(d => d.fingerprint === fingerprint);
-    if (existing) {
-        existing.last_active = now.toISOString();
-        sheet.getRange(rowIndex + 1, 9)
-            .setValue(JSON.stringify(devicePayload));
-        return {
-            active,
-            plan,
-            expiry
-        };
-    }
-
-    // 2️⃣ Under device limit → add
-    if (devices.length < 2) {
-
-        devices.push({
-            device_id: deviceId,
-            fingerprint: fingerprint,
-            platform: platform,
-            last_active: now.toISOString()
-        });
-
-        sheet.getRange(rowIndex + 1, 9)
-            .setValue(JSON.stringify(devicePayload));
-
-        return {
-            active,
-            plan,
-            expiry
-        };
-    }
-
-    // 3️⃣ Exceeded device limit
-    return {
-        blocked: true,
-        reason: "device_limit_exceeded"
-    };
-}
-
-function handleDeviceAccess(sheet, userRows, email, deviceId, fingerprint, platform, telegramChatId) {
-
-    const now = new Date();
-
-    platform = (platform || "web").toLowerCase().trim();
-
-    const hasPaid = userRows.some(u =>
-        String(u.row[3] || "").toLowerCase() === "live+"
-    );
-
-    // =========================================
-    // GROUP ROWS BY PLATFORM
-    // =========================================
-    const platformRows = userRows.filter(u =>
-        String(u.row[10] || "").toLowerCase() === platform
-    );
-
-    const usedPlatforms = [
-        ...new Set(userRows.map(u => String(u.row[10] || "").toLowerCase()))
-    ].filter(Boolean);
-
-    // =========================================
-    // 1️⃣ EXISTING FINGERPRINT (Exact Match)
-    // =========================================
-    const existing = userRows.find(u =>
-        String(u.row[8] || "") === fingerprint
-    );
-
-    if (existing) {
-
-        const expiry = existing.row[2] ? new Date(existing.row[2]) : new Date(0);
-        const plan = String(existing.row[3] || "").toLowerCase();
-
-        const active = expiry > now;
-
-        // Telegram binding logic (unchanged but cleaner)
-        if (telegramChatId) {
-
-            const mismatch = userRows.some(u =>
-                String(u.row[6] || "") &&
-                String(u.row[6]) !== telegramChatId
-            );
-
-            if (mismatch) {
-                return {
-                    blocked: true,
-                    reason: "telegram_mismatch"
-                };
-            }
-
-            userRows.forEach(u => {
-                sheet.getRange(u.index + 1, 7).setValue(telegramChatId);
-            });
-        }
-
-        return {
-            active,
-            plan,
-            expiry
-        };
-    }
-
-    // =========================================
-    // 2️⃣ SAME PLATFORM → REPLACE FINGERPRINT
-    // =========================================
-    if (platformRows.length > 0) {
-
-        const rowToReplace = platformRows[0];
-
-        sheet.getRange(rowToReplace.index + 1, 9).setValue(fingerprint);
-        sheet.getRange(rowToReplace.index + 1, 8).setValue(deviceId);
-
-        return {
-            active: true,
-            plan: rowToReplace.row[3],
-            expiry: rowToReplace.row[2]
-        };
-    }
-
-    // =========================================
-    // 3️⃣ NEW PLATFORM ENTRY
-    // =========================================
-
-    const platformLimit = hasPaid ? 2 : 3;
-    // FREE = 3 (web + telegram + android)
-    // PAID = 2 (max 2 platforms active)
-
-    if (usedPlatforms.length >= platformLimit) {
-        return {
-            blocked: true,
-            reason: "platform_limit_exceeded"
-        };
-    }
-
-    const baseRow = userRows[0].row;
+    // =========================
+    // NEW USER → BASE TIER
+    // =========================
 
     sheet.appendRow([
         email,
-        baseRow[1],
-        baseRow[2],
-        baseRow[3],
-        baseRow[4],
-        baseRow[5],
-        telegramChatId || baseRow[6],
-        deviceId,
-        fingerprint,
-        baseRow[9],
-        platform,
-        baseRow[11]
+        now,
+        "", // no expiry for base
+        "live", // permanent base tier
+        0,
+        "",
+        telegramChatId || "",
+        "",
+        "",
+        true,
+        platform || "web",
+        ""
     ]);
 
     return {
         active: true,
-        plan: baseRow[3],
-        expiry: baseRow[2]
+        plan: "live"
     };
 }
 
@@ -377,12 +174,20 @@ function checkAuthUser(email) {
 
         if (String(rows[i][0] || "").toLowerCase() !== email) continue;
 
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
         const plan = String(rows[i][3] || "").toLowerCase();
+        const now = new Date();
 
-        if (expiry > now) {
-    return { active: true, plan, expiry };
-}
+        const isLivePlusActive =
+            plan === "live+" &&
+            expiry &&
+            expiry > now;
+
+        return {
+            active: plan === "live" || isLivePlusActive,
+            plan: isLivePlusActive ? "live+" : "live",
+            expiry: expiry || null
+        };
     }
 
     return {
@@ -406,18 +211,6 @@ function doPost(e) {
         if (contentType.indexOf("application/json") !== -1) {
 
             const data = JSON.parse(e.postData.contents);
-
-            // ===============================
-            // RESET DEVICES
-            // ===============================
-            if (data.reset_devices && data.email) {
-
-                const result = resetUserDevices(data.email);
-
-                return ContentService
-                    .createTextOutput(JSON.stringify(result))
-                    .setMimeType(ContentService.MimeType.JSON);
-            }
 
             // ===============================
             // ANDROID BILLING
@@ -533,15 +326,13 @@ function requireSignalAccess(email) {
     if (!auth || !auth.active) {
         return {
             blocked: true,
-            plan: auth ? auth.plan : "none",
-            expiry: auth ? auth.expiry : null
+            plan: auth ? auth.plan : "none"
         };
     }
 
     return {
         blocked: false,
-        plan: auth.plan,
-        expiry: auth.expiry
+        plan: auth.plan
     };
 }
 
@@ -552,97 +343,98 @@ function requireSignalAccess(email) {
 function doGet(e) {
 
     const secret = (e.parameter.secret || "").trim();
-
     if (secret !== WEBHOOK_SECRET) {
         return ContentService.createTextOutput("unauthorized");
     }
 
-    const deviceId = (e.parameter.device_id || "").trim();
-    const fingerprint = (e.parameter.fingerprint || "").trim();
+    const email = (e.parameter.email || "").toLowerCase().trim();
     const pair = (e.parameter.pair || "").toUpperCase();
 
-    if (!fingerprint) {
-        return jsonBlocked();
-    }
+    if (!email) return jsonBlocked("none");
 
     const sheet = mustGetSheet();
     const rows = sheet.getDataRange().getValues();
-    const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
 
-        let devicePayload;
-        try {
-            devicePayload = JSON.parse(rows[i][8] || "{}");
-        } catch {
-            continue;
-        }
+        const rowEmail = String(rows[i][0] || "")
+            .toLowerCase()
+            .trim();
 
-        const devices = devicePayload.devices || [];
-        const match = devices.find(d => d.fingerprint === fingerprint);
+        if (rowEmail !== email) continue;
 
-        if (!match) continue;
+        const rawPlan = String(rows[i][3] || "").toLowerCase();
+        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
+        const now = new Date();
 
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const plan = String(rows[i][3] || "").toLowerCase();
+        const isLivePlusActive =
+            rawPlan === "live+" &&
+            expiry &&
+            expiry > now;
 
-        const active = expiry > now;
+        const finalPlan =
+            isLivePlusActive ? "live+" : "live";
 
-        if (!active) {
-            return jsonBlocked(plan, expiry);
+        if (finalPlan !== "live" && finalPlan !== "live+") {
+            return jsonBlocked(finalPlan);
         }
 
         return buildSignalResponse({
-            plan,
-            expiry
+            plan: finalPlan,
+            expiry: expiry || null
         }, pair);
     }
 
-    return jsonBlocked();
+    return jsonBlocked("none");
 }
 
-function resetUserDevices(email) {
-
-    const sheet = mustGetSheet();
-    const rows = sheet.getDataRange().getValues();
-
-    email = email.toLowerCase().trim();
-
-    for (let i = 1; i < rows.length; i++) {
-
-        if (String(rows[i][0] || "").toLowerCase() === email) {
-
-            sheet.getRange(i + 1, 9)
-                .setValue(JSON.stringify({
-                    devices: []
-                }));
-
-            return {
-                success: true
-            };
-        }
-    }
-
-    return {
-        success: false
-    };
-}
-
-function jsonBlocked(plan, expiry) {
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      blocked: false,   // 🔥 CRITICAL FIX
-      active: false,
-      plan: plan || null,
-      expiry: expiry || null
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
+function jsonBlocked(plan) {
+    return ContentService
+        .createTextOutput(JSON.stringify({
+            blocked: true,
+            active: false,
+            plan: plan || null,
+            signals: {}
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
 }
 
 function buildSignalResponse(access, pair) {
 
-    const signals = getLiveSignals();
+    let signals = getLiveSignals();
 
+    // =========================================
+    // PLAN BASED FILTERING
+    // =========================================
+
+    if (access.plan === "live") {
+
+        const allowed = ["ETHUSD", "USDCHF"];
+        const filtered = {};
+
+        Object.keys(signals).forEach(p => {
+            if (allowed.indexOf(p) !== -1) {
+                filtered[p] = signals[p];
+            }
+        });
+
+        signals = filtered;
+
+    } else if (access.plan !== "live+") {
+        // Anything other than live or live+ is blocked
+        return jsonBlocked(access.plan);
+    }
+
+    // =========================================
+    // PAIR SPECIFIC REQUEST
+    // =========================================
+
+    if (pair && access.plan === "live") {
+        const allowed = ["ETHUSD", "USDCHF"];
+        if (allowed.indexOf(pair) === -1) {
+            return jsonBlocked(access.plan);
+        }
+    }
     if (pair) {
 
         const data = getPairDataFromSheet(pair);
@@ -654,7 +446,7 @@ function buildSignalResponse(access, pair) {
                 blocked: false,
                 active: true,
                 plan: access.plan,
-                expiry: access.expiry,
+                expiry: access.expiry || null,
                 signals,
                 history: data.history,
                 performance: data.performance,
@@ -664,12 +456,16 @@ function buildSignalResponse(access, pair) {
             .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // =========================================
+    // GENERAL REQUEST
+    // =========================================
+
     return ContentService
         .createTextOutput(JSON.stringify({
             blocked: false,
             active: true,
             plan: access.plan,
-            expiry: access.expiry,
+            expiry: access.expiry || null,
             signals
         }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -758,18 +554,26 @@ function setBotCommands() {
 
 function onInstruments(chatId) {
 
+    const row = getUserRow(chatId);
+    const plan = row ? row.plan : "live";
+
     let selected = getTempInstruments(chatId);
 
-    // if temp not exists load from sheet
     if (!selected) {
         selected = getUserInstruments(chatId);
         setTempInstruments(chatId, selected);
     }
 
+    // 🔒 Dynamic Title Based on Plan
+    const title =
+        plan === "live+" ?
+        "🔔 <b>Select Trading Instruments</b>\n\nToggle pairs then press Confirm." :
+        "🔔 <b>Select Trading Instruments</b>\n\nLIVE includes ETHUSD & USDCHF only.";
+
     sendRich(
         chatId,
-        "🔔 <b>Select Trading Instruments</b>\n\nToggle pairs then press Confirm.",
-        buildInstrumentKeyboard(selected)
+        title,
+        buildInstrumentKeyboard(selected) // unchanged
     );
 }
 
@@ -898,10 +702,10 @@ function onDeactivate(text) {
 
             // HARD RESET
             sheet.getRange(i + 1, 3).setValue(new Date());
-            sheet.getRange(i + 1, 4).setValue("expired");
+            sheet.getRange(i + 1, 4).setValue("live");
             sheet.getRange(i + 1, 5).setValue(0);
 
-            send(chatId, "⛔ <b>Your subscription has been deactivated</b>");
+            send(chatId, "⛔ <b>Your subscription has been moved to LIVE</b>");
 
             send(
                 ADMIN_CHAT_ID,
@@ -1245,7 +1049,7 @@ function onStart(chatId) {
             "👋 <b>Welcome to FXHEDZ LIVE</b>\n\n" +
             "To activate access:\n\n" +
             "1️⃣ Login inside the FXHEDZ app\n" +
-            "2️⃣ Start your 14-day trial\n" +
+            "2️⃣ Upgrade to LIVE+ anytime\n" +
             "3️⃣ Link this Telegram Chat ID\n\n" +
             "🆔 Your Chat ID:\n<code>" + chatId + "</code>\n\n" +
             "Open the app to continue.",
@@ -1258,19 +1062,29 @@ function onStart(chatId) {
     const now = new Date();
 
     const active =
-        row.plan === "live+" ||
-        (row.plan === "live" && row.expiry >= now);
+        row.plan === "live" || row.plan === "live+";
 
     if (!active) {
         sendExpired(chatId);
         return;
     }
 
+    let planLine;
+
+    if (row.plan === "live+") {
+        planLine =
+            "Plan: LIVE+\n" +
+            "Valid till: " + formatDate(row.expiry);
+    } else {
+        planLine =
+            "Plan: LIVE\n" +
+            "Base access active";
+    }
+
     sendMenu(
         chatId,
         "👋 <b>Welcome back</b> " + chatId + "\n\n" +
-        "Plan: " + row.plan.toUpperCase() + "\n" +
-        "Valid till: " + formatDate(row.expiry)
+        planLine
     );
 }
 
@@ -1279,6 +1093,7 @@ function sendMenu(chatId, text) {
 }
 
 function onPlan(chatId) {
+
     if (!isUserAllowed(chatId)) {
         sendExpired(chatId);
         return;
@@ -1286,12 +1101,21 @@ function onPlan(chatId) {
 
     const row = getUserRow(chatId);
 
-    sendMenu(
-        chatId,
-        "📊 <b>Subscription Plan</b>\n\n" +
-        "Plan: " + row.plan.toUpperCase() + "\n" +
-        "Valid till: " + formatDate(row.expiry)
-    );
+    let text;
+
+    if (row.plan === "live+") {
+        text =
+            "📊 <b>Subscription Plan</b>\n\n" +
+            "Plan: LIVE+\n" +
+            "Valid till: " + formatDate(row.expiry);
+    } else {
+        text =
+            "📊 <b>Subscription Plan</b>\n\n" +
+            "Plan: LIVE\n" +
+            "Base access active";
+    }
+
+    sendMenu(chatId, text);
 }
 
 function onMyId(chatId) {
@@ -1305,40 +1129,42 @@ function onMyId(chatId) {
 }
 
 function onSubscription(chatId) {
+
     const row = getUserRow(chatId);
-    const now = new Date();
 
     let planText;
 
     if (!row) {
-        planText = "Plan: NOT FOUND";
+
+        planText =
+            "Plan: LIVE\n" +
+            "Base access active\n" +
+            "Includes: ETHUSD, USDCHF";
+
     } else if (row.plan === "live+") {
+
         planText =
             "Plan: LIVE+\n" +
             "Valid till: " + formatDate(row.expiry);
-    } else if (row.plan === "live" && row.expiry >= now) {
+
+    } else if (row.plan === "live") {
+
         planText =
             "Plan: LIVE\n" +
-            "Valid till: " + formatDate(row.expiry);
-    } else {
-  const months = row.plan_months || 0;
+            "Base access active\n" +
+            "Includes: ETHUSD, USDCHF";
 
-  if (months > 0) {
-    planText =
-      "Plan: LIVE+\n" +
-      "Status: Access Ended\n" +
-      "Expired on: " + formatDate(row.expiry);
-  } else {
-    planText =
-      "Plan: TRIAL\n" +
-      "Status: TRIAL CONCLUDED\n" +
-      "Expired on: " + formatDate(row.expiry);
-  }
-}
+    } else {
+
+        // Any unexpected state
+        planText =
+            "Plan: LIVE\n" +
+            "Base access active";
+    }
 
     sendRich(
         chatId,
-        "💳 <b>FXHEDZ LIVE</b>\n\n" +
+        "💳 <b>FXHEDZ LIVE+</b>\n\n" +
         planText + "\n\n" +
         "━━━━━━━━━━━━━━\n\n" +
         "Upgrade to LIVE+ 👇\n\n" +
@@ -1350,23 +1176,9 @@ function onSubscription(chatId) {
         "Add your Chat ID in Razorpay payment notes", {
             inline_keyboard: [
                 [{
-                        text: "1 Month · ₹999",
-                        url: "https://rzp.io/rzp/QfdiMtK"
-                    },
-                    {
-                        text: "3 Months · ₹2,699",
-                        url: "https://rzp.io/rzp/4cTq3B7l"
-                    }
-                ],
-                [{
-                        text: "6 Months · ₹4,799",
-                        url: "https://rzp.io/rzp/SRZIBEQP"
-                    },
-                    {
-                        text: "12 Months · ₹8,399",
-                        url: "https://rzp.io/rzp/jPUuZy0"
-                    }
-                ],
+                    text: "LIVE+ · $9.99 / month",
+                    url: "https://rzp.io/l/fxhedz_monthly"
+                }],
                 [{
                     text: "✅ I Have Paid",
                     callback_data: "paid_confirm"
@@ -1426,17 +1238,14 @@ function isUserAllowed(chatId) {
 
     const now = new Date();
 
-    return row.plan === "live+" ||
-        (row.plan === "live" && row.expiry >= now);
+    return row.plan === "live" || row.plan === "live+";
 }
 
 function sendExpired(chatId) {
     sendMenu(
         chatId,
-        "⛔ <b>Subscription Expired</b>\n\n" +
-        "⚠️ Your access to FXHEDZ LIVE has ended.\n\n" +
-        "📅 Please renew your subscription to continue receiving:\n" +
-        "📢 BUY | SELL | EXIT / HEDGE Alerts"
+        "⛔ <b>Access Restricted</b>\n\n" +
+        "Please contact support if this is unexpected."
     );
 }
 
@@ -2000,15 +1809,25 @@ function dispatchImageToUsers(blob, tx) {
         const chatId = String(rows[i][6] || "");
         if (!chatId) continue;
 
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
         const plan = String(rows[i][3] || "").toLowerCase();
         const instruments = rows[i][5] ?
-            String(rows[i][5]).split(",") : [];
+            String(rows[i][5]).split(",") :
+            [];
 
-        if (plan !== "live+" && !(plan === "live" && expiry > now)) {
+        // Only live or live+
+        if (plan !== "live" && plan !== "live+") {
             continue;
         }
 
+        // 🔒 LIVE tier restriction
+        if (plan === "live") {
+            const allowed = ["ETHUSD", "USDCHF"];
+            if (instrument && allowed.indexOf(instrument) === -1) {
+                continue;
+            }
+        }
+
+        // User-selected instrument filter
         if (instrument && instruments.length &&
             instruments.indexOf(instrument) === -1) {
             continue;
@@ -2149,6 +1968,7 @@ function ok() {
 
 // RUN ONCE DAILY
 function nightlyExpirySweep() {
+
     const sheet = mustGetSheet();
     const rows = sheet.getDataRange().getValues();
     const now = new Date();
@@ -2159,7 +1979,10 @@ function nightlyExpirySweep() {
         const plan = String(rows[i][3] || "").toLowerCase();
 
         if (plan === "live+" && expiry < now) {
-            sheet.getRange(i + 1, 4).setValue("expired");
+
+            // downgrade to base tier
+            sheet.getRange(i + 1, 4).setValue("live");
+            sheet.getRange(i + 1, 5).setValue(0); // reset plan_months
         }
     }
 }

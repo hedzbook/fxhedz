@@ -1,0 +1,206 @@
+"use client"
+
+import { useMemo } from "react"
+import { signOut, useSession } from "next-auth/react"
+
+type Props = {
+  accessMeta: {
+    active?: boolean
+    status?: string | null
+    expiry?: string | null
+  } | null
+  deviceId?: string | null
+  version: string
+}
+
+const PLAN = {
+  label: "LIVE+ Monthly",
+  price: "$9.99 / month",
+  razorpayLink: "https://rzp.io/l/fxhedz_monthly", // replace with real link
+  playSku: "fxhedz_liveplus_monthly"
+}
+
+export default function ControlPanel({
+  accessMeta,
+  deviceId,
+  version
+}: Props) {
+
+  const { data: session } = useSession()
+
+  const isAndroid =
+    typeof window !== "undefined" &&
+    !!(window as any).ReactNativeWebView
+
+  const daysLeft = useMemo(() => {
+    if (!accessMeta?.expiry) return null
+    const now = new Date()
+    const expiry = new Date(accessMeta.expiry)
+    const diff = expiry.getTime() - now.getTime()
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  }, [accessMeta])
+
+  function handleUpgrade() {
+
+    if (isAndroid) {
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({
+          type: "PLAY_BILLING_REQUEST",
+          sku: PLAN.playSku
+        })
+      )
+      return
+    }
+
+    window.open(PLAN.razorpayLink, "_blank")
+  }
+
+  function handleLogout() {
+    if (isAndroid) {
+      (window as any).ReactNativeWebView.postMessage("LOGOUT_REQUEST")
+      return
+    }
+    signOut()
+  }
+
+  const isActive = Boolean(accessMeta?.active)
+  const planName = (accessMeta?.status || "none").toUpperCase()
+
+  return (
+    <div className="w-[300px] bg-neutral-900 border border-neutral-800 p-5 space-y-6 text-sm">
+
+      {/* ================= ACCOUNT BLOCK ================= */}
+      <Block title="Account">
+
+        <Row label="Email" value={session?.user?.email || "—"} />
+
+        <Row
+          label="Plan"
+          value={planName}
+          highlight={isActive ? "green" : "red"}
+        />
+
+        {daysLeft !== null && (
+          <Row label="Days Left" value={String(daysLeft)} />
+        )}
+
+        {deviceId && (
+          <Row label="Device" value={deviceId} mono />
+        )}
+
+        <Row
+          label="Status"
+          value={isActive ? "ACTIVE" : "EXPIRED"}
+          highlight={isActive ? "green" : "red"}
+        />
+
+      </Block>
+
+      {/* ================= SUBSCRIPTION BLOCK ================= */}
+      <Block title="Subscription">
+
+        {!isActive ? (
+
+          <button
+            onClick={handleUpgrade}
+            className="w-full py-3 bg-sky-600 hover:bg-sky-500 rounded-md font-semibold transition-colors"
+          >
+            Upgrade to LIVE+
+            <div className="text-xs text-sky-200 mt-1">
+              {PLAN.price}
+            </div>
+          </button>
+
+        ) : (
+
+          <div className="w-full py-3 bg-emerald-600 rounded-md font-semibold text-center">
+            LIVE+ ACTIVE
+          </div>
+
+        )}
+
+        <div className="text-neutral-400 text-xs leading-relaxed">
+          LIVE+ provides full institutional access with real-time signals across all instruments.
+        </div>
+
+      </Block>
+
+      {/* ================= SYSTEM BLOCK ================= */}
+      <Block title="System">
+
+        <Row label="Version" value={version} mono />
+        <Row label="Platform" value={isAndroid ? "ANDROID" : "WEB"} />
+        <Row label="Latency" value="~120ms" />
+        <Row label="Last Sync" value="Live" />
+
+      </Block>
+
+      {/* ================= SUPPORT BLOCK ================= */}
+      <Block title="Support">
+
+        <LinkBtn label="Help" href="https://t.me/fxhedzbot" />
+        <LinkBtn label="Telegram" href="https://t.me/fxhedzbot" />
+        <LinkBtn label="Risk Disclosure" href="/risk" />
+        <LinkBtn label="Terms" href="/terms" />
+
+      </Block>
+
+      {/* ================= LOGOUT ================= */}
+      <button
+        onClick={handleLogout}
+        className="w-full pt-4 border-t border-neutral-800 text-red-500 font-semibold hover:text-red-400 transition-colors"
+      >
+        Sign Out
+      </button>
+
+    </div>
+  )
+}
+
+/* ================= COMPONENT HELPERS ================= */
+
+function Block({ title, children }: any) {
+  return (
+    <div className="space-y-3">
+      <div className="text-neutral-400 uppercase text-xs tracking-wider">
+        {title}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function Row({
+  label,
+  value,
+  highlight,
+  mono
+}: any) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-neutral-500">{label}</span>
+      <span
+        className={`
+          ${mono ? "font-mono text-xs" : ""}
+          ${highlight === "green" ? "text-green-400" : ""}
+          ${highlight === "red" ? "text-red-400" : ""}
+        `}
+      >
+        {value}
+      </span>
+    </div>
+  )
+}
+
+function LinkBtn({ label, href }: any) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block text-sky-400 hover:text-sky-300 transition-colors"
+    >
+      {label}
+    </a>
+  )
+}

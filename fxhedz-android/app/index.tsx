@@ -139,6 +139,7 @@ export default function HomeScreen() {
       await SecureStore.setItemAsync("email", data.email)
 
       setAccessToken(data.accessToken)
+      webViewRef.current?.reload()
 
     } catch (error) {
       console.log("Exchange Error:", error)
@@ -227,7 +228,7 @@ export default function HomeScreen() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-injectedJavaScript={`
+      injectedJavaScript={`
   window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
   window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
   window.__NATIVE_ACCESS_TOKEN__ = "${accessToken ?? ""}";
@@ -252,13 +253,45 @@ injectedJavaScript={`
 
         const message = event.nativeEvent.data
 
+        // ======================
+        // LOGIN
+        // ======================
         if (message === "LOGIN_REQUEST") {
           promptAsync()
+          return
         }
 
+        // ======================
+        // LOGOUT
+        // ======================
         if (message === "LOGOUT_REQUEST") {
           await logout()
+          return
         }
+
+        // ======================
+        // PLAY BILLING REQUEST
+        // ======================
+        try {
+
+          if (message?.includes("PLAY_BILLING_REQUEST")) {
+
+            const parsed = JSON.parse(message)
+            const sku = parsed.sku
+
+            console.log("Play Billing SKU:", sku)
+
+            // TODO:
+            // Call Play Billing flow here
+            // Example:
+            // await startPurchaseFlow(sku)
+
+          }
+
+        } catch (err) {
+          console.log("Billing parse error:", err)
+        }
+
       }}
 
       onHttpError={async (event) => {

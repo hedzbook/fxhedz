@@ -11,31 +11,37 @@ export async function GET(req: NextRequest) {
   let deviceId: string | undefined
   let email: string | undefined
 
-  // Android
+  // ===============================
+  // ANDROID (JWT)
+  // ===============================
   if (jwtUser && typeof jwtUser === "object") {
     deviceId = (jwtUser as any).deviceId
     email = (jwtUser as any).email
   }
 
-  // Web
+  // ===============================
+  // WEB (NextAuth Session)
+  // ===============================
   if (!email && session?.user?.email) {
     email = session.user.email
   }
 
+  // ===============================
+  // DEVICE COOKIE FALLBACK
+  // ===============================
   if (!deviceId) {
     deviceId = req.cookies.get("fx_device")?.value
   }
 
-  // 🔐 require both identity factors
+  // ===============================
+  // REQUIRE IDENTITY
+  // ===============================
   if (!email || !deviceId) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
     )
   }
-
-  const fingerprint =
-    req.nextUrl.searchParams.get("fingerprint") || ""
 
   try {
 
@@ -44,19 +50,42 @@ export async function GET(req: NextRequest) {
       { cache: "no-store" }
     )
 
+    if (!res.ok) {
+      throw new Error("GAS request failed")
+    }
+
     const data = await res.json()
 
-    // 🔥 TRUST GAS RESPONSE
-    const plan = (data?.status || data?.plan || "").toLowerCase()
+    // ===============================
+    // NORMALIZE PLAN
+    // ===============================
+    const rawPlan =
+      (data?.plan || data?.status || "").toLowerCase()
+
+    const expiryRaw =
+      data?.expiry ? new Date(data.expiry) : null
+
+    const now = new Date()
+
+    // ===============================
+    // ENFORCE EXPIRY
+    // ===============================
+    const isLivePlusActive =
+      rawPlan === "live+" &&
+      expiryRaw &&
+      expiryRaw > now
+
+    const finalPlan =
+      isLivePlusActive ? "live+" : "live"
 
     return NextResponse.json({
-      active: plan === "live" || plan === "live+",
+      active: true,               // LIVE base is always active
       blocked: false,
-      status: plan,
-      expiry: data?.expiry ?? null
+      status: finalPlan,
+      expiry: expiryRaw ?? null
     })
 
-  } catch {
+  } catch (err) {
 
     return NextResponse.json({
       active: false,
@@ -64,5 +93,6 @@ export async function GET(req: NextRequest) {
       status: null,
       expiry: null
     })
+
   }
 }
