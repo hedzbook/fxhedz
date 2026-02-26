@@ -69,32 +69,32 @@ export default function ControlPanel({
   return (
     <div className="w-[300px] bg-neutral-900 border border-neutral-800 p-5 space-y-6 text-sm">
 
-      {/* ================= ACCOUNT BLOCK ================= */}
-      <Block title="Account">
+{/* ================= ACCOUNT BLOCK ================= */}
+<Block title="Account">
 
-        <Row label="Email" value={session?.user?.email || "—"} />
+  <Row label="Email" value={session?.user?.email || "—"} />
 
-        <Row
-          label="Plan"
-          value={planName}
-          highlight={isActive ? "green" : "red"}
-        />
+  <Row
+    label="Plan"
+    value={planName}
+    highlight={isActive ? "green" : "red"}
+  />
 
-        {daysLeft !== null && (
-          <Row label="Days Left" value={String(daysLeft)} />
-        )}
+  {daysLeft !== null && (
+    <Row label="Days Left" value={String(daysLeft)} />
+  )}
 
-        {deviceId && (
-          <Row label="Device" value={deviceId} mono />
-        )}
+  <Row
+    label="Status"
+    value={isActive ? "ACTIVE" : "EXPIRED"}
+    highlight={isActive ? "green" : "red"}
+  />
 
-        <Row
-          label="Status"
-          value={isActive ? "ACTIVE" : "EXPIRED"}
-          highlight={isActive ? "green" : "red"}
-        />
+  {deviceId && (
+    <DeviceBlock deviceId={deviceId} />
+  )}
 
-      </Block>
+</Block>
 
       {/* ================= SUBSCRIPTION BLOCK ================= */}
       <Block title="Subscription">
@@ -188,6 +188,34 @@ function Row({
       >
         {value}
       </span>
+    </div>
+  )
+}
+
+function DeviceBlock({ deviceId }: { deviceId: string }) {
+  return (
+    <div className="pt-3 border-t border-neutral-800 space-y-2">
+
+      <div className="text-neutral-500 text-xs tracking-wide">
+        Device
+      </div>
+
+      <div
+        className="
+          font-mono text-[11px]
+          text-neutral-400
+          leading-snug
+          break-all
+          bg-neutral-800/40
+          border border-neutral-800
+          rounded-md
+          px-3 py-2
+          text-center
+        "
+      >
+        {deviceId}
+      </div>
+
     </div>
   )
 }

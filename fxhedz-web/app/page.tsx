@@ -12,6 +12,7 @@ import { generateDummySignals } from "@/lib/dummySignals"
 import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
+import ControlPanel from "@/components/ControlPanel"
 import {
   DndContext,
   closestCenter,
@@ -82,10 +83,10 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-const isAuthenticated =
-  isAndroid
-    ? true
-    : status === "authenticated"
+  const isAuthenticated =
+    isAndroid
+      ? true
+      : status === "authenticated"
 
   const sessionExists =
     isAndroid
@@ -292,9 +293,9 @@ const isAuthenticated =
   // =============================
   // SUBSCRIPTION POLLING (LIVE SYNC)
   // =============================
-useEffect(() => {
+  useEffect(() => {
 
-  if (!isAndroid && !isAuthenticated) return
+    if (!isAndroid && !isAuthenticated) return
 
     async function checkSubscription() {
       try {
@@ -602,8 +603,10 @@ useEffect(() => {
 
                             <div
                               className="h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                              style={{ width: "clamp(30px, 3.5vw, 46px)",
-                              touchAction: "none" }}
+                              style={{
+                                width: "clamp(30px, 3.5vw, 46px)",
+                                touchAction: "none"
+                              }}
                               {...attributes}
                               {...listeners}
                             >
@@ -659,106 +662,17 @@ useEffect(() => {
           {menuOpen && (
             <div
               ref={menuRef}
-              className="
-      absolute
-      bottom-[clamp(26px,3vh,40px)]
-      left-0
-      w-[260px]
-      bg-neutral-900
-      border border-neutral-800
-      p-4
-      z-50
-      shadow-lg
-      space-y-4
-      text-[12px]
-    "
+              className="absolute bottom-[clamp(26px,3vh,40px)] left-0 z-50"
             >
-
-              {/* SUBSCRIPTION STATUS */}
-              {isAuthenticated && (
-                <div className="space-y-2 text-neutral-400">
-
-                  <div className="flex justify-between">
-                    <span>Plan</span>
-                    <span className={subActive ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
-                      {subActive ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                  </div>
-
-                  {daysLeft !== null && (
-                    <div className="flex justify-between">
-                      <span>Days Left</span>
-                      <span className={daysLeft > 3 ? "text-sky-400 font-semibold" : "text-orange-400 font-semibold"}>
-                        {daysLeft}
-                      </span>
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              <div className="border-t border-neutral-800 pt-3 space-y-3">
-
-                {/* VERSION */}
-                <div className="flex justify-between text-neutral-500">
-                  <span>Version</span>
-                  <span className="font-mono text-neutral-400">v0.1.0</span>
-                </div>
-
-                {/* UPGRADE */}
-                {accessMeta?.status !== "live+" ? (
-                  <a
-                    href="https://t.me/fxhedzbot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
-      block w-full text-center
-      py-2 rounded-md
-      bg-sky-600 hover:bg-sky-500
-      text-white font-semibold
-      transition-colors
-    "
-                  >
-                    GO LIVE+
-                  </a>
-                ) : (
-                  <div
-                    className="
-      block w-full text-center
-      py-2 rounded-md
-      bg-emerald-600
-      text-white font-semibold
-      opacity-90
-      cursor-default
-    "
-                  >
-                    LIVE+ ACTIVE
-                  </div>
-                )}
-
-                {/* SUPPORT */}
-                <a
-                  href="https://t.me/fxhedzbot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="
-          block w-full text-center
-          py-2 rounded-md
-          bg-neutral-800 hover:bg-neutral-700
-          text-white font-semibold
-          transition-colors
-        "
-                >
-                  HELP
-                </a>
-
-                {/* AUTH BUTTON */}
-                <div className="border-t border-neutral-800 pt-3">
-                  <AuthButton />
-                </div>
-
-              </div>
-
+              <ControlPanel
+                accessMeta={accessMeta}
+                deviceId={
+                  typeof window !== "undefined"
+                    ? localStorage.getItem("fxhedz_device_id")
+                    : null
+                }
+                version="v0.1.0"
+              />
             </div>
           )}
 
