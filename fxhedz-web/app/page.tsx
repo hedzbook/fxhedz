@@ -270,7 +270,7 @@ useEffect(() => {
         )
 
 const data = await res.json()
-alert("SUB DATA: " + JSON.stringify(data))
+//alert("SUB DATA: " + JSON.stringify(data))
 console.log("SUB DATA:", data)
 
         if (data?.blocked) {
