@@ -185,11 +185,7 @@ export default function Page() {
         const json = await res.json()
         const incoming = json?.signals ?? {}
 
-        setSignals((prev: any) =>
-          JSON.stringify(prev) === JSON.stringify(incoming)
-            ? prev
-            : incoming
-        )
+setSignals(incoming)
       } catch { }
     }
 
@@ -307,16 +303,9 @@ useEffect(() => {
 
 }, [isAuthenticated])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setUiSignals((prev: any) => {
-        if (JSON.stringify(prev) === JSON.stringify(signals)) return prev
-        return signals
-      })
-    }, 90)
-
-    return () => clearTimeout(timer)
-  }, [signals])
+useEffect(() => {
+  setUiSignals(signals)
+}, [signals])
 
   useEffect(() => {
 
