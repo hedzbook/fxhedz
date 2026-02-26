@@ -430,10 +430,8 @@ setSubActive(Boolean(data?.active))
     <div className="relative">
 
       <main
-        className={`h-[100dvh] bg-black text-white flex flex-col ${isAuthenticated && subActive === false ? "pointer-events-none" : ""
-          }`}
-        style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
-      >
+  className="h-[100dvh] bg-black text-white flex flex-col"
+>
 
         {/* TOP BAR */}
         <div
