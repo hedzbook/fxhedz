@@ -12,6 +12,7 @@ import * as AuthSession from "expo-auth-session"
 WebBrowser.maybeCompleteAuthSession()
 
 const API_BASE = "https://fxhedz.vercel.app"
+const [nativeEmail, setNativeEmail] = useState<string | null>(null)
 
 export default function HomeScreen() {
 
@@ -51,28 +52,32 @@ export default function HomeScreen() {
       if (id) setDeviceIdState(id)
     })
   }, [])
-  async function initialize() {
+async function initialize() {
 
-    const storedAccess = await SecureStore.getItemAsync("accessToken")
-    const storedRefresh = await SecureStore.getItemAsync("refreshToken")
-    const storedEmail = await SecureStore.getItemAsync("email")
+  const storedAccess = await SecureStore.getItemAsync("accessToken")
+  const storedRefresh = await SecureStore.getItemAsync("refreshToken")
+  const storedEmail = await SecureStore.getItemAsync("email")
 
-    if (storedAccess) {
-      setAccessToken(storedAccess)
-      setLoading(false)
-      return
-    }
-
-    if (storedRefresh && storedEmail) {
-      const refreshed = await tryRefresh()
-      if (refreshed) {
-        const newAccess = await SecureStore.getItemAsync("accessToken")
-        setAccessToken(newAccess ?? null)
-      }
-    }
-
-    setLoading(false)
+  if (storedEmail) {
+    setNativeEmail(storedEmail)
   }
+
+  if (storedAccess) {
+    setAccessToken(storedAccess)
+    setLoading(false)
+    return
+  }
+
+  if (storedRefresh && storedEmail) {
+    const refreshed = await tryRefresh()
+    if (refreshed) {
+      const newAccess = await SecureStore.getItemAsync("accessToken")
+      setAccessToken(newAccess ?? null)
+    }
+  }
+
+  setLoading(false)
+}
 
   // ===============================
   // HANDLE GOOGLE RESPONSE
@@ -137,6 +142,7 @@ export default function HomeScreen() {
       await SecureStore.setItemAsync("accessToken", data.accessToken)
       await SecureStore.setItemAsync("refreshToken", data.refreshToken)
       await SecureStore.setItemAsync("email", data.email)
+      setNativeEmail(data.email)
 
       setAccessToken(data.accessToken)
       webViewRef.current?.reload()
@@ -228,10 +234,11 @@ export default function HomeScreen() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-      injectedJavaScript={`
+injectedJavaScript={`
   window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
   window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
   window.__NATIVE_ACCESS_TOKEN__ = "${accessToken ?? ""}";
+  window.__NATIVE_EMAIL__ = "${nativeEmail ?? ""}";
 
   if (window.__NATIVE_ACCESS_TOKEN__) {
     const originalFetch = window.fetch;

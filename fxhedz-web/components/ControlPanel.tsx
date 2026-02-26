@@ -32,6 +32,11 @@ export default function ControlPanel({
         typeof window !== "undefined" &&
         !!(window as any).ReactNativeWebView
 
+    const nativeEmail =
+        typeof window !== "undefined"
+            ? (window as any).__NATIVE_EMAIL__ || null
+            : null
+
     const daysLeft = useMemo(() => {
         if (!accessMeta?.expiry) return null
         const now = new Date()
@@ -69,8 +74,8 @@ export default function ControlPanel({
     const planName = (status || "none").toUpperCase()
 
     return (
-<div
-  className="
+        <div
+            className="
     w-full
     flex
     flex-col
@@ -83,12 +88,19 @@ export default function ControlPanel({
     space-y-6
     text-[clamp(12px,3vw,14px)]
   "
->
+        >
 
             {/* ================= ACCOUNT BLOCK ================= */}
             <Block title="Account">
 
-                <Row label="Email" value={session?.user?.email || "—"} />
+                <Row
+                    label="Email"
+                    value={
+                        isAndroid
+                            ? nativeEmail || "—"
+                            : session?.user?.email || "—"
+                    }
+                />
 
                 <Row
                     label="Plan"
