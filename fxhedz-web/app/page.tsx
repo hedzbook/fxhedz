@@ -72,6 +72,17 @@ export default function Page() {
   const [uiSignals, setUiSignals] = useState<any>({})
   const [netState, setNetState] = useState("FLAT")
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    function check() {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
   const isAndroid =
@@ -662,20 +673,41 @@ export default function Page() {
           {menuOpen && (
             <div
               ref={menuRef}
-              className="
-      absolute
-      bottom-[clamp(26px,3vh,40px)]
-      left-0
-      z-50
-      w-[min(92vw,360px)]
-      max-h-[80vh]
-      overflow-y-auto
-      backdrop-blur-md
-      bg-black/40
-      rounded-lg
-      shadow-xl
-    "
+              className={
+                isMobile
+                  ? `
+          fixed inset-0
+          z-[100]
+          bg-neutral-950
+          overflow-y-auto
+        `
+                  : `
+          absolute
+          bottom-[clamp(26px,3vh,40px)]
+          left-0
+          z-50
+          w-[min(92vw,360px)]
+          max-h-[80vh]
+          overflow-y-auto
+          backdrop-blur-md
+          bg-black/40
+          rounded-lg
+          shadow-xl
+        `
+              }
             >
+              {/* Close button for mobile */}
+              {isMobile && (
+                <div className="flex justify-end p-4 border-b border-neutral-800">
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="text-neutral-400 hover:text-white text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+
               <ControlPanel
                 accessMeta={accessMeta}
                 deviceId={
@@ -726,4 +758,3 @@ export default function Page() {
     </div>
   )
 }
-
