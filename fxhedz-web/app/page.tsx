@@ -758,15 +758,15 @@ setSubActive(Boolean(data?.active))
         </div>
 
       </main>
-      {status !== "loading" && (
-        <AccessOverlay
-          active={subActive}
-          sessionExists={sessionExists}
-          status={accessMeta?.status}
-          expiry={accessMeta?.expiry}
-          blocked={accessMeta?.blocked}
-        />
-      )}
+{status !== "loading" && subActive !== null && (
+  <AccessOverlay
+    active={subActive}
+    sessionExists={sessionExists}
+    status={accessMeta?.status}
+    expiry={accessMeta?.expiry}
+    blocked={accessMeta?.blocked}
+  />
+)}
     </div>
   )
 }
