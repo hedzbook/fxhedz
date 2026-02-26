@@ -211,17 +211,17 @@ export default function Page() {
   // =============================
   // CHECK SUBSCRIPTION STATUS
   // =============================
-useEffect(() => {
+  useEffect(() => {
 
-  if (status === "loading") return
+    if (status === "loading") return
 
-  // 🔥 FIX: Only block unauthenticated for WEB
-  if (!isAndroid && status === "unauthenticated") {
-    setSubActive(false)
-    return
-  }
+    // 🔥 FIX: Only block unauthenticated for WEB
+    if (!isAndroid && status === "unauthenticated") {
+      setSubActive(false)
+      return
+    }
 
-  if (!fingerprint) return
+    if (!fingerprint) return
 
     async function init() {
 
@@ -269,12 +269,12 @@ useEffect(() => {
           { cache: "no-store" }
         )
 
-const data = await res.json()
-alert("SUB DATA: " + JSON.stringify(data))
-console.log("SUB DATA:", data)
+        const data = await res.json()
+        alert("SUB DATA: " + JSON.stringify(data))
+        console.log("SUB DATA:", data)
 
-setAccessMeta(data)
-setSubActive(Boolean(data?.active))
+        setAccessMeta(data)
+        setSubActive(Boolean(data?.active))
 
       } catch {
         setSubActive(false)
@@ -363,7 +363,7 @@ setSubActive(Boolean(data?.active))
     !isAuthenticated ||
     subActive === false
 
-  const plan = accessMeta?.plan
+  const plan = accessMeta?.status
 
   const isLivePlus = plan === "live+"
   const isLive = plan === "live"
@@ -429,9 +429,9 @@ setSubActive(Boolean(data?.active))
   return (
     <div className="relative">
 
-<main
-  className="h-[100dvh] bg-black text-white flex flex-col"
->
+      <main
+        className="h-[100dvh] bg-black text-white flex flex-col"
+      >
 
         {/* TOP BAR */}
         <div
@@ -550,7 +550,7 @@ setSubActive(Boolean(data?.active))
                       !isAuthenticated
                         ? dummySignal
                         : canAccess
-                          ? realSignal
+                          ? (realSignal ?? dummySignal)
                           : dummySignal
 
                     const displayDirection =
@@ -756,9 +756,9 @@ setSubActive(Boolean(data?.active))
         </div>
 
       </main>
-{status !== "loading" && (
-  <AccessOverlay sessionExists={sessionExists} />
-)}
+      {status !== "loading" && (
+        <AccessOverlay sessionExists={sessionExists} />
+      )}
     </div>
   )
 }
