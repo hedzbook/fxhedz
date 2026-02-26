@@ -275,7 +275,6 @@ console.log("SUB DATA:", data)
 
 setAccessMeta(data)
 setSubActive(Boolean(data?.active))
-        setAccessMeta(data)
 
       } catch {
         setSubActive(false)
