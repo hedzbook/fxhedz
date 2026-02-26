@@ -15,6 +15,10 @@ import { generateDummyDetail } from "@/lib/dummyDetail"
 import {
   DndContext,
   closestCenter,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors
 } from "@dnd-kit/core"
 
 import {
@@ -88,7 +92,7 @@ export default function Page() {
       ? hasNativeToken
       : !!session
   const [accessMeta, setAccessMeta] =
-  useState<SubscriptionMeta | null>(null)
+    useState<SubscriptionMeta | null>(null)
   async function loadPreview(pair: string) {
     try {
       const res = await fetch(`/api/public-preview?pair=${pair}`)
@@ -104,6 +108,20 @@ export default function Page() {
   }
   const [instrumentOrder, setInstrumentOrder] =
     useState<PairKey[]>(DEFAULT_ORDER as PairKey[])
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8
+      }
+    })
+  )
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -185,7 +203,7 @@ export default function Page() {
         const json = await res.json()
         const incoming = json?.signals ?? {}
 
-setSignals(incoming)
+        setSignals(incoming)
       } catch { }
     }
 
@@ -193,7 +211,7 @@ setSignals(incoming)
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
- }, [subActive, status, accessMeta])
+  }, [subActive, status, accessMeta])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -271,41 +289,41 @@ setSignals(incoming)
 
   }, [status])
 
-// =============================
-// SUBSCRIPTION POLLING (LIVE SYNC)
-// =============================
-useEffect(() => {
+  // =============================
+  // SUBSCRIPTION POLLING (LIVE SYNC)
+  // =============================
+  useEffect(() => {
 
-  if (!isAuthenticated) return
+    if (!isAuthenticated) return
 
-  async function checkSubscription() {
-    try {
-      const res = await fetch("/api/subscription", {
-        cache: "no-store"
-      })
+    async function checkSubscription() {
+      try {
+        const res = await fetch("/api/subscription", {
+          cache: "no-store"
+        })
 
-      const data = await res.json()
+        const data = await res.json()
 
-      setAccessMeta(prev => {
-        if (JSON.stringify(prev) === JSON.stringify(data)) return prev
-        return data
-      })
+        setAccessMeta(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev
+          return data
+        })
 
-      setSubActive(Boolean(data?.active))
+        setSubActive(Boolean(data?.active))
 
-    } catch {}
-  }
+      } catch { }
+    }
 
-  // poll every 10 seconds
-  const interval = setInterval(checkSubscription, 10000)
+    // poll every 10 seconds
+    const interval = setInterval(checkSubscription, 10000)
 
-  return () => clearInterval(interval)
+    return () => clearInterval(interval)
 
-}, [isAuthenticated])
+  }, [isAuthenticated])
 
-useEffect(() => {
-  setUiSignals(signals)
-}, [signals])
+  useEffect(() => {
+    setUiSignals(signals)
+  }, [signals])
 
   useEffect(() => {
 
@@ -372,10 +390,10 @@ useEffect(() => {
     !isAuthenticated ||
     subActive === false
 
-const plan = accessMeta?.status?.toLowerCase()
+  const plan = accessMeta?.status?.toLowerCase()
 
-const isLivePlus = plan === "live+"
-const isLive = plan === "live"
+  const isLivePlus = plan === "live+"
+  const isLive = plan === "live"
 
   const detailData = openPair
     ? (
@@ -526,6 +544,7 @@ const isLive = plan === "live"
           ) : (
 
             <DndContext
+              sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
@@ -583,7 +602,8 @@ const isLive = plan === "live"
 
                             <div
                               className="h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                              style={{ width: "clamp(30px, 3.5vw, 46px)" }}
+                              style={{ width: "clamp(30px, 3.5vw, 46px)",
+                              touchAction: "none" }}
                               {...attributes}
                               {...listeners}
                             >
