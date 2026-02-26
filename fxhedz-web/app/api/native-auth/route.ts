@@ -68,13 +68,6 @@ export async function POST(req: NextRequest) {
 
     const gasData = await gasRes.json()
 
-    if (gasData.blocked) {
-      return NextResponse.json(
-        { error: "Device blocked" },
-        { status: 403 }
-      )
-    }
-
  console.log("GAS DATA:", gasData)
 
 if (!gasData.active) {

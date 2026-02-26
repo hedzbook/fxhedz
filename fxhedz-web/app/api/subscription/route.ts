@@ -46,12 +46,12 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json()
 
-    return NextResponse.json({
-      active: Boolean(data?.active),
-      blocked: Boolean(data?.blocked),
-      status: data?.plan ?? null,
-      expiry: data?.expiry ?? null
-    })
+return NextResponse.json({
+  active: Boolean(data?.active),
+  blocked: false,
+  status: data?.plan ?? null,
+  expiry: data?.expiry ?? null
+})
 
   } catch {
 

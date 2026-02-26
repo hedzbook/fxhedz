@@ -42,42 +42,6 @@ export default function AccessOverlay({
     <OverlayContainer>
       <Panel>
 
-        {/* 2️⃣ DEVICE BLOCKED */}
-        {blocked && (
-          <>
-            <Header />
-            <Title>Device Restricted</Title>
-            <Description>
-              Maximum 2 terminals allowed.
-            </Description>
-
-            <div className="space-y-2 w-full">
-
-              <button
-                onClick={async () => {
-                  const res = await fetch("/api/reset-devices", {
-                    method: "POST"
-                  })
-
-                  const data = await res.json()
-
-                  if (data?.success) {
-                    await signOut({ callbackUrl: "/" })
-                  }
-                }}
-                className="w-full flex justify-center items-center py-2.5 bg-red-600 hover:bg-red-500 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98]"
-              >
-                Logout of All Devices
-              </button>
-
-              <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 font-mono">DEVICE LIMIT</span>
-                <GoogleLogoutButton />
-              </div>
-            </div>
-          </>
-        )}
-
         {/* 3️⃣ LOGIN REQUIRED */}
         {!sessionExists && !blocked && (
           <>

@@ -1504,30 +1504,6 @@ export default function AccessOverlay({
           </>
         )}
 
-        {/* 4ï¸âƒ£ LIVE/ LIVE+ EXPIRED */}
-        {sessionExists && active === false && !blocked && (
-          <>
-            <Header />
-            <Title>Access Ended</Title>
-            <Description>
-              Terminal access has expired.
-            </Description>
-            <div className="space-y-2 w-full flex flex-col items-center">
-              {/* FIXED: Direct Tailwind classes for the blue button */}
-              <a
-                href="https://t.me/fxhedzbot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex justify-center items-center py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-[clamp(10px,2.5vw,14px)] leading-[1.3] font-bold rounded-md transition-all shadow-md active:scale-[0.98] cursor-pointer"
-              >
-                Get LIVE+
-              </a>
-              <div className="w-full pt-2 border-t border-neutral-800 mt-2 flex justify-center">
-                <GoogleLogoutButton />
-              </div>
-            </div>
-          </>
-        )}
       </Panel>
     </OverlayContainer>
   )
