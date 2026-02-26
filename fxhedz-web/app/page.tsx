@@ -716,17 +716,67 @@ isMobile
 
 
           {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
-          <button
-            ref={hamburgerRef}
-            onClick={() => setMenuOpen(prev => !prev)}
-            className="border-r border-neutral-800 bg-neutral-950 hover:bg-neutral-900 flex items-center justify-center"
-          >
-            <div className="w-[60%] flex flex-col gap-[2px]">
-              <div className="h-[2px] w-full bg-neutral-400" />
-              <div className="h-[2px] w-full bg-neutral-400" />
-              <div className="h-[2px] w-full bg-neutral-400" />
-            </div>
-          </button>
+<button
+  ref={hamburgerRef}
+  onClick={() => setMenuOpen(prev => !prev)}
+  className="
+    border-r border-neutral-800
+    bg-neutral-950
+    hover:bg-neutral-900
+    flex items-center justify-center
+    relative
+  "
+>
+  <div
+    className="
+      relative
+      w-[clamp(12px,1.6vh,18px)]
+      h-[clamp(8px,1.2vh,14px)]
+    "
+  >
+
+    {/* TOP LINE */}
+    <span
+      className={`
+        absolute left-0
+        w-full
+        h-[clamp(1px,0.25vh,2px)]
+        bg-neutral-400
+        transition-all duration-300 ease-in-out
+        ${menuOpen
+          ? "top-1/2 -translate-y-1/2 rotate-45"
+          : "top-0"}
+      `}
+    />
+
+    {/* MIDDLE LINE */}
+    <span
+      className={`
+        absolute left-0 top-1/2 -translate-y-1/2
+        w-full
+        h-[clamp(1px,0.25vh,2px)]
+        bg-neutral-400
+        transition-all duration-300 ease-in-out
+        ${menuOpen ? "opacity-0" : ""}
+      `}
+    />
+
+    {/* BOTTOM LINE */}
+    <span
+      className={`
+        absolute left-0
+        w-full
+        h-[clamp(1px,0.25vh,2px)]
+        bg-neutral-400
+        transition-all duration-300 ease-in-out
+        ${menuOpen
+          ? "top-1/2 -translate-y-1/2 -rotate-45"
+          : "bottom-0"}
+      `}
+    />
+
+  </div>
+</button>
 
           {/* RIGHT SIDE CONTENT */}
           <div className="bg-neutral-900 flex items-center px-2">
