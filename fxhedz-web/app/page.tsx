@@ -675,7 +675,7 @@ useEffect(() => {
             >
 
               {/* SUBSCRIPTION STATUS */}
-              {session && (
+              {isAuthenticated && (
                 <div className="space-y-2 text-neutral-400">
 
                   <div className="flex justify-between">

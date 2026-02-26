@@ -114,6 +114,7 @@ export default function HomeScreen() {
   async function exchangeTokenWithBackend(idToken: string) {
 
     const deviceId = await getDeviceId()
+    setDeviceIdState(deviceId)
 
     try {
 
