@@ -51,6 +51,13 @@ const SIGNAL_API = "/api/signals"
 
 type ViewMode = "MIN" | "MAX"
 
+type SubscriptionMeta = {
+  active?: boolean
+  status?: string | null
+  expiry?: string | null
+  blocked?: boolean
+}
+
 export default function Page() {
 
   const dummySignals = useMemo(() => generateDummySignals(), [])
@@ -80,7 +87,8 @@ export default function Page() {
     isAndroid
       ? hasNativeToken
       : !!session
-  const [accessMeta, setAccessMeta] = useState<any>(null)
+  const [accessMeta, setAccessMeta] =
+  useState<SubscriptionMeta | null>(null)
   async function loadPreview(pair: string) {
     try {
       const res = await fetch(`/api/public-preview?pair=${pair}`)
@@ -189,7 +197,7 @@ export default function Page() {
     const interval = setInterval(loadSignals, 2500)
     return () => clearInterval(interval)
 
-  }, [subActive, status])
+ }, [subActive, status, accessMeta])
 
   // =============================
   // CHECK SUBSCRIPTION STATUS
@@ -266,6 +274,38 @@ export default function Page() {
     init()
 
   }, [status])
+
+// =============================
+// SUBSCRIPTION POLLING (LIVE SYNC)
+// =============================
+useEffect(() => {
+
+  if (!isAuthenticated) return
+
+  async function checkSubscription() {
+    try {
+      const res = await fetch("/api/subscription", {
+        cache: "no-store"
+      })
+
+      const data = await res.json()
+
+      setAccessMeta(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(data)) return prev
+        return data
+      })
+
+      setSubActive(Boolean(data?.active))
+
+    } catch {}
+  }
+
+  // poll every 10 seconds
+  const interval = setInterval(checkSubscription, 10000)
+
+  return () => clearInterval(interval)
+
+}, [isAuthenticated])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -657,7 +697,7 @@ const isLive = plan === "live"
                 </div>
 
                 {/* UPGRADE */}
-                {accessMeta?.plan !== "live+" ? (
+                {accessMeta?.status !== "live+" ? (
                   <a
                     href="https://t.me/fxhedzbot"
                     target="_blank"

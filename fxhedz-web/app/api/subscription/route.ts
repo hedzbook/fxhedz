@@ -47,10 +47,12 @@ export async function GET(req: NextRequest) {
     const data = await res.json()
 
     // 🔥 TRUST GAS RESPONSE
+    const plan = (data?.status || data?.plan || "").toLowerCase()
+
     return NextResponse.json({
-      active: data?.active ?? false,
+      active: plan === "live" || plan === "live+",
       blocked: false,
-      status: data?.plan ?? null,
+      status: plan,
       expiry: data?.expiry ?? null
     })
 
