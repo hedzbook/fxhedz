@@ -674,9 +674,11 @@ isMobile
       top-0
       bottom-[clamp(26px,3vh,40px)]
       z-40
-      bg-neutral-950
+      bg-neutral-900
+      rounded-t-2xl
       flex
       flex-col
+      shadow-2xl
     `
         : `
             absolute

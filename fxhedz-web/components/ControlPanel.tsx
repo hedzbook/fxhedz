@@ -69,20 +69,24 @@ export default function ControlPanel({
     const planName = (status || "none").toUpperCase()
 
     return (
-        <div
-            className="
-      w-full
-      flex
-      flex-col
-      flex-1
-      overflow-y-auto
-      bg-neutral-900
-      p-4
-      space-y-6
-      text-[clamp(12px,3vw,14px)]
-    "
-        >
-
+<div
+  className="
+    w-full
+    flex
+    flex-col
+    flex-1
+    overflow-y-auto
+    bg-neutral-900
+    pt-6
+    pb-4
+    px-4
+    space-y-6
+    text-[clamp(12px,3vw,14px)]
+  "
+>
+<div className="flex justify-center mb-2">
+  <div className="w-10 h-1.5 bg-neutral-700 rounded-full" />
+</div>
             {/* ================= ACCOUNT BLOCK ================= */}
             <Block title="Account">
 
