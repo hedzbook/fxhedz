@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json()
 
 return NextResponse.json({
-  active: Boolean(data?.active),
+  active: data?.plan === "live" || data?.plan === "live+",
   blocked: false,
   status: data?.plan ?? null,
   expiry: data?.expiry ?? null
