@@ -674,16 +674,13 @@ export default function Page() {
             <div
               ref={menuRef}
               className={
-isMobile
-  ? `
-      absolute
-      inset-x-0
-      top-0
-      bottom-[clamp(26px,3vh,40px)]
-      z-40
-      bg-neutral-950
-      overflow-y-auto
-    `
+                isMobile
+                  ? `
+          fixed inset-0
+          z-[100]
+          bg-neutral-950
+          overflow-y-auto
+        `
                   : `
           absolute
           bottom-[clamp(26px,3vh,40px)]
@@ -699,6 +696,17 @@ isMobile
         `
               }
             >
+              {/* Close button for mobile */}
+              {isMobile && (
+                <div className="flex justify-end p-4 border-b border-neutral-800">
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="text-neutral-400 hover:text-white text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
 
               <ControlPanel
                 accessMeta={accessMeta}
