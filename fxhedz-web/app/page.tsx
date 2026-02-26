@@ -667,16 +667,17 @@ export default function Page() {
   <div
     ref={menuRef}
     className={
-      isMobile
-        ? `
-            absolute
-            inset-x-0
-            top-[clamp(26px,3vh,40px)]
-            bottom-[clamp(26px,3vh,40px)]
-            z-40
-            bg-neutral-950
-            overflow-y-auto
-          `
+isMobile
+  ? `
+      absolute
+      inset-x-0
+      top-0
+      bottom-[clamp(26px,3vh,40px)]
+      z-40
+      bg-neutral-950
+      flex
+      flex-col
+    `
         : `
             absolute
             bottom-[clamp(26px,3vh,40px)]
