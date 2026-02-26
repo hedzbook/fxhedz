@@ -84,9 +84,7 @@ export default function ControlPanel({
     text-[clamp(12px,3vw,14px)]
   "
 >
-<div className="flex justify-center mb-2">
-  <div className="w-10 h-1.5 bg-neutral-700 rounded-full" />
-</div>
+
             {/* ================= ACCOUNT BLOCK ================= */}
             <Block title="Account">
 
