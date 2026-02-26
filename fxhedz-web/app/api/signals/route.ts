@@ -51,10 +51,9 @@ export async function GET(req: NextRequest) {
 
     const pair = req.nextUrl.searchParams.get("pair")
 
-    const url = pair
-      ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&pair=${pair}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
-      : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&device_id=${deviceId}&fingerprint=${encodeURIComponent(fingerprint)}`
-
+const url = pair
+  ? `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}&pair=${pair}`
+  : `${GAS_BASE}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
 
