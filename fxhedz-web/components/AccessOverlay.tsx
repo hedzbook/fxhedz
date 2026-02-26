@@ -20,6 +20,7 @@ export default function AccessOverlay({
 }: Props) {
 
   // 1️⃣ Still verifying → show ONLY verifying state
+  if (sessionExists && active === null) return null
   if (active === null) {
     return (
       <OverlayContainer>

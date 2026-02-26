@@ -273,13 +273,8 @@ const data = await res.json()
 //alert("SUB DATA: " + JSON.stringify(data))
 console.log("SUB DATA:", data)
 
-        if (data?.blocked) {
-          setSubActive(false)
-          setAccessMeta(data)
-          return
-        }
-
-        setSubActive(data?.active === true)
+setAccessMeta(data)
+setSubActive(Boolean(data?.active))
         setAccessMeta(data)
 
       } catch {
