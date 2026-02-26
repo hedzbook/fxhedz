@@ -662,7 +662,19 @@ export default function Page() {
           {menuOpen && (
             <div
               ref={menuRef}
-              className="absolute bottom-[clamp(26px,3vh,40px)] left-0 z-50"
+              className="
+      absolute
+      bottom-[clamp(26px,3vh,40px)]
+      left-0
+      z-50
+      w-[min(92vw,360px)]
+      max-h-[80vh]
+      overflow-y-auto
+      backdrop-blur-md
+      bg-black/40
+      rounded-lg
+      shadow-xl
+    "
             >
               <ControlPanel
                 accessMeta={accessMeta}
