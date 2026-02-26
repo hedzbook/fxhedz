@@ -275,6 +275,19 @@ export default function HomeScreen() {
 injectedJavaScript={`
   window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
   window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
+  window.__NATIVE_ACCESS_TOKEN__ = "${accessToken ?? ""}";
+
+  if (window.__NATIVE_ACCESS_TOKEN__) {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+      options.headers = {
+        ...(options.headers || {}),
+        Authorization: "Bearer " + window.__NATIVE_ACCESS_TOKEN__
+      };
+      return originalFetch(url, options);
+    };
+  }
+
   true;
 `}
       style={{ flex: 1, backgroundColor: "#000000" }}
