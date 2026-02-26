@@ -662,6 +662,48 @@ export default function Page() {
 
         </div>
 
+{/* MENU LAYER */}
+{menuOpen && (
+  <div
+    ref={menuRef}
+    className={
+      isMobile
+        ? `
+            absolute
+            inset-x-0
+            top-[clamp(26px,3vh,40px)]
+            bottom-[clamp(26px,3vh,40px)]
+            z-40
+            bg-neutral-950
+            overflow-y-auto
+          `
+        : `
+            absolute
+            bottom-[clamp(26px,3vh,40px)]
+            left-0
+            z-50
+            w-[min(92vw,360px)]
+            max-h-[80vh]
+            overflow-y-auto
+            backdrop-blur-md
+            bg-black/40
+            rounded-lg
+            shadow-xl
+          `
+    }
+  >
+    <ControlPanel
+      accessMeta={accessMeta}
+      deviceId={
+        typeof window !== "undefined"
+          ? localStorage.getItem("fxhedz_device_id")
+          : null
+      }
+      version="v0.1.0"
+    />
+  </div>
+)}
+
         {/* BOTTOM BAR */}
         <div
           className="shrink-0 grid border-t border-neutral-800 relative"
@@ -670,55 +712,7 @@ export default function Page() {
             height: "clamp(26px,3vh,40px)"
           }}
         >
-          {menuOpen && (
-            <div
-              ref={menuRef}
-              className={
-                isMobile
-                  ? `
-          fixed inset-0
-          z-[100]
-          bg-neutral-950
-          overflow-y-auto
-        `
-                  : `
-          absolute
-          bottom-[clamp(26px,3vh,40px)]
-          left-0
-          z-50
-          w-[min(92vw,360px)]
-          max-h-[80vh]
-          overflow-y-auto
-          backdrop-blur-md
-          bg-black/40
-          rounded-lg
-          shadow-xl
-        `
-              }
-            >
-              {/* Close button for mobile */}
-              {isMobile && (
-                <div className="flex justify-end p-4 border-b border-neutral-800">
-                  <button
-                    onClick={() => setMenuOpen(false)}
-                    className="text-neutral-400 hover:text-white text-sm"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
 
-              <ControlPanel
-                accessMeta={accessMeta}
-                deviceId={
-                  typeof window !== "undefined"
-                    ? localStorage.getItem("fxhedz_device_id")
-                    : null
-                }
-                version="v0.1.0"
-              />
-            </div>
-          )}
 
           {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
           <button
