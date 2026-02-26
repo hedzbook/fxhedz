@@ -68,9 +68,9 @@ export default function ControlPanel({
     const isLivePlus = status === "live+"
     const planName = (status || "none").toUpperCase()
 
-return (
-  <div
-    className="
+    return (
+        <div
+            className="
       w-full
       flex
       flex-col
@@ -81,7 +81,7 @@ return (
       space-y-6
       text-[clamp(12px,3vw,14px)]
     "
-  >
+        >
 
             {/* ================= ACCOUNT BLOCK ================= */}
             <Block title="Account">
@@ -158,11 +158,11 @@ return (
             {/* ================= LOGOUT ================= */}
             <div className="mt-auto pt-4 border-t border-neutral-800">
                 <button
-                onClick={handleLogout}
-                className="w-full pt-4 border-t border-neutral-800 text-red-500 font-semibold hover:text-red-400 transition-colors"
-            >
-                Sign Out
-            </button>
+                    onClick={handleLogout}
+                    className="w-full text-red-500 font-semibold hover:text-red-400 transition-colors"
+                >
+                    Sign Out
+                </button>
             </div>
         </div>
     )
