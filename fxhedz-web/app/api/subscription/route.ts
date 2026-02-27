@@ -44,7 +44,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-
     const res = await fetch(
       `${process.env.GAS_AUTH_URL}?secret=${process.env.GAS_SECRET}&email=${encodeURIComponent(email)}`,
       { cache: "no-store" }
