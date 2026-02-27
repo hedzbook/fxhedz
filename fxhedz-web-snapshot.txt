@@ -580,6 +580,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import Script from "next/script"
 import Providers from "@/components/Providers"
 import "./globals.css"
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -1179,6 +1180,7 @@ export default function Page() {
                 signal={uiSignals?.[openPair]}
                 onClose={() => setOpenPair(null)}
                 isGuest={isGuest}
+                email={session?.user?.email || (window as any).__NATIVE_EMAIL__}
               />
 
             </div>
@@ -2972,6 +2974,7 @@ type Props = {
     data: any
     onClose: () => void
     isGuest?: boolean
+    email?: string
 }
 
 export default function PairDetail({
@@ -2979,11 +2982,13 @@ export default function PairDetail({
     signal,
     data,
     onClose,
-    isGuest = false
+    isGuest = false,
+    email
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
+    const [appInstruments, setAppInstruments] = useState<string[]>([])
     useEffect(() => {
         if (preview) {
             document.body.style.overflow = "hidden"
@@ -2991,14 +2996,57 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
+    useEffect(() => {
+        if (data?.appInstruments) {
+            setAppInstruments(data.appInstruments)
+        }
+    }, [data])
+    const toggleNotification = async () => {
+
+        if (!pair) return
+
+        let updated = [...appInstruments]
+
+        if (updated.includes(pair)) {
+            updated = updated.filter(p => p !== pair)
+        } else {
+            updated.push(pair)
+        }
+
+        setAppInstruments(updated)
+
+        await fetch(process.env.NEXT_PUBLIC_GAS_AUTH_URL as string, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email,
+                app_instruments: updated
+            })
+        })
+    }
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
             {/* HEADER */}
             <div className="shrink-0 flex items-center justify-between px-3 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
-                <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
-                    {pair}
+
+                <div className="flex items-center gap-3">
+
+                    <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
+                        {pair}
+                    </div>
+
+                    {!isGuest && (
+                        <button
+                            onClick={toggleNotification}
+                            className="text-[18px] leading-none"
+                        >
+                            {appInstruments.includes(pair) ? "ðŸ””" : "ðŸ”•"}
+                        </button>
+                    )}
+
                 </div>
+
                 <button
                     onClick={onClose}
                     className="text-[clamp(10px,1.6vw,14px)] text-neutral-400 hover:text-white leading-none"
@@ -3115,10 +3163,10 @@ export default function PairDetail({
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-xs font-semibold">BUY</span>
+                                                    <span className="text-green-400 text-xs font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-xs font-semibold">SELL</span>
+                                                    <span className="text-red-400 text-xs font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
@@ -3657,6 +3705,7 @@ export function verifyAccessToken(req: Request) {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@vercel/analytics": "^1.6.1",
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.3",
     "lightweight-charts": "^5.1.0",
