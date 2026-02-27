@@ -782,13 +782,14 @@ isMobile
               FXHEDZ
             </div>
 
-<div className="ml-auto flex items-center h-full pr-0 overflow-hidden">
-  <img
-    src="/zlchs.png"
-    alt="ZeroLoss"
-    className="block h-[50%] w-auto object-contain"
-  />
-</div>
+            <div className="ml-auto text-right flex flex-col items-end">
+              <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
+                ZEROLOSS COMPOUNDED
+              </div>
+              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[10px] tracking-[0.14em]">
+                HEDGING SYSTEM
+              </div>
+            </div>
           </div>
 
         </div>
