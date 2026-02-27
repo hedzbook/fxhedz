@@ -35,7 +35,7 @@ function PairCard({
 
   const dir: TradeDirection = direction ?? "--"
   const [liveDir, setLiveDir] = useState<TradeDirection>(dir)
-  const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
+  const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
   const [liveOrders, setLiveOrders] = useState<any[]>(orders ?? [])
   const [pnlCache, setPnlCache] = useState<Record<string, number>>({})
   const expanded = !!open
@@ -135,7 +135,7 @@ py-[clamp(2px,0.6vh,6px)]
           {/* TABS */}
           <div className="flex w-full border-b border-neutral-800 text-[clamp(10px,1.4vw,14px)]">
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
-            <TabBtn label="News" active={tab === "news"} onClick={() => setTab("news")} />
+            <TabBtn label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
             <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
             <TabBtn label="Performance" active={tab === "performance"} onClick={() => setTab("performance")} />
           </div>
@@ -224,7 +224,7 @@ py-[clamp(2px,0.6vh,6px)]
             )}
 
             {/* ================= NEWS ================= */}
-            {tab === "news" && (
+            {tab === "updates" && (
               <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
                 <div className="shrink-0 text-[clamp(10px,1.4vw,14px)] text-neutral-400 mb-2">

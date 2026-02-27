@@ -19,7 +19,7 @@ export default function PairDetail({
     isGuest = false
 }: Props) {
 
-    const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
+    const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
     useEffect(() => {
         if (preview) {
@@ -60,7 +60,7 @@ export default function PairDetail({
             {/* TABS (FIXED) */}
             <div className="shrink-0 flex border-b border-neutral-800 text-[clamp(10px,1.4vw,14px)]">
                 <Tab label="Market" active={tab === "market"} onClick={() => setTab("market")} />
-                <Tab label="News" active={tab === "news"} onClick={() => setTab("news")} />
+                <Tab label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
                 <Tab label="History" active={tab === "history"} onClick={() => setTab("history")} />
                 <Tab label="Statistics" active={tab === "performance"} onClick={() => setTab("performance")} />
             </div>
@@ -121,7 +121,7 @@ export default function PairDetail({
                     </div>
                 )}
 
-                {tab === "news" && (
+                {tab === "updates" && (
                     <div className="flex flex-col flex-1 min-h-0">
 
                         <div className="flex-1 overflow-y-auto space-y-2.5 p-[clamp(8px,1.2vw,16px)]">
