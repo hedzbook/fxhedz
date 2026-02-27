@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   }
 
   const GAS_URL =
-    "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+    "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec"
 
   const res = await fetch(`${GAS_URL}?image=${id}`, {
     cache: "no-store",
