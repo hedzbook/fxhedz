@@ -9,6 +9,7 @@ type Props = {
     data: any
     onClose: () => void
     isGuest?: boolean
+    email?: string
 }
 
 export default function PairDetail({
@@ -16,7 +17,8 @@ export default function PairDetail({
     signal,
     data,
     onClose,
-    isGuest = false
+    isGuest = false,
+    email
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
@@ -48,11 +50,11 @@ export default function PairDetail({
 
         setAppInstruments(updated)
 
-        await fetch(process.env.NEXT_PUBLIC_GAS_URL as string, {
+        await fetch(process.env.NEXT_PUBLIC_GAS_AUTH_URL as string, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                email: data?.email,   // ensure email is coming from parent
+                email,
                 app_instruments: updated
             })
         })

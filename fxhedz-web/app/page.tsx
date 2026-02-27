@@ -552,6 +552,7 @@ export default function Page() {
                 signal={uiSignals?.[openPair]}
                 onClose={() => setOpenPair(null)}
                 isGuest={isGuest}
+                email={session?.user?.email || (window as any).__NATIVE_EMAIL__}
               />
 
             </div>
