@@ -2,8 +2,9 @@ import { NextRequest } from "next/server"
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id")
+
   if (!id) {
-    return new Response("Missing image id", { status: 400 })
+    return new Response("Missing id", { status: 400 })
   }
 
   const GAS_URL =
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   return new Response(buffer, {
     headers: {
       "Content-Type": res.headers.get("content-type") || "image/jpeg",
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": "public, max-age=600",
     },
   })
 }

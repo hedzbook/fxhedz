@@ -6,6 +6,7 @@ WEB PROJECT STRUCTURE
 .env.local
 .gitignore
 app\api\auth\[...nextauth]\route.ts
+app\api\image\route.ts
 app\api\native-auth\route.ts
 app\api\public-preview\route.ts
 app\api\refresh\route.ts
@@ -116,6 +117,40 @@ async signIn({ user }) {
 const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
+
+
+
+// app\api\image\route.ts
+// --------------------------------------------------
+
+import { NextRequest } from "next/server"
+
+export async function GET(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get("id")
+  if (!id) {
+    return new Response("Missing image id", { status: 400 })
+  }
+
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycby55ye_dTtWJ-QILNYJIaXWv74_n7n0muh3U--sBl7yowMlp1FzESOokWqeHI75U5_R/exec"
+
+  const res = await fetch(`${GAS_URL}?image=${id}`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    return new Response("Image not found", { status: 404 })
+  }
+
+  const buffer = await res.arrayBuffer()
+
+  return new Response(buffer, {
+    headers: {
+      "Content-Type": res.headers.get("content-type") || "image/jpeg",
+      "Cache-Control": "public, max-age=300",
+    },
+  })
+}
 
 
 
@@ -407,6 +442,19 @@ export async function GET(req: NextRequest) {
 
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
+
+    if (pair && json?.signals?.[pair]) {
+      return NextResponse.json({
+        ...json.signals[pair],
+        feed: json.feed || [],
+        history: json.history || [],
+        performance: json.performance || {},
+        blocked: json.blocked,
+        active: json.active,
+        plan: json.plan,
+        expiry: json.expiry
+      })
+    }
 
     return NextResponse.json(json)
 
@@ -2957,11 +3005,11 @@ export default function PairDetail({
                     id={`chart_mount_${pair}`}
                     className="w-full h-full"
                 />
-<GlobalLightChart
-    mountId={`chart_mount_${pair}`}
-    signal={isGuest ? data : signal}
-    disableOverlays={isGuest}
-/>
+                <GlobalLightChart
+                    mountId={`chart_mount_${pair}`}
+                    signal={isGuest ? data : signal}
+                    disableOverlays={isGuest}
+                />
             </div>
 
             {/* TABS (FIXED) */}
@@ -3029,9 +3077,50 @@ export default function PairDetail({
                 )}
 
                 {tab === "news" && (
-                    <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
-                        <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(10px,1.4vw,14px)] pr-1">
-                            {data?.notes || "Coming Soon"}
+                    <div className="flex flex-col flex-1 min-h-0">
+
+                        <div className="flex-1 overflow-y-auto space-y-4 p-[clamp(8px,1.2vw,16px)]">
+
+                            {data?.feed?.length ? data.feed.map((post: any, i: number) => (
+
+                                <div
+                                    key={i}
+                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden"
+                                >
+
+                                    {/* IMAGE */}
+                                    {post.image && (
+                                        <img
+                                            src={`/api/image?id=${post.image}`}
+                                            alt="chart"
+                                            className="w-full object-cover"
+                                        />
+                                    )}
+
+                                    {/* TEXT */}
+                                    <div className="p-4 space-y-2">
+
+                                        <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">
+                                            {new Date(post.time).toLocaleString()}
+                                        </div>
+
+                                        <div
+                                            className="whitespace-pre-line text-[clamp(10px,1.4vw,15px)] text-neutral-200"
+                                            dangerouslySetInnerHTML={{ __html: post.text }}
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                            )) : (
+
+                                <div className="text-neutral-500 text-center">
+                                    No updates yet
+                                </div>
+
+                            )}
+
                         </div>
 
                     </div>
