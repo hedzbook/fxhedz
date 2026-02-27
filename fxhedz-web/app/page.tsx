@@ -782,14 +782,16 @@ isMobile
               FXHEDZ
             </div>
 
-            <div className="ml-auto text-right flex flex-col items-end">
-              <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
-                ZEROLOSS COMPOUNDED
-              </div>
-              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[10px] tracking-[0.12em]">
-                HEDGING SYSTEM
-              </div>
-            </div>
+<div className="ml-auto flex h-full items-center">
+  <div className="text-right">
+    <div className="text-[clamp(8px,1vh,13px)] font-semibold leading-none">
+      ZEROLOSS COMPOUNDED
+    </div>
+    <div className="text-[clamp(7px,0.9vh,11px)] text-neutral-500 tracking-[0.14em] leading-none">
+      HEDGING SYSTEM
+    </div>
+  </div>
+</div>
           </div>
 
         </div>
