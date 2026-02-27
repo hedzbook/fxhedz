@@ -129,7 +129,7 @@ export default function PairDetail({
                                     {/* IMAGE */}
                                     {post.image && (
                                         <img
-                                            src={`/api/image?id=${post.image}`}
+                                            src={`https://drive.google.com/thumbnail?id=${post.image}&sz=w2000`}
                                             alt="chart"
                                             className="w-full object-cover"
                                         />
