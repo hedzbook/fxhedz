@@ -117,9 +117,19 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
 
         if (String(rows[i][0] || "").toLowerCase() !== email) continue;
 
+        // 🔥 FIX: Update telegram_chat_id if missing or changed
+        if (telegramChatId) {
+
+            const currentChatId = String(rows[i][6] || "");
+
+            if (!currentChatId || currentChatId !== telegramChatId) {
+
+                sheet.getRange(i + 1, 7).setValue(telegramChatId);
+            }
+        }
+
         const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
         const plan = String(rows[i][3] || "").toLowerCase();
-        const now = new Date();
 
         const isLivePlusActive =
             plan === "live+" &&
@@ -140,8 +150,8 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
     sheet.appendRow([
         email,
         now,
-        "", // no expiry for base
-        "live", // permanent base tier
+        "",
+        "live",
         0,
         "",
         telegramChatId || "",
@@ -226,6 +236,32 @@ function doPost(e) {
                 return ContentService
                     .createTextOutput(JSON.stringify(result))
                     .setMimeType(ContentService.MimeType.JSON);
+            }
+
+            // ===============================
+            // APP INSTRUMENT UPDATE
+            // ===============================
+            if (data.app_instruments && data.email) {
+
+                const sheet = mustGetSheet();
+                const rows = sheet.getDataRange().getValues();
+
+                for (let i = 1; i < rows.length; i++) {
+
+                    if (String(rows[i][0] || "").toLowerCase() !== data.email.toLowerCase())
+                        continue;
+
+                    // Column H = index 7
+                    sheet.getRange(i + 1, 8).setValue(
+                        data.app_instruments.join(",")
+                    );
+
+                    return ContentService
+                        .createTextOutput(JSON.stringify({
+                            success: true
+                        }))
+                        .setMimeType(ContentService.MimeType.JSON);
+                }
             }
 
             // ===============================
@@ -342,9 +378,44 @@ function requireSignalAccess(email) {
 
 function doGet(e) {
 
+    // =========================================
+    // IMAGE PROXY (Drive → Direct Binary)
+    // =========================================
+    if (e.parameter.image) {
+        try {
+
+            const fileId = String(e.parameter.image).trim();
+            const file = DriveApp.getFileById(fileId);
+            const blob = file.getBlob();
+
+            const base64 = Utilities.base64Encode(blob.getBytes());
+            const mime = blob.getContentType() || "image/jpeg";
+
+            const html = `
+            <html>
+              <body style="margin:0;padding:0;background:#000;">
+                <img src="data:${mime};base64,${base64}" 
+                     style="width:100%;height:auto;display:block;" />
+              </body>
+            </html>
+        `;
+
+            return HtmlService.createHtmlOutput(html)
+                .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+        } catch (err) {
+
+            return ContentService
+                .createTextOutput("image_error:\n" + err)
+                .setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
+    // ================= AUTH SECTION BELOW (unchanged) =================
     const secret = (e.parameter.secret || "").trim();
     if (secret !== WEBHOOK_SECRET) {
-        return ContentService.createTextOutput("unauthorized");
+        return ContentService
+            .createTextOutput("unauthorized")
+            .setMimeType(ContentService.MimeType.TEXT);
     }
 
     const email = (e.parameter.email || "").toLowerCase().trim();
@@ -357,10 +428,7 @@ function doGet(e) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        const rowEmail = String(rows[i][0] || "")
-            .toLowerCase()
-            .trim();
-
+        const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
         if (rowEmail !== email) continue;
 
         const rawPlan = String(rows[i][3] || "").toLowerCase();
@@ -372,8 +440,7 @@ function doGet(e) {
             expiry &&
             expiry > now;
 
-        const finalPlan =
-            isLivePlusActive ? "live+" : "live";
+        const finalPlan = isLivePlusActive ? "live+" : "live";
 
         if (finalPlan !== "live" && finalPlan !== "live+") {
             return jsonBlocked(finalPlan);
@@ -441,6 +508,28 @@ function buildSignalResponse(access, pair) {
         const notes = getMarketNotes();
         const orders = signals[pair]?.orders || [];
 
+        const feedSheet = SpreadsheetApp
+            .openById(SPREADSHEET_ID)
+            .getSheetByName("NEWS_FEED");
+
+        const rowsFeed = feedSheet.getDataRange().getValues();
+        const feed = [];
+
+        for (let i = rowsFeed.length - 1; i > 0; i--) {
+
+            if (rowsFeed[i][1] !== pair) continue;
+
+            feed.push({
+                time: rowsFeed[i][0],
+                pair: rowsFeed[i][1],
+                text: rowsFeed[i][2],
+                image: rowsFeed[i][3],
+                source: rowsFeed[i][4]
+            });
+
+            if (feed.length >= 50) break;
+        }
+
         return ContentService
             .createTextOutput(JSON.stringify({
                 blocked: false,
@@ -451,7 +540,8 @@ function buildSignalResponse(access, pair) {
                 history: data.history,
                 performance: data.performance,
                 notes: notes[pair] || "",
-                orders
+                orders,
+                feed
             }))
             .setMimeType(ContentService.MimeType.JSON);
     }
@@ -863,6 +953,20 @@ function updateMarketNotes(text) {
     notes[pair] = note
 
     setMarketNotes(notes)
+    // ALSO WRITE TO NEWS_FEED SHEET
+    const feedSheet = SpreadsheetApp
+        .openById(SPREADSHEET_ID)
+        .getSheetByName("NEWS_FEED");
+
+    feedSheet.appendRow([
+        new Date().toISOString(),
+        pair,
+        note,
+        "", // no image
+        "AI"
+    ]);
+
+    pruneNewsFeed(feedSheet);
 }
 
 // ======================================================
@@ -1749,13 +1853,15 @@ function getPairDataFromSheet(pair) {
 // IMAGE BROADCAST
 // ======================================================
 function dispatchImageToUsers(blob, tx) {
-    const cache = CacheService.getScriptCache();
 
+    const cache = CacheService.getScriptCache();
     let payload = null;
 
+    // =========================================
+    // RETRIEVE CACHED TEXT (PAIRING WITH IMAGE)
+    // =========================================
     if (tx) {
 
-        // retry up to 5 times because image can arrive first
         for (let i = 0; i < 5; i++) {
 
             const raw = cache.get("tx_" + tx);
@@ -1765,14 +1871,19 @@ function dispatchImageToUsers(blob, tx) {
                 break;
             }
 
-            Utilities.sleep(250); // wait 250ms
+            Utilities.sleep(250);
         }
     }
 
     const instrument = payload ? payload.instrument : null;
-    // ✅ ALSO UPDATE MINIAPP STATE FROM IMAGE FLOW
+
+    // =========================================
+    // UPDATE MINIAPP STATE
+    // =========================================
     if (payload && payload.text) {
+
         handleSignal(payload.text, null);
+
         const parts = payload.text.trim().split(/\s+/);
         const direction = parts.length > 1 ?
             parts[1].toUpperCase().replace(/<[^>]*>/g, "") :
@@ -1792,17 +1903,46 @@ function dispatchImageToUsers(blob, tx) {
             };
 
             setLiveSignals(updated);
-
         }
-
     }
 
     const caption = payload ?
         stripMachineHeader(payload.text) :
         "📊 FXHEDZ Chart Snapshot";
 
+    // =========================================
+    // SAVE IMAGE TO GOOGLE DRIVE
+    // =========================================
+    const folder = DriveApp.getFolderById("1wQSnKddV3nT3UoBoeXedZSu_JXHZKp5m");
+
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    const imageUrl = file.getId();
+
+    // =========================================
+    // WRITE TO NEWS_FEED SHEET
+    // =========================================
+    if (instrument) {
+
+        const feedSheet = SpreadsheetApp
+            .openById(SPREADSHEET_ID)
+            .getSheetByName("NEWS_FEED");
+
+        feedSheet.appendRow([
+            new Date().toISOString(), // A time
+            instrument, // B pair
+            caption, // C text
+            imageUrl, // D image
+            "MT5" // E source
+        ]);
+
+    }
+
+    // =========================================
+    // TELEGRAM DISTRIBUTION LOGIC
+    // =========================================
     const rows = mustGetSheet().getDataRange().getValues();
-    const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
 
@@ -1810,29 +1950,49 @@ function dispatchImageToUsers(blob, tx) {
         if (!chatId) continue;
 
         const plan = String(rows[i][3] || "").toLowerCase();
-        const instruments = rows[i][5] ?
-            String(rows[i][5]).split(",") :
-            [];
 
-        // Only live or live+
+        // -------------------------------------
+        // PLAN MUST BE LIVE OR LIVE+
+        // -------------------------------------
         if (plan !== "live" && plan !== "live+") {
             continue;
         }
 
-        // 🔒 LIVE tier restriction
-        if (plan === "live") {
-            const allowed = ["ETHUSD", "USDCHF"];
-            if (instrument && allowed.indexOf(instrument) === -1) {
-                continue;
-            }
+        // -------------------------------------
+        // USER MUST HAVE SELECTED INSTRUMENTS
+        // -------------------------------------
+        const selected = rows[i][5] ?
+            String(rows[i][5]).split(",").filter(Boolean) : [];
+
+        if (!selected.length) {
+            continue; // no selection = no alerts
         }
 
-        // User-selected instrument filter
-        if (instrument && instruments.length &&
-            instruments.indexOf(instrument) === -1) {
+        // -------------------------------------
+        // PLAN-BASED ALLOWED PAIRS
+        // -------------------------------------
+        let allowedPairs = [];
+
+        if (plan === "live") {
+            allowedPairs = ["ETHUSD", "USDCHF"];
+        } else if (plan === "live+") {
+            allowedPairs = PAIRS;
+        }
+
+        // -------------------------------------
+        // FINAL INTERSECTION CHECK
+        // -------------------------------------
+        if (
+            !instrument ||
+            allowedPairs.indexOf(instrument) === -1 ||
+            selected.indexOf(instrument) === -1
+        ) {
             continue;
         }
 
+        // -------------------------------------
+        // SEND TELEGRAM PHOTO
+        // -------------------------------------
         UrlFetchApp.fetch(
             "https://api.telegram.org/bot" + TOKEN + "/sendPhoto", {
                 method: "post",
@@ -1847,7 +2007,21 @@ function dispatchImageToUsers(blob, tx) {
         );
     }
 
-    if (tx) cache.remove("tx_" + tx);
+    // =========================================
+    // PRUNE AFTER TELEGRAM SEND
+    // =========================================
+    if (instrument) {
+
+        const feedSheet = SpreadsheetApp
+            .openById(SPREADSHEET_ID)
+            .getSheetByName("NEWS_FEED");
+
+        pruneNewsFeed(feedSheet);
+    }
+
+    if (tx) {
+        cache.remove("tx_" + tx);
+    }
 }
 
 function setMenuButton() {
@@ -1922,6 +2096,18 @@ function getUserRow(chatId) {
     }
 
     return null;
+}
+
+function pruneNewsFeed(sheet) {
+
+    const maxRows = 20000; // ~3 months heavy usage
+    const currentRows = sheet.getLastRow();
+
+    if (currentRows <= maxRows) return;
+
+    const rowsToDelete = 500;
+
+    sheet.deleteRows(2, rowsToDelete);
 }
 
 function send(chatId, text) {

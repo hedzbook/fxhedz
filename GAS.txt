@@ -382,25 +382,34 @@ function doGet(e) {
     // IMAGE PROXY (Drive → Direct Binary)
     // =========================================
     if (e.parameter.image) {
-
         try {
 
             const fileId = String(e.parameter.image).trim();
             const file = DriveApp.getFileById(fileId);
             const blob = file.getBlob();
 
-            blob.setContentType(blob.getContentType() || "image/jpeg");
+            const base64 = Utilities.base64Encode(blob.getBytes());
+            const mime = blob.getContentType() || "image/jpeg";
 
-            return blob; // ✅ raw binary
+            const html = `
+            <html>
+              <body style="margin:0;padding:0;background:#000;">
+                <img src="data:${mime};base64,${base64}" 
+                     style="width:100%;height:auto;display:block;" />
+              </body>
+            </html>
+        `;
+
+            return HtmlService.createHtmlOutput(html)
+                .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 
         } catch (err) {
 
             return ContentService
-                .createTextOutput("image_not_found")
+                .createTextOutput("image_error:\n" + err)
                 .setMimeType(ContentService.MimeType.TEXT);
         }
     }
-
     // ================= AUTH SECTION BELOW (unchanged) =================
     const secret = (e.parameter.secret || "").trim();
     if (secret !== WEBHOOK_SECRET) {
@@ -1907,6 +1916,7 @@ function dispatchImageToUsers(blob, tx) {
     const folder = DriveApp.getFolderById("1wQSnKddV3nT3UoBoeXedZSu_JXHZKp5m");
 
     const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
     const imageUrl = file.getId();
 

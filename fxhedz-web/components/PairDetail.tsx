@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import GlobalLightChart from "./GlobalLightChart"
+import { useState, useEffect } from "react"
 
 type Props = {
     pair: string
@@ -20,7 +20,14 @@ export default function PairDetail({
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
-
+    const [preview, setPreview] = useState<any>(null)
+useEffect(() => {
+    if (preview) {
+        document.body.style.overflow = "hidden"
+    } else {
+        document.body.style.overflow = "auto"
+    }
+}, [preview])
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
@@ -123,32 +130,37 @@ export default function PairDetail({
 
                                 <div
                                     key={i}
-                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden"
+                                    onClick={() => setPreview(post)}
+                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer hover:border-neutral-600 transition"
                                 >
+                                    <div className="flex">
 
-                                    {/* IMAGE */}
-                                    {post.image && (
-                                        <img
-                                            src={`https://drive.google.com/thumbnail?id=${post.image}&sz=w2000`}
-                                            alt="chart"
-                                            className="w-full object-cover"
-                                        />
-                                    )}
+                                        {/* LEFT IMAGE */}
+                                        {post.image && (
+                                            <div className="w-[120px] h-[100px] shrink-0 overflow-hidden">
+                                                <img
+                                                    src={`https://drive.google.com/thumbnail?id=${post.image}&sz=w800`}
+                                                    alt="chart"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        )}
 
-                                    {/* TEXT */}
-                                    <div className="p-4 space-y-2">
+                                        {/* RIGHT TEXT */}
+                                        <div className="flex-1 p-3 space-y-2">
 
-                                        <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">
-                                            {new Date(post.time).toLocaleString()}
+                                            <div className="text-[11px] text-neutral-400">
+                                                {new Date(post.time).toLocaleString()}
+                                            </div>
+
+                                            <div
+                                                className="text-[13px] text-neutral-200 line-clamp-4"
+                                                dangerouslySetInnerHTML={{ __html: post.text }}
+                                            />
+
                                         </div>
 
-                                        <div
-                                            className="whitespace-pre-line text-[clamp(10px,1.4vw,15px)] text-neutral-200"
-                                            dangerouslySetInnerHTML={{ __html: post.text }}
-                                        />
-
                                     </div>
-
                                 </div>
 
                             )) : (
@@ -230,6 +242,37 @@ export default function PairDetail({
                 )}
             </div>
 
+            {/* MODAL PREVIEW */}
+            {preview && (
+                <div
+                    className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+                    onClick={() => setPreview(null)}
+                >
+                    <div
+                        className="bg-neutral-900 max-w-[700px] w-[92%] rounded-xl overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {preview.image && (
+                            <img
+                                src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
+                                className="w-full object-contain"
+                            />
+                        )}
+
+                        <div className="p-5 space-y-3">
+                            <div className="text-sm text-neutral-400">
+                                {new Date(preview.time).toLocaleString()}
+                            </div>
+
+                            <div
+                                className="text-neutral-200 whitespace-pre-line"
+                                dangerouslySetInnerHTML={{ __html: preview.text }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     )
 }
@@ -271,5 +314,3 @@ function Metric({ label, value }: any) {
         </div>
     )
 }
-
-
