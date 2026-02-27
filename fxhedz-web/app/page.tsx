@@ -782,7 +782,7 @@ export default function Page() {
           </button>
 
           {/* RIGHT SIDE CONTENT */}
-          <div className="bg-neutral-900 flex items-center px-2">
+          <div className="bg-neutral-900 flex items-center px-3">
             <div className="text-[clamp(10px,1.8vh,22px)] font-semibold leading-none">
               FXHEDZ
             </div>
