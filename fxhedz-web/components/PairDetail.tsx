@@ -129,7 +129,7 @@ export default function PairDetail({
                                     {/* IMAGE */}
                                     {post.image && (
                                         <img
-                                            src={post.image}
+                                            src={`/api/image?id=${post.image}`}
                                             alt="chart"
                                             className="w-full object-cover"
                                         />
