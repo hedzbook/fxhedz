@@ -37,7 +37,7 @@ export default function PairDetail({
         }
     }, [data])
     const toggleNotification = async () => {
-
+if (!pair || !email) return
         if (!pair) return
 
         let updated = [...appInstruments]
@@ -52,7 +52,6 @@ export default function PairDetail({
         console.log("TOGGLE →", {
             email,
             updated,
-            url: process.env.NEXT_PUBLIC_GAS_AUTH_URL
         })
         await fetch("/api/toggle-notification", {
             method: "POST",
