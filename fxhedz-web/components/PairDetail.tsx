@@ -21,13 +21,13 @@ export default function PairDetail({
 
     const [tab, setTab] = useState<"market" | "news" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
-useEffect(() => {
-    if (preview) {
-        document.body.style.overflow = "hidden"
-    } else {
-        document.body.style.overflow = "auto"
-    }
-}, [preview])
+    useEffect(() => {
+        if (preview) {
+            document.body.style.overflow = "hidden"
+        } else {
+            document.body.style.overflow = "auto"
+        }
+    }, [preview])
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
@@ -149,8 +149,17 @@ useEffect(() => {
                                         {/* RIGHT TEXT */}
                                         <div className="flex-1 p-3 space-y-2">
 
-                                            <div className="text-[11px] text-neutral-400">
-                                                {new Date(post.time).toLocaleString()}
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-[11px] text-neutral-400">
+                                                    {new Date(post.time).toLocaleString()}
+                                                </div>
+
+                                                {post.text.includes("BUY") && (
+                                                    <span className="text-green-400 text-xs font-semibold">BUY</span>
+                                                )}
+                                                {post.text.includes("SELL") && (
+                                                    <span className="text-red-400 text-xs font-semibold">SELL</span>
+                                                )}
                                             </div>
 
                                             <div
