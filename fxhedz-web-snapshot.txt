@@ -12,6 +12,7 @@ app\api\public-preview\route.ts
 app\api\refresh\route.ts
 app\api\signals\route.ts
 app\api\subscription\route.ts
+app\api\toggle-notification\route.ts
 app\globals.css
 app\layout.tsx
 app\page.tsx
@@ -567,6 +568,47 @@ export async function GET(req: NextRequest) {
       expiry: null
     })
 
+  }
+}
+
+
+
+// app\api\toggle-notification\route.ts
+// --------------------------------------------------
+
+import { NextRequest, NextResponse } from "next/server"
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+
+    const { email, app_instruments } = body
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Missing email" },
+        { status: 400 }
+      )
+    }
+
+    const res = await fetch(process.env.GAS_AUTH_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        app_instruments
+      })
+    })
+
+    const data = await res.json()
+
+    return NextResponse.json(data)
+
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Toggle failed" },
+      { status: 500 }
+    )
   }
 }
 
@@ -2554,7 +2596,7 @@ py-[clamp(2px,0.6vh,6px)]
               </>
             )}
 
-            {/* ================= NEWS ================= */}
+            {/* ================= UPDATES ================= */}
             {tab === "updates" && (
               <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
@@ -3014,8 +3056,12 @@ export default function PairDetail({
         }
 
         setAppInstruments(updated)
-
-        await fetch(process.env.NEXT_PUBLIC_GAS_AUTH_URL as string, {
+console.log("TOGGLE â†’", {
+  email,
+  updated,
+  url: process.env.NEXT_PUBLIC_GAS_AUTH_URL
+})
+        await fetch("/api/toggle-notification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

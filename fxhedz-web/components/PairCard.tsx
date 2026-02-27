@@ -223,7 +223,7 @@ py-[clamp(2px,0.6vh,6px)]
               </>
             )}
 
-            {/* ================= NEWS ================= */}
+            {/* ================= UPDATES ================= */}
             {tab === "updates" && (
               <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
