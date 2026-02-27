@@ -475,7 +475,7 @@ export default function Page() {
           className="shrink-0 grid border-b border-neutral-800"
           style={{
             gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-            height: "clamp(30px,4.5vh,60px)"
+            height: "clamp(28px,3.5vh,50px)"
           }}
         >
 
@@ -675,7 +675,7 @@ export default function Page() {
       absolute
       inset-x-0
       top-0
-      bottom-[clamp(30px,4.5vh,60px)]
+      bottom-[clamp(28px,3.5vh,50px)]
       z-40
       bg-neutral-950
       flex
@@ -683,7 +683,7 @@ export default function Page() {
     `
                 : `
             absolute
-            bottom-[clamp(30px,4.5vh,60px)]
+            bottom-[clamp(28px,3.5vh,50px)]
             left-0
             z-50
             w-[min(92vw,360px)]
@@ -713,7 +713,7 @@ export default function Page() {
           className="shrink-0 grid border-t border-neutral-800 relative"
           style={{
             gridTemplateColumns: "clamp(30px, 3.5vw, 46px) 1fr",
-            height: "clamp(30px,4.5vh,60px)"
+            height: "clamp(28px,3.5vh,50px)"
           }}
         >
 

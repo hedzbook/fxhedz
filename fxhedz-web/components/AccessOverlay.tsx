@@ -35,7 +35,7 @@ function OverlayContainer({ children }: any) {
     <div
       className="
         fixed inset-x-0
-        bottom-[clamp(26px,3vh,40px)]
+        bottom-[clamp(28px,4.5vh,56px)]
         z-[999]
         flex justify-center
         px-4
