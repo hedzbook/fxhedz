@@ -142,9 +142,10 @@ export default function PairDetail({
                                             {new Date(post.time).toLocaleString()}
                                         </div>
 
-                                        <div className="whitespace-pre-line text-[clamp(10px,1.4vw,15px)] text-neutral-200">
-                                            {post.text}
-                                        </div>
+                                        <div
+                                            className="whitespace-pre-line text-[clamp(10px,1.4vw,15px)] text-neutral-200"
+                                            dangerouslySetInnerHTML={{ __html: post.text }}
+                                        />
 
                                     </div>
 
