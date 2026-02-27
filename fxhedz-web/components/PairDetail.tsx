@@ -124,30 +124,27 @@ export default function PairDetail({
                 {tab === "news" && (
                     <div className="flex flex-col flex-1 min-h-0">
 
-                        <div className="flex-1 overflow-y-auto space-y-4 p-[clamp(8px,1.2vw,16px)]">
+                        <div className="flex-1 overflow-y-auto space-y-2.5 p-[clamp(8px,1.2vw,16px)]">
 
                             {data?.feed?.length ? data.feed.map((post: any, i: number) => (
 
                                 <div
                                     key={i}
                                     onClick={() => setPreview(post)}
-                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer hover:border-neutral-600 transition"
+                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer"
                                 >
                                     <div className="flex">
 
-                                        {/* LEFT IMAGE */}
                                         {post.image && (
-                                            <div className="w-[120px] h-[100px] shrink-0 overflow-hidden">
+                                            <div className="w-[120px] shrink-0 overflow-hidden">
                                                 <img
                                                     src={`https://drive.google.com/thumbnail?id=${post.image}&sz=w800`}
-                                                    alt="chart"
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
                                         )}
 
-                                        {/* RIGHT TEXT */}
-                                        <div className="flex-1 p-3 space-y-2">
+                                        <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
                                                 <div className="text-[11px] text-neutral-400">
@@ -163,25 +160,21 @@ export default function PairDetail({
                                             </div>
 
                                             <div
-                                                className="text-[13px] text-neutral-200 line-clamp-4"
+                                                className="text-[13px] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
                                         </div>
-
                                     </div>
                                 </div>
 
                             )) : (
-
                                 <div className="text-neutral-500 text-center">
                                     No updates yet
                                 </div>
-
                             )}
 
                         </div>
-
                     </div>
                 )}
 
