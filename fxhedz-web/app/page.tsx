@@ -786,7 +786,7 @@ isMobile
               <div className="text-[clamp(7px,0.9vh,12px)] leading-[11px]">
                 ZEROLOSS COMPOUNDED
               </div>
-              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[10px] tracking-[0.10em]">
+              <div className="text-[clamp(8px,1vh,14px)] text-neutral-500 leading-[10px] tracking-[0.09em]">
                 HEDGING SYSTEM
               </div>
             </div>
