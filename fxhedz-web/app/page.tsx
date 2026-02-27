@@ -94,8 +94,8 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-  const isAuthenticated =
-    status === "authenticated"
+const isAuthenticated =
+  status === "authenticated"
 
   const sessionExists =
     isAndroid
@@ -660,13 +660,13 @@ export default function Page() {
 
         </div>
 
-        {/* MENU LAYER */}
-        {menuOpen && (
-          <div
-            ref={menuRef}
-            className={
-              isMobile
-                ? `
+{/* MENU LAYER */}
+{menuOpen && (
+  <div
+    ref={menuRef}
+    className={
+isMobile
+  ? `
       absolute
       inset-x-0
       top-0
@@ -676,7 +676,7 @@ export default function Page() {
       flex
       flex-col
     `
-                : `
+        : `
             absolute
             bottom-[clamp(26px,3vh,40px)]
             left-0
@@ -689,19 +689,19 @@ export default function Page() {
             rounded-lg
             shadow-xl
           `
-            }
-          >
-            <ControlPanel
-              accessMeta={accessMeta}
-              deviceId={
-                typeof window !== "undefined"
-                  ? localStorage.getItem("fxhedz_device_id")
-                  : null
-              }
-              version="v0.1.0"
-            />
-          </div>
-        )}
+    }
+  >
+    <ControlPanel
+      accessMeta={accessMeta}
+      deviceId={
+        typeof window !== "undefined"
+          ? localStorage.getItem("fxhedz_device_id")
+          : null
+      }
+      version="v0.1.0"
+    />
+  </div>
+)}
 
         {/* BOTTOM BAR */}
         <div
@@ -714,42 +714,42 @@ export default function Page() {
 
 
           {/* BOTTOM LEFT BUTTON (HAMBURGER HERE) */}
-          <button
-            ref={hamburgerRef}
-            onClick={() => setMenuOpen(prev => !prev)}
-            className="
+<button
+  ref={hamburgerRef}
+  onClick={() => setMenuOpen(prev => !prev)}
+  className="
     border-r border-neutral-800
     bg-neutral-950
     hover:bg-neutral-900
     flex items-center justify-center
     relative
   "
-          >
-            <div
-              className="
+>
+  <div
+    className="
       relative
       w-[clamp(12px,1.6vh,18px)]
       h-[clamp(8px,1.2vh,14px)]
     "
-            >
+  >
 
-              {/* TOP LINE */}
-              <span
-                className={`
+    {/* TOP LINE */}
+    <span
+      className={`
         absolute left-0
         w-full
         h-[clamp(1px,0.25vh,2px)]
         bg-neutral-400
         transition-all duration-300 ease-in-out
         ${menuOpen
-                    ? "top-1/2 -translate-y-1/2 rotate-45"
-                    : "top-0"}
+          ? "top-1/2 -translate-y-1/2 rotate-45"
+          : "top-0"}
       `}
-              />
+    />
 
-              {/* MIDDLE LINE */}
-              <span
-                className={`
+    {/* MIDDLE LINE */}
+    <span
+      className={`
         absolute left-0 top-1/2 -translate-y-1/2
         w-full
         h-[clamp(1px,0.25vh,2px)]
@@ -757,24 +757,24 @@ export default function Page() {
         transition-all duration-300 ease-in-out
         ${menuOpen ? "opacity-0" : ""}
       `}
-              />
+    />
 
-              {/* BOTTOM LINE */}
-              <span
-                className={`
+    {/* BOTTOM LINE */}
+    <span
+      className={`
         absolute left-0
         w-full
         h-[clamp(1px,0.25vh,2px)]
         bg-neutral-400
         transition-all duration-300 ease-in-out
         ${menuOpen
-                    ? "top-1/2 -translate-y-1/2 -rotate-45"
-                    : "bottom-0"}
+          ? "top-1/2 -translate-y-1/2 -rotate-45"
+          : "bottom-0"}
       `}
-              />
+    />
 
-            </div>
-          </button>
+  </div>
+</button>
 
           {/* RIGHT SIDE CONTENT */}
           <div className="bg-neutral-900 flex items-center px-2">
@@ -782,14 +782,12 @@ export default function Page() {
               FXHEDZ
             </div>
 
-<div className="ml-auto flex items-center h-full pr-0">
-  <div className="h-[100%]">
-    <img
-      src="/zlchs.png"
-      alt="ZeroLoss"
-      className="h-full w-auto object-contain"
-    />
-  </div>
+<div className="ml-auto flex items-center h-full pr-0 overflow-hidden">
+  <img
+    src="/zlchs.png"
+    alt="ZeroLoss"
+    className="block h-[50%] w-auto object-contain"
+  />
 </div>
           </div>
 
