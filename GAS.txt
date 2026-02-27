@@ -510,7 +510,7 @@ function buildSignalResponse(access, pair) {
 
         const feedSheet = SpreadsheetApp
             .openById(SPREADSHEET_ID)
-            .getSheetByName("NEWS_FEED");
+            .getSheetByName("UPDATES_FEED");
 
         const rowsFeed = feedSheet.getDataRange().getValues();
         const feed = [];
@@ -530,6 +530,26 @@ function buildSignalResponse(access, pair) {
             if (feed.length >= 50) break;
         }
 
+        // 🔔 ANDROID PUSH INSTRUMENTS (Column H index 7)
+
+        let appInstruments = [];
+
+        for (let i = 1; i < rows.length; i++) {
+
+            const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
+
+            if (rowEmail === email) {
+
+                if (rows[i][7]) {
+                    appInstruments = String(rows[i][7])
+                        .split(",")
+                        .filter(Boolean);
+                }
+
+                break;
+            }
+        }
+
         return ContentService
             .createTextOutput(JSON.stringify({
                 blocked: false,
@@ -541,7 +561,8 @@ function buildSignalResponse(access, pair) {
                 performance: data.performance,
                 notes: notes[pair] || "",
                 orders,
-                feed
+                feed,
+                appInstruments
             }))
             .setMimeType(ContentService.MimeType.JSON);
     }
@@ -953,10 +974,10 @@ function updateMarketNotes(text) {
     notes[pair] = note
 
     setMarketNotes(notes)
-    // ALSO WRITE TO NEWS_FEED SHEET
+    // ALSO WRITE TO UPDATES_FEED SHEET
     const feedSheet = SpreadsheetApp
         .openById(SPREADSHEET_ID)
-        .getSheetByName("NEWS_FEED");
+        .getSheetByName("UPDATES_FEED");
 
     feedSheet.appendRow([
         new Date().toISOString(),
@@ -966,7 +987,7 @@ function updateMarketNotes(text) {
         "AI"
     ]);
 
-    pruneNewsFeed(feedSheet);
+    pruneUpdatesFeed(feedSheet);
 }
 
 // ======================================================
@@ -1921,13 +1942,13 @@ function dispatchImageToUsers(blob, tx) {
     const imageUrl = file.getId();
 
     // =========================================
-    // WRITE TO NEWS_FEED SHEET
+    // WRITE TO UPDATES_FEED SHEET
     // =========================================
     if (instrument) {
 
         const feedSheet = SpreadsheetApp
             .openById(SPREADSHEET_ID)
-            .getSheetByName("NEWS_FEED");
+            .getSheetByName("UPDATES_FEED");
 
         feedSheet.appendRow([
             new Date().toISOString(), // A time
@@ -2014,9 +2035,9 @@ function dispatchImageToUsers(blob, tx) {
 
         const feedSheet = SpreadsheetApp
             .openById(SPREADSHEET_ID)
-            .getSheetByName("NEWS_FEED");
+            .getSheetByName("UPDATES_FEED");
 
-        pruneNewsFeed(feedSheet);
+        pruneUpdatesFeed(feedSheet);
     }
 
     if (tx) {
@@ -2098,7 +2119,7 @@ function getUserRow(chatId) {
     return null;
 }
 
-function pruneNewsFeed(sheet) {
+function pruneUpdatesFeed(sheet) {
 
     const maxRows = 20000; // ~3 months heavy usage
     const currentRows = sheet.getLastRow();

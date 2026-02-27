@@ -21,6 +21,7 @@ export default function PairDetail({
 
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
+    const [appInstruments, setAppInstruments] = useState<string[]>([])
     useEffect(() => {
         if (preview) {
             document.body.style.overflow = "hidden"
@@ -28,14 +29,57 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
+    useEffect(() => {
+        if (data?.appInstruments) {
+            setAppInstruments(data.appInstruments)
+        }
+    }, [data])
+    const toggleNotification = async () => {
+
+        if (!pair) return
+
+        let updated = [...appInstruments]
+
+        if (updated.includes(pair)) {
+            updated = updated.filter(p => p !== pair)
+        } else {
+            updated.push(pair)
+        }
+
+        setAppInstruments(updated)
+
+        await fetch(process.env.NEXT_PUBLIC_GAS_URL as string, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: data?.email,   // ensure email is coming from parent
+                app_instruments: updated
+            })
+        })
+    }
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
             {/* HEADER */}
             <div className="shrink-0 flex items-center justify-between px-3 py-[clamp(6px,1vh,10px)] border-b border-neutral-800">
-                <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
-                    {pair}
+
+                <div className="flex items-center gap-3">
+
+                    <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
+                        {pair}
+                    </div>
+
+                    {!isGuest && (
+                        <button
+                            onClick={toggleNotification}
+                            className="text-[18px] leading-none"
+                        >
+                            {appInstruments.includes(pair) ? "🔔" : "🔕"}
+                        </button>
+                    )}
+
                 </div>
+
                 <button
                     onClick={onClose}
                     className="text-[clamp(10px,1.6vw,14px)] text-neutral-400 hover:text-white leading-none"
@@ -152,10 +196,10 @@ export default function PairDetail({
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-xs font-semibold">BUY</span>
+                                                    <span className="text-green-400 text-xs font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-xs font-semibold">SELL</span>
+                                                    <span className="text-red-400 text-xs font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
