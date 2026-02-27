@@ -782,19 +782,15 @@ export default function Page() {
               FXHEDZ
             </div>
 
-            <div className="ml-auto h-full flex items-center">
-              <img
-                src="/zlchs.png"
-                alt="ZeroLoss Compounded Hedging System"
-                className="
-      h-[80%]
-      w-auto
-      object-contain
-      select-none
-      pointer-events-none
-    "
-              />
-            </div>
+<div className="ml-auto flex items-center h-full pr-2">
+  <div className="h-[65%] flex items-center">
+    <img
+      src="/zlchs.png"
+      alt="ZeroLoss"
+      className="h-full w-auto object-contain"
+    />
+  </div>
+</div>
           </div>
 
         </div>
