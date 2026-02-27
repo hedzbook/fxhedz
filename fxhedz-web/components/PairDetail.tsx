@@ -114,19 +114,40 @@ export default function PairDetail({
                     </div>
                 )}
 
-                {tab === "news" && (
-                    <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
+{tab === "news" && (
+  <div className="h-full overflow-y-auto px-3 pb-6 space-y-4">
 
-                        <div className="shrink-0 text-neutral-400 mb-2">
-                            Market Commentary
-                        </div>
+    {data?.feed && data.feed.length > 0 ? (
+      data.feed.map((item: any, index: number) => (
+        <div
+          key={index}
+          className="bg-black border border-neutral-800 rounded-xl overflow-hidden"
+        >
+          {item.image && (
+            <img
+              src={item.image}
+              alt="snapshot"
+              className="w-full object-cover"
+            />
+          )}
 
-                        <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(10px,1.4vw,14px)] pr-1">
-                            {data?.notes || "Coming Soon"}
-                        </div>
+          <div className="p-3 text-sm text-neutral-200 whitespace-pre-line">
+            {item.text}
+          </div>
 
-                    </div>
-                )}
+          <div className="px-3 pb-3 text-xs text-neutral-500">
+            {new Date(item.time).toLocaleString()}
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="text-neutral-500 text-sm">
+        No updates yet.
+      </div>
+    )}
+
+  </div>
+)}
 
                 {tab === "history" && (
                     <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
