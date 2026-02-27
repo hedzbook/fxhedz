@@ -486,8 +486,8 @@ export default function Page() {
             }}
             className="
     border-r border-neutral-800
-    bg-neutral-950
-    hover:bg-neutral-900
+    bg-neutral-000
+    hover:bg-neutral-000
     flex items-center justify-center
   "
           >
@@ -495,7 +495,7 @@ export default function Page() {
               src="/favicon.png"
               alt="FXHEDZ"
               className="
-      w-[90%]
+      w-[80%]
       h-[90%]
       object-contain
       select-none
