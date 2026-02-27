@@ -49,7 +49,11 @@ export default function PairDetail({
         }
 
         setAppInstruments(updated)
-
+console.log("TOGGLE →", {
+  email,
+  updated,
+  url: process.env.NEXT_PUBLIC_GAS_AUTH_URL
+})
         await fetch(process.env.NEXT_PUBLIC_GAS_AUTH_URL as string, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
