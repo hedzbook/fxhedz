@@ -38,6 +38,19 @@ export async function GET(req: NextRequest) {
     const res = await fetch(url, { cache: "no-store" })
     const json = await res.json()
 
+    if (pair && json?.signals?.[pair]) {
+      return NextResponse.json({
+        ...json.signals[pair],
+        feed: json.feed || [],
+        history: json.history || [],
+        performance: json.performance || {},
+        blocked: json.blocked,
+        active: json.active,
+        plan: json.plan,
+        expiry: json.expiry
+      })
+    }
+
     return NextResponse.json(json)
 
   } catch {

@@ -43,11 +43,11 @@ export default function PairDetail({
                     id={`chart_mount_${pair}`}
                     className="w-full h-full"
                 />
-<GlobalLightChart
-    mountId={`chart_mount_${pair}`}
-    signal={isGuest ? data : signal}
-    disableOverlays={isGuest}
-/>
+                <GlobalLightChart
+                    mountId={`chart_mount_${pair}`}
+                    signal={isGuest ? data : signal}
+                    disableOverlays={isGuest}
+                />
             </div>
 
             {/* TABS (FIXED) */}
@@ -114,40 +114,54 @@ export default function PairDetail({
                     </div>
                 )}
 
-{tab === "news" && (
-  <div className="h-full overflow-y-auto px-3 pb-6 space-y-4">
+                {tab === "news" && (
+                    <div className="flex flex-col flex-1 min-h-0">
 
-    {data?.feed && data.feed.length > 0 ? (
-      data.feed.map((item: any, index: number) => (
-        <div
-          key={index}
-          className="bg-black border border-neutral-800 rounded-xl overflow-hidden"
-        >
-          {item.image && (
-            <img
-              src={item.image}
-              alt="snapshot"
-              className="w-full object-cover"
-            />
-          )}
+                        <div className="flex-1 overflow-y-auto space-y-4 p-[clamp(8px,1.2vw,16px)]">
 
-          <div className="p-3 text-sm text-neutral-200 whitespace-pre-line">
-            {item.text}
-          </div>
+                            {data?.feed?.length ? data.feed.map((post: any, i: number) => (
 
-          <div className="px-3 pb-3 text-xs text-neutral-500">
-            {new Date(item.time).toLocaleString()}
-          </div>
-        </div>
-      ))
-    ) : (
-      <div className="text-neutral-500 text-sm">
-        No updates yet.
-      </div>
-    )}
+                                <div
+                                    key={i}
+                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden"
+                                >
 
-  </div>
-)}
+                                    {/* IMAGE */}
+                                    {post.image && (
+                                        <img
+                                            src={post.image}
+                                            alt="chart"
+                                            className="w-full object-cover"
+                                        />
+                                    )}
+
+                                    {/* TEXT */}
+                                    <div className="p-4 space-y-2">
+
+                                        <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">
+                                            {new Date(post.time).toLocaleString()}
+                                        </div>
+
+                                        <div className="whitespace-pre-line text-[clamp(10px,1.4vw,15px)] text-neutral-200">
+                                            {post.text}
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            )) : (
+
+                                <div className="text-neutral-500 text-center">
+                                    No updates yet
+                                </div>
+
+                            )}
+
+                        </div>
+
+                    </div>
+                )}
 
                 {tab === "history" && (
                     <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
