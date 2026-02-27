@@ -782,8 +782,8 @@ export default function Page() {
               FXHEDZ
             </div>
 
-<div className="ml-auto flex items-center h-full pr-1">
-  <div className="h-[70%]">
+<div className="ml-auto flex items-center h-full pr-0">
+  <div className="h-[100%]">
     <img
       src="/zlchs.png"
       alt="ZeroLoss"
