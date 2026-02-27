@@ -783,7 +783,7 @@ export default function Page() {
             </div>
 
             <div className="ml-auto flex items-center h-full pr-2">
-              <div className="h-[65%] flex items-center">
+              <div className="h-[100%] flex items-center">
                 <img src="/zlchs.png" alt="ZeroLoss" className="h-full w-auto object-contain" />
               </div>
             </div>
