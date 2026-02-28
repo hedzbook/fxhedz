@@ -663,18 +663,26 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { app_instruments } = await req.json()
+  // ============================
+  // READ BODY (ATOMIC TOGGLE)
+  // ============================
+  const body = await req.json()
+  const pair = body?.pair
+  const action = body?.action
 
-  if (!Array.isArray(app_instruments)) {
+  if (
+    !pair ||
+    !["add", "remove"].includes(action)
+  ) {
     return NextResponse.json(
-      { error: "Invalid instruments" },
+      { error: "Invalid toggle request" },
       { status: 400 }
     )
   }
 
-  const sanitized = app_instruments
-    .map((p: string) => String(p).toUpperCase().trim())
-    .filter(Boolean)
+  const cleanPair = String(pair)
+    .toUpperCase()
+    .trim()
 
   // ============================
   // PLATFORM DETECTION
@@ -682,19 +690,24 @@ export async function POST(req: NextRequest) {
   const platform =
     req.cookies.get("fx_platform")?.value || "web"
 
-  let payload: any = { email }
-
-  if (platform === "telegram") {
-    payload.telegram_instruments = sanitized
-  } else if (platform === "android") {
-    payload.app_instruments = sanitized
-  } else {
-    payload.web_instruments = sanitized
+  // ============================
+  // BUILD GAS PAYLOAD
+  // ============================
+  const payload: any = {
+    email,
+    toggle_pair: cleanPair,
+    toggle_action: action,
+    toggle_platform: platform
   }
 
+  // ============================
+  // SEND TO GAS
+  // ============================
   const res = await fetch(process.env.GAS_AUTH_URL!, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(payload)
   })
 
@@ -781,6 +794,7 @@ import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
 import ControlPanel from "@/components/ControlPanel"
+
 import {
   DndContext,
   closestCenter,
@@ -841,6 +855,7 @@ export default function Page() {
   const [netState, setNetState] = useState("FLAT")
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [appInstruments, setAppInstruments] = useState<string[]>([])
 
   useEffect(() => {
     function check() {
@@ -853,6 +868,11 @@ export default function Page() {
   }, [])
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
+  const email =
+  session?.user?.email ||
+  (typeof window !== "undefined"
+    ? (window as any).__NATIVE_EMAIL__
+    : null)
   const isAndroid =
     typeof window !== "undefined" &&
     !!(window as any).ReactNativeWebView
@@ -900,6 +920,17 @@ export default function Page() {
       }
     })
   )
+  useEffect(() => {
+
+    if (!email) return
+
+    fetch(`/api/proxy?instruments=1&email=${email}`)
+        .then(r => r.json())
+        .then(d => {
+            setAppInstruments(d.appInstruments || [])
+        })
+
+}, [email])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -1321,6 +1352,8 @@ export default function Page() {
                 onClose={() => setOpenPair(null)}
                 isGuest={isGuest}
                 email={session?.user?.email || (window as any).__NATIVE_EMAIL__}
+                    appInstruments={appInstruments}
+    setAppInstruments={setAppInstruments}
               />
 
             </div>
@@ -3117,6 +3150,8 @@ type Props = {
     onClose: () => void
     isGuest?: boolean
     email?: string
+    appInstruments: string[]
+    setAppInstruments: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export default function PairDetail({
@@ -3125,12 +3160,13 @@ export default function PairDetail({
     data,
     onClose,
     isGuest = false,
-    email
+    email,
+    appInstruments,
+    setAppInstruments
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
-    const [appInstruments, setAppInstruments] = useState<string[]>([])
     const [saving, setSaving] = useState(false)
 
     useEffect(() => {
@@ -3141,30 +3177,38 @@ export default function PairDetail({
         }
     }, [preview])
 
-const toggleNotification = async () => {
+    const toggleNotification = async () => {
 
-    if (!pair || saving) return
+        if (!pair || saving) return
 
-    setSaving(true)
+        setSaving(true)
 
-    const updated = appInstruments.includes(pair)
-        ? appInstruments.filter(p => p !== pair)
-        : [...appInstruments, pair]
+        let updated: string[] = []
 
-    setAppInstruments(updated)
+        setAppInstruments(prev => {
 
-    try {
-        await fetch("/api/toggle-notification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                app_instruments: updated
-            })
+            if (prev.includes(pair)) {
+                updated = prev.filter(p => p !== pair)
+            } else {
+                updated = [...prev, pair]
+            }
+
+            return updated
         })
-    } finally {
-        setSaving(false)
+
+        try {
+await fetch("/api/toggle-notification", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    pair,
+    action: appInstruments.includes(pair) ? "remove" : "add"
+  })
+})
+        } finally {
+            setSaving(false)
+        }
     }
-}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 

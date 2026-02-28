@@ -139,17 +139,31 @@ export default function Page() {
       }
     })
   )
-  useEffect(() => {
+useEffect(() => {
 
-    if (!email) return
+  if (!email || !accessMeta) return
 
-    fetch(`/api/proxy?instruments=1&email=${email}`)
-        .then(r => r.json())
-        .then(d => {
-            setAppInstruments(d.appInstruments || [])
-        })
+  fetch(`/api/proxy?instruments=1&email=${email}`)
+    .then(r => r.json())
+    .then(d => {
 
-}, [email])
+      const platform =
+        document.cookie
+          .split("; ")
+          .find(row => row.startsWith("fx_platform="))
+          ?.split("=")[1] || "web"
+
+      if (platform === "telegram") {
+        setAppInstruments(d.telegramInstruments || [])
+      } else if (platform === "android") {
+        setAppInstruments(d.appInstruments || [])
+      } else {
+        setAppInstruments(d.webInstruments || [])
+      }
+
+    })
+
+}, [email, accessMeta])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {

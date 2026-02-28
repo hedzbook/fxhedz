@@ -321,20 +321,44 @@ function doPost(e) {
             // ===============================
             // APP INSTRUMENT UPDATE
             // ===============================
-            if (data.app_instruments && data.email) {
+            if (data.toggle_pair && data.toggle_action && data.email) {
 
                 const sheet = mustGetSheet();
                 const rows = sheet.getDataRange().getValues();
 
                 for (let i = 1; i < rows.length; i++) {
 
-                    if (String(rows[i][0] || "").toLowerCase() !== data.email.toLowerCase())
+                    if (String(rows[i][COL.email] || "").toLowerCase() !== data.email.toLowerCase())
                         continue;
 
-                    // Column H = index 7
-                    sheet.getRange(i + 1, COL.android_pairs + 1).setValue(
-                        data.app_instruments.join(",")
-                    );
+                    const platform =
+                        rows[i][COL.platform] || "web";
+
+                    let colIndex;
+
+                    if (platform === "android") colIndex = COL.android_pairs;
+                    else if (platform === "telegram") colIndex = COL.telegram_pairs;
+                    else colIndex = COL.web_pairs;
+
+                    let current = rows[i][colIndex] ?
+                        String(rows[i][colIndex]).split(",").filter(Boolean) :
+                        [];
+
+                    const pair = String(data.toggle_pair).toUpperCase().trim();
+
+                    if (data.toggle_action === "add") {
+
+                        if (current.indexOf(pair) === -1) {
+                            current.push(pair);
+                        }
+
+                    } else if (data.toggle_action === "remove") {
+
+                        current = current.filter(p => p !== pair);
+                    }
+
+                    sheet.getRange(i + 1, colIndex + 1)
+                        .setValue(current.join(","));
 
                     return ContentService
                         .createTextOutput(JSON.stringify({
@@ -614,6 +638,16 @@ function requireSignalAccess(email) {
 
 function doGet(e) {
 
+    if (e.parameter.instruments === "1") {
+
+        const email = (e.parameter.email || "").toLowerCase().trim();
+
+        const result = getUserInstrumentsByEmail(email);
+
+        return ContentService
+            .createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     // =========================================
     // IMAGE PROXY (Drive → Direct Binary)
     // =========================================
@@ -817,17 +851,48 @@ function buildSignalResponse(access, pair, email) {
                 performance: data.performance,
                 notes: notes[pair] || "",
                 orders,
-                feed,
-                appInstruments,
-                webInstruments,
-                telegramInstruments
+                feed
             }))
             .setMimeType(ContentService.MimeType.JSON);
     }
 
     // =========================================
-    // GENERAL REQUEST
+    // LOAD INSTRUMENTS FOR GENERAL REQUEST
     // =========================================
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+
+    let appInstruments = [];
+    let webInstruments = [];
+    let telegramInstruments = [];
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
+
+        if (rowEmail !== email) continue;
+
+        if (rows[i][COL.android_pairs]) {
+            appInstruments = String(rows[i][COL.android_pairs])
+                .split(",")
+                .filter(Boolean);
+        }
+
+        if (rows[i][COL.web_pairs]) {
+            webInstruments = String(rows[i][COL.web_pairs])
+                .split(",")
+                .filter(Boolean);
+        }
+
+        if (rows[i][COL.telegram_pairs]) {
+            telegramInstruments = String(rows[i][COL.telegram_pairs])
+                .split(",")
+                .filter(Boolean);
+        }
+
+        break;
+    }
 
     return ContentService
         .createTextOutput(JSON.stringify({
@@ -835,7 +900,10 @@ function buildSignalResponse(access, pair, email) {
             active: true,
             plan: access.plan,
             expiry: access.expiry || null,
-            signals
+            signals,
+            appInstruments,
+            webInstruments,
+            telegramInstruments
         }))
         .setMimeType(ContentService.MimeType.JSON);
 }
@@ -1323,6 +1391,44 @@ function getUserInstruments(chatId) {
     }
 
     return [];
+}
+
+function getUserInstrumentsByEmail(email) {
+
+    if (!email) return {
+        appInstruments: [],
+        webInstruments: [],
+        telegramInstruments: []
+    };
+
+    email = String(email).toLowerCase().trim();
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
+        if (rowEmail !== email) continue;
+
+        return {
+            appInstruments: rows[i][COL.android_pairs] ?
+                String(rows[i][COL.android_pairs]).split(",").filter(Boolean) :
+                [],
+            webInstruments: rows[i][COL.web_pairs] ?
+                String(rows[i][COL.web_pairs]).split(",").filter(Boolean) :
+                [],
+            telegramInstruments: rows[i][COL.telegram_pairs] ?
+                String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) :
+                []
+        };
+    }
+
+    return {
+        appInstruments: [],
+        webInstruments: [],
+        telegramInstruments: []
+    };
 }
 
 function editInstrumentPanel(chatId, messageId, selected) {
