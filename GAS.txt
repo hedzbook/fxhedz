@@ -51,9 +51,43 @@ function getLiveSignals() {
 }
 
 function setLiveSignals(data) {
+
+    const safe = {};
+
+    // Rebuild strictly from approved PAIRS list
+    PAIRS.forEach(pair => {
+
+        if (!data[pair]) return;
+
+        safe[pair] = {
+            direction: data[pair].direction || null,
+            entry: data[pair].entry || null,
+            sl: data[pair].sl || null,
+            tp: data[pair].tp || null,
+            price: data[pair].price || null,
+            lots: Number(data[pair].lots || 0),
+            buys: Number(data[pair].buys || 0),
+            sells: Number(data[pair].sells || 0),
+            candles: Array.isArray(data[pair].candles) ?
+                data[pair].candles.slice(-60) :
+                [],
+            orders: Array.isArray(data[pair].orders) ?
+                data[pair].orders.slice(0, 20) :
+                []
+        };
+    });
+
+    const json = JSON.stringify(safe);
+
+    // 🔒 Hard memory guard (~100 KB safe ceiling)
+    if (json.length > 90000) {
+        Logger.log("LIVE_SIGNALS too large, skipping write");
+        return;
+    }
+
     PropertiesService
         .getScriptProperties()
-        .setProperty("LIVE_SIGNALS", JSON.stringify(data));
+        .setProperty("LIVE_SIGNALS", json);
 }
 
 function getOrderHistory() {
@@ -97,7 +131,7 @@ function setMarketNotes(data) {
         .setProperty("MARKET_NOTES", JSON.stringify(data))
 }
 
-function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) {
+function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId, refreshHash, refreshExpires) {
 
     if (!email) {
         return {
@@ -126,6 +160,15 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
 
                 sheet.getRange(i + 1, 7).setValue(telegramChatId);
             }
+        }
+
+        // SAVE REFRESH HASH + EXPIRY (Columns M & N)
+        if (refreshHash) {
+            sheet.getRange(i + 1, 13).setValue(refreshHash); // Column M
+        }
+
+        if (refreshExpires) {
+            sheet.getRange(i + 1, 14).setValue(refreshExpires); // Column N
         }
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
@@ -159,7 +202,9 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId) 
         "",
         true,
         platform || "web",
-        ""
+        "", // L purchase_token
+        refreshHash || "", // M refresh_hash
+        refreshExpires || "" // N refresh_expiry
     ]);
 
     return {
@@ -265,16 +310,57 @@ function doPost(e) {
             }
 
             // ===============================
+            // SAVE PUSH TOKEN
+            // ===============================
+            if (data.push_token && data.email) {
+
+                const sheet = mustGetSheet();
+                const rows = sheet.getDataRange().getValues();
+
+                for (let i = 1; i < rows.length; i++) {
+
+                    if (String(rows[i][0] || "").toLowerCase() !== data.email.toLowerCase())
+                        continue;
+
+                    sheet.getRange(i + 1, 9).setValue(data.push_token);
+
+                    return ContentService
+                        .createTextOutput(JSON.stringify({
+                            success: true
+                        }))
+                        .setMimeType(ContentService.MimeType.JSON);
+                }
+            }
+
+            // ===============================
+            // REFRESH TOKEN VALIDATION
+            // ===============================
+            if (data.refresh_validate && data.email) {
+
+                const result = validateRefreshToken(
+                    data.email,
+                    data.device_id || "",
+                    data.refresh_token_hash || ""
+                );
+
+                return ContentService
+                    .createTextOutput(JSON.stringify(result))
+                    .setMimeType(ContentService.MimeType.JSON);
+            }
+
+            // ===============================
             // APP LOGIN
             // ===============================
-            if (data.email) {
+            if (data.email && !data.refresh_validate) {
 
                 const result = handleAuthUser(
                     data.email,
                     data.device_id || "",
                     data.fingerprint || "",
                     data.platform || "web",
-                    data.telegram_chat_id || ""
+                    data.telegram_chat_id || "",
+                    data.refresh_token_hash || "",
+                    data.refresh_expires || ""
                 );
 
                 return ContentService
@@ -353,6 +439,50 @@ function doPost(e) {
         send(ADMIN_CHAT_ID, "❌ GAS ERROR\n<code>" + err + "</code>");
         return ack;
     }
+}
+
+function validateRefreshToken(email, deviceId, refreshHash) {
+
+    if (!email || !refreshHash) {
+        return {
+            valid: false
+        };
+    }
+
+    const sheet = mustGetSheet();
+    const rows = sheet.getDataRange().getValues();
+    const now = new Date();
+
+    email = String(email).toLowerCase().trim();
+
+    for (let i = 1; i < rows.length; i++) {
+
+        const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
+        if (rowEmail !== email) continue;
+
+        const storedHash = String(rows[i][12] || ""); // ✅ Column M
+        const storedExpiry = rows[i][13] ? new Date(rows[i][13]) : null; // ✅ Column N
+
+        if (!storedHash || storedHash !== refreshHash) {
+            return {
+                valid: false
+            };
+        }
+
+        if (!storedExpiry || storedExpiry < now) {
+            return {
+                valid: false
+            };
+        }
+
+        return {
+            valid: true
+        };
+    }
+
+    return {
+        valid: false
+    };
 }
 
 function requireSignalAccess(email) {
@@ -449,7 +579,7 @@ function doGet(e) {
         return buildSignalResponse({
             plan: finalPlan,
             expiry: expiry || null
-        }, pair);
+        }, pair, email);
     }
 
     return jsonBlocked("none");
@@ -466,7 +596,7 @@ function jsonBlocked(plan) {
         .setMimeType(ContentService.MimeType.JSON);
 }
 
-function buildSignalResponse(access, pair) {
+function buildSignalResponse(access, pair, email) {
 
     let signals = getLiveSignals();
 
@@ -529,6 +659,9 @@ function buildSignalResponse(access, pair) {
 
             if (feed.length >= 50) break;
         }
+
+        const sheet = mustGetSheet();
+        const rows = sheet.getDataRange().getValues();
 
         // 🔔 ANDROID PUSH INSTRUMENTS (Column H index 7)
 
@@ -2026,6 +2159,26 @@ function dispatchImageToUsers(blob, tx) {
                 muteHttpExceptions: true
             }
         );
+
+        // -------------------------------------
+        // ANDROID PUSH (Column H instruments, Column I token)
+        // -------------------------------------
+
+        // Column H = index 7 (app instruments)
+        // Column I = index 8 (push token)
+
+        const appSelected = rows[i][7] ?
+            String(rows[i][7]).split(",").filter(Boolean) : []
+
+        const pushToken = rows[i][8] || ""
+
+        if (
+            pushToken &&
+            instrument &&
+            appSelected.indexOf(instrument) !== -1
+        ) {
+            sendPush(pushToken, instrument, caption)
+        }
     }
 
     // =========================================
@@ -2133,6 +2286,24 @@ function pruneUpdatesFeed(sheet) {
 
 function send(chatId, text) {
     sendRich(chatId, text, null);
+}
+
+function sendPush(token, pair, text) {
+
+    UrlFetchApp.fetch("https://exp.host/--/api/v2/push/send", {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify({
+            to: token,
+            sound: "default",
+            title: "FXHEDZ " + pair,
+            body: text.substring(0, 150),
+            data: {
+                pair: pair
+            }
+        }),
+        muteHttpExceptions: true
+    });
 }
 
 function sendRich(chatId, text, markup) {

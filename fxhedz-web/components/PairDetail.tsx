@@ -57,7 +57,7 @@ if (!pair || !email) return
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                email,
+                // email,
                 app_instruments: updated
             })
         })
@@ -149,7 +149,7 @@ if (!pair || !email) return
                                                 {o.direction}
                                             </div>
                                             <div className="text-neutral-400 text-xs">
-                                                ENTRY {o.entry}
+                                                {/*ENTRY*/} {o.entry}
                                             </div>
                                         </div>
                                         <div className="text-right">
