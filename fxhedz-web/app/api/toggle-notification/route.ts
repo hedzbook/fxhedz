@@ -87,5 +87,10 @@ export async function POST(req: NextRequest) {
 
   const data = await res.json()
 
-  return NextResponse.json(data)
+  return NextResponse.json({
+    success: true,
+    instruments: Array.isArray(data?.instruments)
+      ? data.instruments
+      : []
+  })
 }

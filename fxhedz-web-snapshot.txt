@@ -920,17 +920,42 @@ export default function Page() {
       }
     })
   )
-  useEffect(() => {
+useEffect(() => {
 
-    if (!email) return
+  if (!email || !accessMeta) return
 
-    fetch(`/api/proxy?instruments=1&email=${email}`)
-        .then(r => r.json())
-        .then(d => {
-            setAppInstruments(d.appInstruments || [])
-        })
+  async function loadInstruments() {
 
-}, [email])
+    try {
+
+      const res = await fetch("/api/signals", {
+        cache: "no-store"
+      })
+
+      const data = await res.json()
+
+      const platform =
+        document.cookie
+          .split("; ")
+          .find(r => r.startsWith("fx_platform="))
+          ?.split("=")[1] || "web"
+
+      if (platform === "telegram") {
+        setAppInstruments(data.telegramInstruments || [])
+      } else if (platform === "android") {
+        setAppInstruments(data.appInstruments || [])
+      } else {
+        setAppInstruments(data.webInstruments || [])
+      }
+
+    } catch (err) {
+      console.error("Instrument load failed", err)
+    }
+  }
+
+  loadInstruments()
+
+}, [email, accessMeta])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -3177,38 +3202,39 @@ export default function PairDetail({
         }
     }, [preview])
 
-    const toggleNotification = async () => {
+const toggleNotification = async () => {
 
-        if (!pair || saving) return
+  if (!pair || saving) return
 
-        setSaving(true)
+  setSaving(true)
 
-        let updated: string[] = []
+  let isRemoving = false
 
-        setAppInstruments(prev => {
+  setAppInstruments(prev => {
 
-            if (prev.includes(pair)) {
-                updated = prev.filter(p => p !== pair)
-            } else {
-                updated = [...prev, pair]
-            }
-
-            return updated
-        })
-
-        try {
-await fetch("/api/toggle-notification", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    pair,
-    action: appInstruments.includes(pair) ? "remove" : "add"
-  })
-})
-        } finally {
-            setSaving(false)
-        }
+    if (prev.includes(pair)) {
+      isRemoving = true
+      return prev.filter(p => p !== pair)
     }
+
+    return [...prev, pair]
+  })
+
+  try {
+
+    await fetch("/api/toggle-notification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pair,
+        action: isRemoving ? "remove" : "add"
+      })
+    })
+
+  } finally {
+    setSaving(false)
+  }
+}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 

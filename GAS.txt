@@ -319,45 +319,52 @@ function doPost(e) {
             }
 
             // ===============================
-            // APP INSTRUMENT UPDATE
+            // APP INSTRUMENT UPDATE (TOGGLE)
             // ===============================
             if (data.toggle_pair && data.toggle_action && data.email) {
 
                 const sheet = mustGetSheet();
                 const rows = sheet.getDataRange().getValues();
 
+                const email = String(data.email).toLowerCase().trim();
+                const pair = String(data.toggle_pair).toUpperCase().trim();
+                const action = String(data.toggle_action).toLowerCase().trim();
+                const platform = (data.toggle_platform || "web").toLowerCase().trim();
+
+                let colIndex;
+
+                if (platform === "android") {
+                    colIndex = COL.android_pairs;
+                } else if (platform === "telegram") {
+                    colIndex = COL.telegram_pairs;
+                } else {
+                    colIndex = COL.web_pairs;
+                }
+
                 for (let i = 1; i < rows.length; i++) {
 
-                    if (String(rows[i][COL.email] || "").toLowerCase() !== data.email.toLowerCase())
-                        continue;
+                    const rowEmail = String(rows[i][COL.email] || "")
+                        .toLowerCase()
+                        .trim();
 
-// 🔥 USE INCOMING PLATFORM (NOT STORED COLUMN)
-const platform = (data.toggle_platform || "web").toLowerCase().trim();
+                    if (rowEmail !== email) continue;
 
-let colIndex;
+                    let current = [];
 
-if (platform === "android") {
-    colIndex = COL.android_pairs;
-} else if (platform === "telegram") {
-    colIndex = COL.telegram_pairs;
-} else {
-    colIndex = COL.web_pairs;
-}
+                    if (rows[i][colIndex]) {
+                        current = String(rows[i][colIndex])
+                            .split(",")
+                            .map(p => String(p).toUpperCase().trim())
+                            .filter(Boolean);
+                    }
 
-                    let current = rows[i][colIndex] ?
-                        String(rows[i][colIndex]).split(",").filter(Boolean) :
-                        [];
-
-                    const pair = String(data.toggle_pair).toUpperCase().trim();
-
-                    if (data.toggle_action === "add") {
-
-                        if (current.indexOf(pair) === -1) {
+                    if (action === "add") {
+                        if (!current.includes(pair)) {
                             current.push(pair);
                         }
+                    }
 
-                    } else if (data.toggle_action === "remove") {
-
+                    if (action === "remove") {
                         current = current.filter(p => p !== pair);
                     }
 
@@ -366,10 +373,17 @@ if (platform === "android") {
 
                     return ContentService
                         .createTextOutput(JSON.stringify({
-                            success: true
+                            success: true,
+                            instruments: current
                         }))
                         .setMimeType(ContentService.MimeType.JSON);
                 }
+
+                return ContentService
+                    .createTextOutput(JSON.stringify({
+                        success: false
+                    }))
+                    .setMimeType(ContentService.MimeType.JSON);
             }
 
             // ===============================
@@ -1417,14 +1431,11 @@ function getUserInstrumentsByEmail(email) {
 
         return {
             appInstruments: rows[i][COL.android_pairs] ?
-                String(rows[i][COL.android_pairs]).split(",").filter(Boolean) :
-                [],
+                String(rows[i][COL.android_pairs]).split(",").filter(Boolean) : [],
             webInstruments: rows[i][COL.web_pairs] ?
-                String(rows[i][COL.web_pairs]).split(",").filter(Boolean) :
-                [],
+                String(rows[i][COL.web_pairs]).split(",").filter(Boolean) : [],
             telegramInstruments: rows[i][COL.telegram_pairs] ?
-                String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) :
-                []
+                String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) : []
         };
     }
 
