@@ -180,7 +180,7 @@ if (!pair || !email) return
                                 <div
                                     key={i}
                                     onClick={() => setPreview(post)}
-                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer"
+                                    className="bg-neutral-900 border border-neutral-800 overflow-hidden cursor-pointer"
                                 >
                                     <div className="flex">
 
@@ -196,20 +196,20 @@ if (!pair || !email) return
                                         <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
-                                                <div className="text-[11px] text-neutral-400">
+                                                <div className="text-[clamp(12px,1.8vw,18px)] text-neutral-400">
                                                     {new Date(post.time).toLocaleString()}
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-xs font-semibold">BULLISH</span>
+                                                    <span className="text-green-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-xs font-semibold">BEARISH</span>
+                                                    <span className="text-red-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
                                             <div
-                                                className="text-[13px] leading-4 text-neutral-200 whitespace-pre-line"
+                                                className="text-[clamp(12px,1.8vw,18px)] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 

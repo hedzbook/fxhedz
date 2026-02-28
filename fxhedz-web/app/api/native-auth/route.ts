@@ -8,7 +8,8 @@ const REFRESH_EXPIRES_DAYS = 14
 
 export async function POST(req: NextRequest) {
   try {
-    const { idToken, deviceId } = await req.json()
+
+    const { idToken, deviceId, pushToken } = await req.json()
 
     if (!idToken || !deviceId) {
       return NextResponse.json(
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 🔹 Verify Google token (accept Web + Android)
+    // 🔹 Verify Google token
     const client = new OAuth2Client()
 
     const ticket = await client.verifyIdToken({
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       refreshExpires.getDate() + REFRESH_EXPIRES_DAYS
     )
 
-    // 🔹 Register device in GAS
+    // 🔹 Register device in GAS (also validates subscription)
     const gasRes = await fetch(process.env.GAS_AUTH_URL!, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,16 +69,26 @@ export async function POST(req: NextRequest) {
 
     const gasData = await gasRes.json()
 
- console.log("GAS DATA:", gasData)
-
-if (!gasData.active) {
+    if (!gasData.active) {
       return NextResponse.json(
         { error: "Subscription inactive" },
         { status: 403 }
       )
     }
 
-    // 🔹 Issue short-lived access token
+    // 🔹 Save push token ONLY if subscription active
+    if (pushToken) {
+      await fetch(process.env.GAS_AUTH_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          push_token: pushToken
+        })
+      })
+    }
+
+    // 🔹 Issue access token
     const accessToken = jwt.sign(
       { email, deviceId },
       process.env.FXHEDZ_SECRET!,

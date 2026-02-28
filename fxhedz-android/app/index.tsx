@@ -8,7 +8,16 @@ import * as Google from "expo-auth-session/providers/google"
 import * as SecureStore from "expo-secure-store"
 import * as Crypto from "expo-crypto"
 import * as AuthSession from "expo-auth-session"
-
+import * as Notifications from 'expo-notifications'
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+})
 WebBrowser.maybeCompleteAuthSession()
 
 const API_BASE = "https://fxhedz.vercel.app"
@@ -17,6 +26,7 @@ const [nativeEmail, setNativeEmail] = useState<string | null>(null)
 export default function HomeScreen() {
 
   const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [nativeEmail, setNativeEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const webViewRef = useRef<WebView>(null)
   const [deviceIdState, setDeviceIdState] = useState<string | null>(null)
@@ -52,32 +62,33 @@ export default function HomeScreen() {
       if (id) setDeviceIdState(id)
     })
   }, [])
-async function initialize() {
+  async function initialize() {
 
-  const storedAccess = await SecureStore.getItemAsync("accessToken")
-  const storedRefresh = await SecureStore.getItemAsync("refreshToken")
-  const storedEmail = await SecureStore.getItemAsync("email")
+    const storedAccess = await SecureStore.getItemAsync("accessToken")
+    const storedRefresh = await SecureStore.getItemAsync("refreshToken")
+    const storedEmail = await SecureStore.getItemAsync("email")
 
-  if (storedEmail) {
-    setNativeEmail(storedEmail)
-  }
-
-  if (storedAccess) {
-    setAccessToken(storedAccess)
-    setLoading(false)
-    return
-  }
-
-  if (storedRefresh && storedEmail) {
-    const refreshed = await tryRefresh()
-    if (refreshed) {
-      const newAccess = await SecureStore.getItemAsync("accessToken")
-      setAccessToken(newAccess ?? null)
+    if (storedAccess) {
+      setAccessToken(storedAccess)
+      setLoading(false)
+      return
     }
-  }
 
-  setLoading(false)
-}
+    if (storedEmail) {
+      await registerForPushNotifications()
+      setNativeEmail(storedEmail)
+    }
+
+    if (storedRefresh && storedEmail) {
+      const refreshed = await tryRefresh()
+      if (refreshed) {
+        const newAccess = await SecureStore.getItemAsync("accessToken")
+        setAccessToken(newAccess ?? null)
+      }
+    }
+
+    setLoading(false)
+  }
 
   // ===============================
   // HANDLE GOOGLE RESPONSE
@@ -113,6 +124,35 @@ async function initialize() {
     return deviceId
   }
 
+  async function registerForPushNotifications() {
+
+    const access = await SecureStore.getItemAsync("accessToken")
+    if (!access) return
+
+    const { status } = await Notifications.requestPermissionsAsync()
+
+    if (status !== "granted") {
+      console.log("Push permission denied")
+      return
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync()
+    const expoPushToken = tokenData.data
+
+    console.log("Expo Push Token:", expoPushToken)
+
+    await fetch(`${API_BASE}/api/register-push`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access}`
+      },
+      body: JSON.stringify({
+        pushToken: expoPushToken
+      })
+    })
+  }
+
   // ===============================
   // EXCHANGE WITH BACKEND
   // ===============================
@@ -143,6 +183,8 @@ async function initialize() {
       await SecureStore.setItemAsync("refreshToken", data.refreshToken)
       await SecureStore.setItemAsync("email", data.email)
       setNativeEmail(data.email)
+
+      await registerForPushNotifications()
 
       setAccessToken(data.accessToken)
       webViewRef.current?.reload()
@@ -234,7 +276,7 @@ async function initialize() {
           ? { Authorization: `Bearer ${accessToken}` }
           : {}
       }}
-injectedJavaScript={`
+      injectedJavaScript={`
   window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
   window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
   window.__NATIVE_ACCESS_TOKEN__ = "${accessToken ?? ""}";

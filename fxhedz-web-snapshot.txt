@@ -10,6 +10,7 @@ app\api\image\route.ts
 app\api\native-auth\route.ts
 app\api\public-preview\route.ts
 app\api\refresh\route.ts
+app\api\register-push\route.ts
 app\api\signals\route.ts
 app\api\subscription\route.ts
 app\api\toggle-notification\route.ts
@@ -169,7 +170,8 @@ const REFRESH_EXPIRES_DAYS = 14
 
 export async function POST(req: NextRequest) {
   try {
-    const { idToken, deviceId } = await req.json()
+
+    const { idToken, deviceId, pushToken } = await req.json()
 
     if (!idToken || !deviceId) {
       return NextResponse.json(
@@ -178,7 +180,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ðŸ”¹ Verify Google token (accept Web + Android)
+    // ðŸ”¹ Verify Google token
     const client = new OAuth2Client()
 
     const ticket = await client.verifyIdToken({
@@ -213,7 +215,7 @@ export async function POST(req: NextRequest) {
       refreshExpires.getDate() + REFRESH_EXPIRES_DAYS
     )
 
-    // ðŸ”¹ Register device in GAS
+    // ðŸ”¹ Register device in GAS (also validates subscription)
     const gasRes = await fetch(process.env.GAS_AUTH_URL!, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -229,16 +231,26 @@ export async function POST(req: NextRequest) {
 
     const gasData = await gasRes.json()
 
- console.log("GAS DATA:", gasData)
-
-if (!gasData.active) {
+    if (!gasData.active) {
       return NextResponse.json(
         { error: "Subscription inactive" },
         { status: 403 }
       )
     }
 
-    // ðŸ”¹ Issue short-lived access token
+    // ðŸ”¹ Save push token ONLY if subscription active
+    if (pushToken) {
+      await fetch(process.env.GAS_AUTH_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          push_token: pushToken
+        })
+      })
+    }
+
+    // ðŸ”¹ Issue access token
     const accessToken = jwt.sign(
       { email, deviceId },
       process.env.FXHEDZ_SECRET!,
@@ -398,6 +410,41 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Refresh failed" }, { status: 401 })
   }
+}
+
+
+
+// app\api\register-push\route.ts
+// --------------------------------------------------
+
+import { NextRequest, NextResponse } from "next/server"
+import { verifyAccessToken } from "@/lib/jwt"
+
+export async function POST(req: NextRequest) {
+
+  const jwtUser = verifyAccessToken(req)
+
+  if (!jwtUser || typeof jwtUser !== "object") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { pushToken } = await req.json()
+  const email = (jwtUser as any).email
+
+  if (!pushToken) {
+    return NextResponse.json({ error: "Missing token" }, { status: 400 })
+  }
+
+  await fetch(process.env.GAS_AUTH_URL!, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      push_token: pushToken
+    })
+  })
+
+  return NextResponse.json({ success: true })
 }
 
 
@@ -3044,7 +3091,7 @@ export default function PairDetail({
         }
     }, [data])
     const toggleNotification = async () => {
-
+if (!pair || !email) return
         if (!pair) return
 
         let updated = [...appInstruments]
@@ -3056,11 +3103,10 @@ export default function PairDetail({
         }
 
         setAppInstruments(updated)
-console.log("TOGGLE â†’", {
-  email,
-  updated,
-  url: process.env.NEXT_PUBLIC_GAS_AUTH_URL
-})
+        console.log("TOGGLE â†’", {
+            email,
+            updated,
+        })
         await fetch("/api/toggle-notification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -3188,7 +3234,7 @@ console.log("TOGGLE â†’", {
                                 <div
                                     key={i}
                                     onClick={() => setPreview(post)}
-                                    className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer"
+                                    className="bg-neutral-900 border border-neutral-800 overflow-hidden cursor-pointer"
                                 >
                                     <div className="flex">
 
@@ -3204,20 +3250,20 @@ console.log("TOGGLE â†’", {
                                         <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
-                                                <div className="text-[11px] text-neutral-400">
+                                                <div className="text-[clamp(12px,1.8vw,18px)] text-neutral-400">
                                                     {new Date(post.time).toLocaleString()}
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-xs font-semibold">BULLISH</span>
+                                                    <span className="text-green-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-xs font-semibold">BEARISH</span>
+                                                    <span className="text-red-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
                                             <div
-                                                className="text-[13px] leading-4 text-neutral-200 whitespace-pre-line"
+                                                className="text-[clamp(12px,1.8vw,18px)] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
