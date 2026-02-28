@@ -56,7 +56,7 @@ function PairCard({
 <div
   className={`
     h-full
-    text-[clamp(10px,7.33px+0.833vw,18px)]
+    text-[clamp(11px,6.66px+1.354vw,24px)]
     relative
     transition-all duration-300
     border border-neutral-800 rounded-none
@@ -104,7 +104,7 @@ py-[clamp(2px,0.6vh,6px)]
             </div>
 
             {/* ROW 2 â€” LOTS + B/S COUNT */}
-            <div className="mt-[clamp(1px,0.4vw,6px)] flex justify-between items-center text-[clamp(8px,1.3vh,18px)] leading-none">
+            <div className="mt-[clamp(1px,0.4vw,6px)] flex justify-between items-center text-[clamp(8px,4.66px+1.0416vw,18px)] leading-none">
               <div className="text-neutral-400">
                 {signal?.lots ?? "-"} LOTS
               </div>
@@ -133,7 +133,7 @@ py-[clamp(2px,0.6vh,6px)]
         <div className="border-t border-neutral-800 flex flex-col flex-1 min-h-0 overflow-y-auto">
 
           {/* TABS */}
-          <div className="flex w-full border-b border-neutral-800 text-[clamp(10px,1.4vw,14px)]">
+          <div className="flex w-full border-b border-neutral-800 text-[clamp(8px,4.66px+1.0416vw,18px)]">
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
             <TabBtn label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
             <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
@@ -155,17 +155,17 @@ py-[clamp(2px,0.6vh,6px)]
                 />
 
                 <div>
-                  <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">Latest Signal</div>
+                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">Latest Signal</div>
                   <div className="font-bold text-lg">
                     {signal?.direction || "--"} {signal?.entry || ""}
                   </div>
-                  <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">
+                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
                     SL {signal?.sl || "--"} Â· TP {signal?.tp || "--"}
                   </div>
                 </div>
 
-                <div className="bg-neutral-800 rounded-lg p-2 text-[clamp(10px,1.4vw,14px)] text-neutral-300">
-                  <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400 mb-2">Active Orders</div>
+                <div className="bg-neutral-800 rounded-lg p-2 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-300">
+                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-2">Active Orders</div>
 
                   <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
                     {liveOrders?.length ? liveOrders.map((o, i) => {
@@ -214,7 +214,7 @@ py-[clamp(2px,0.6vh,6px)]
                       )
 
                     }) : (
-                      <div className="text-neutral-500 text-[clamp(10px,1.4vw,14px)]">
+                      <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
                         No open orders
                       </div>
                     )}
@@ -227,11 +227,11 @@ py-[clamp(2px,0.6vh,6px)]
             {tab === "updates" && (
               <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
-                <div className="shrink-0 text-[clamp(10px,1.4vw,14px)] text-neutral-400 mb-2">
+                <div className="shrink-0 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-2">
                   Market Commentary
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(10px,1.4vw,14px)]">
+                <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
                   {notes || "Coming Soon"}
                 </div>
 
@@ -247,7 +247,7 @@ py-[clamp(2px,0.6vh,6px)]
                   {history?.length ? history.map((h: any, i: number) => (
                     <div
                       key={i}
-                      className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(10px,1.4vw,14px)]"
+                      className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)]"
                     >
                       <div>
                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
@@ -262,7 +262,7 @@ py-[clamp(2px,0.6vh,6px)]
                       </div>
                     </div>
                   )) : (
-                    <div className="text-neutral-500 text-[clamp(10px,1.4vw,14px)]">
+                    <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
                       No history yet
                     </div>
                   )}
@@ -279,7 +279,7 @@ py-[clamp(2px,0.6vh,6px)]
                 <div className="flex-1 min-h-0 overflow-y-auto space-y-[clamp(8px,1vh,16px)] pr-1">
 
                   {/* TOP METRICS */}
-                  <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(10px,1.4vw,14px)]">
+                  <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
                     <Metric
                       label="Win Rate"
                       value={
@@ -295,7 +295,7 @@ py-[clamp(2px,0.6vh,6px)]
                   </div>
 
                   {/* STAT LIST */}
-                  <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(10px,1.4vw,14px)]">
+                  <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
                     <Stat label="Total Trades" value={performance?.trades} />
                     <Stat label="Wins" value={performance?.wins} />
                     <Stat label="Losses" value={performance?.losses} />
@@ -343,8 +343,8 @@ function Stat({ label, value }: any) {
 function Metric({ label, value }: any) {
   return (
     <div className="bg-neutral-800 border border-neutral-700 p-[clamp(10px,1.4vw,18px)] text-center">
-      <div className="text-neutral-400 text-[clamp(9px,1.2vw,12px)]">{label}</div>
-      <div className="text-[clamp(12px,1.8vw,20px)] font-semibold">{value ?? "--"}</div>
+      <div className="text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">{label}</div>
+      <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">{value ?? "--"}</div>
     </div>
   )
 }
@@ -486,7 +486,7 @@ function InlineTradeStrip({ signal, direction }: any) {
         </div>
       </div>
 
-      <div className="flex justify-between text-[clamp(8px,2.4vw,16px)] text-neutral-400">
+      <div className="flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
         <span>{sl}</span>
         <span>{entry}</span>
         <span>{tp}</span>
@@ -550,7 +550,7 @@ function TradeBar({
   return (
     <div className="mt-3 select-none">
 
-      <div className="relative h-3 text-[clamp(12px,1vw,16px)] text-neutral-400 mb-1">
+      <div className="relative h-3 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-1">
         <span className="absolute left-0">SL / HEDZ</span>
         <span
           className="absolute"
@@ -615,7 +615,7 @@ function TradeBar({
 
       </div>
 
-      <div className="flex justify-between text-[11px] text-neutral-400 mt-1">
+      <div className="flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mt-1">
         <span>{sl}</span>
         <span>{entry}</span>
         <span>{tp}</span>

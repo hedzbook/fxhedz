@@ -70,7 +70,7 @@ if (!pair || !email) return
 
                 <div className="flex items-center gap-3">
 
-                    <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-none">
+                    <div className="font-semibold text-[clamp(11px,6.66px+1.354vw,24px)] leading-none">
                         {pair}
                     </div>
 
@@ -123,7 +123,7 @@ if (!pair || !email) return
 
                         <div>
                             <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">Latest Signal</div>
-                            <div className="font-semibold text-[clamp(12px,1.8vw,18px)] leading-tight">
+                            <div className="font-semibold text-[clamp(11px,6.66px+1.354vw,24px)] leading-tight">
                                 {signal?.direction || "--"} {signal?.entry || ""}
                             </div>
                             <div className="text-[clamp(10px,1.4vw,14px)] text-neutral-400">
@@ -196,20 +196,20 @@ if (!pair || !email) return
                                         <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
-                                                <div className="text-[clamp(12px,1.8vw,18px)] text-neutral-400">
+                                                <div className="text-[clamp(11px,6.66px+1.354vw,24px)] text-neutral-400">
                                                     {new Date(post.time).toLocaleString()}
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BULLISH</span>
+                                                    <span className="text-green-400 text-[clamp(11px,6.66px+1.354vw,24px)] font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-[clamp(12px,1.8vw,18px)] font-semibold">BEARISH</span>
+                                                    <span className="text-red-400 text-[clamp(11px,6.66px+1.354vw,24px)] font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
                                             <div
-                                                className="text-[clamp(12px,1.8vw,18px)] leading-4 text-neutral-200 whitespace-pre-line"
+                                                className="text-[clamp(11px,6.66px+1.354vw,24px)] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
