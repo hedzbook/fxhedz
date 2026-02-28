@@ -1621,7 +1621,7 @@ function Panel({ children }: any) {
 
 function Header() {
   return (
-    <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] tracking-[0.3em] text-blue-500 font-black mb-4 uppercase">
+    <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] tracking-[0.3em] text-blue-500 font-black mb-4 uppercase">
       FXHEDZ <span className="text-white">LIVE</span>
     </div>
   )
@@ -1637,7 +1637,7 @@ function Title({ children }: any) {
 
 function Description({ children }: any) {
   return (
-    <p className="text-[clamp(8px,4.66px+1.0416vw,18px)] leading-[1.3] text-neutral-400 mb-4">
+    <p className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-[1.3] text-neutral-400 mb-4">
       {children}
     </p>
   )
@@ -1705,14 +1705,14 @@ export default function AccountStrip({
 return (
   <div className="h-full bg-neutral-900 flex px-3">
 
-    <div className="flex-1 h-full flex items-center text-left text-[clamp(8px,4.66px+1.0416vw,18px)] leading-none">
+    <div className="flex-1 h-full flex items-center text-left text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-none">
 <div className="flex items-center gap-[clamp(4px,0.6vw,8px)]">
   <span className="text-neutral-400">LOTS</span>
   <span className="font-semibold">{totalLots.toFixed(2)}</span>
 </div>
     </div>
 
-    <div className="flex-1 h-full flex items-center justify-center text-[clamp(8px,4.66px+1.0416vw,18px)] leading-none">
+    <div className="flex-1 h-full flex items-center justify-center text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-none">
 <div className="flex items-center gap-[clamp(4px,0.6vw,8px)]">
   <span className="text-neutral-400">~PnL</span>
   <span className={totalFloating >= 0 ? "text-green-400" : "text-red-400"}>
@@ -1721,7 +1721,7 @@ return (
 </div>
     </div>
 
-    <div className="flex-1 h-full flex items-center justify-end text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold text-sky-400 leading-none">
+    <div className="flex-1 h-full flex items-center justify-end text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold text-sky-400 leading-none">
       {netState}
     </div>
 
@@ -1755,7 +1755,7 @@ const hasNativeToken =
     return (
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin" />
-        <span className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)] uppercase tracking-widest font-bold">Syncing...</span>
+        <span className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)] uppercase tracking-widest font-bold">Syncing...</span>
       </div>
     )
   }
@@ -1780,7 +1780,7 @@ const hasNativeToken =
           w-full max-w-[clamp(140px,65vw,200px)]
 py-[clamp(6px,1.8vh,10px)]
 px-[clamp(10px,3vw,18px)]
-text-[clamp(8px,4.66px+1.0416vw,18px)]
+text-[clamp(9px,5.5px+1.0937vw,19.5px)]
           bg-white hover:bg-neutral-50 
           rounded-md border border-neutral-300
           shadow-sm transition-all duration-200
@@ -1799,7 +1799,7 @@ if (session || (isAndroid && hasNativeToken)) {
     <div className="flex flex-col items-center gap-3 w-full">
       {!isAndroid && (
         <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
-          <span className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 font-mono truncate max-w-[180px] block">
+          <span className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 font-mono truncate max-w-[180px] block">
             {session?.user?.email}
           </span>
         </div>
@@ -1814,7 +1814,7 @@ if (session || (isAndroid && hasNativeToken)) {
           signOut()
         }}
         className="
-          text-[clamp(8px,4.66px+1.0416vw,18px)] font-black uppercase tracking-tighter
+          text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-black uppercase tracking-tighter
           text-red-500/80 hover:text-red-500
           transition-colors duration-200
         "
@@ -1934,7 +1934,7 @@ export default function ControlPanel({
     pb-4
     px-4
     space-y-6
-    text-[clamp(8px,4.66px+1.0416vw,18px)]
+    text-[clamp(9px,5.5px+1.0937vw,19.5px)]
   "
         >
 
@@ -2075,7 +2075,7 @@ function DeviceBlock({ deviceId }: { deviceId: string }) {
 
             <div
                 className="
-          font-mono text-[clamp(8px,4.66px+1.0416vw,18px)]
+          font-mono text-[clamp(9px,5.5px+1.0937vw,19.5px)]
           text-neutral-400
           leading-snug
           break-all
@@ -2139,7 +2139,7 @@ export default function DashboardControlBar({
     return (
       <button
         onClick={onClick}
-        className={`px-4 py-2 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold transition-all duration-200
+        className={`px-4 py-2 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold transition-all duration-200
         ${active
             ? "text-white bg-neutral-800"
             : "text-neutral-400 hover:text-neutral-200"
@@ -2245,28 +2245,30 @@ export default function GlobalLightChart({
             container.removeChild(container.firstChild)
         }
 
-const chart = createChart(container, {
-    width: container.clientWidth,
-    height: container.clientHeight,
-    layout: {
-        background: { type: ColorType.Solid, color: "#1E1E1E" },
-        textColor: "#888"
-    },
-    grid: {
-        vertLines: { color: "rgba(255,255,255,0.03)" },
-        horzLines: { color: "rgba(255,255,255,0.03)" }
-    },
-    rightPriceScale: {
-        borderColor: "rgba(255,255,255,0.08)"
-    },
-    timeScale: {
-        borderColor: "rgba(255,255,255,0.08)",
-        timeVisible: true,
-        secondsVisible: false,
-        rightOffset: 8,
-        barSpacing: 8
-    }
-})
+        const chart = createChart(container, {
+            width: container.clientWidth,
+            height: container.clientHeight,
+            layout: {
+                background: { type: ColorType.Solid, color: "#1E1E1E" },
+                textColor: "#888",
+                fontSize: 10,
+                fontFamily: "monospace"
+            },
+            grid: {
+                vertLines: { color: "rgba(255,255,255,0.03)" },
+                horzLines: { color: "rgba(255,255,255,0.03)" }
+            },
+            rightPriceScale: {
+                borderColor: "rgba(255,255,255,0.08)"
+            },
+            timeScale: {
+                borderColor: "rgba(255,255,255,0.08)",
+                timeVisible: true,
+                secondsVisible: false,
+                rightOffset: 8,
+                barSpacing: 8
+            }
+        })
 
         const series = chart.addSeries(CandlestickSeries, {
             upColor: "#22c55e",
@@ -2332,7 +2334,7 @@ const chart = createChart(container, {
     // ==========================================
     useEffect(() => {
 
-    if (disableOverlays) return
+        if (disableOverlays) return
 
         const candleSeries = candleSeriesRef.current
         if (!candleSeries || !signal) return
@@ -2546,7 +2548,7 @@ py-[clamp(2px,0.6vh,6px)]
             </div>
 
             {/* ROW 2 Ã¢â‚¬â€ LOTS + B/S COUNT */}
-            <div className="mt-[clamp(1px,0.4vw,6px)] flex justify-between items-center text-[clamp(8px,4.66px+1.0416vw,18px)] leading-none">
+            <div className="mt-[clamp(1px,0.4vw,6px)] flex justify-between items-center text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-none">
               <div className="text-neutral-400">
                 {signal?.lots ?? "-"} LOTS
               </div>
@@ -2575,7 +2577,7 @@ py-[clamp(2px,0.6vh,6px)]
         <div className="border-t border-neutral-800 flex flex-col flex-1 min-h-0 overflow-y-auto">
 
           {/* TABS */}
-          <div className="flex w-full border-b border-neutral-800 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+          <div className="flex w-full border-b border-neutral-800 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
             <TabBtn label="Market" active={tab === "market"} onClick={() => setTab("market")} />
             <TabBtn label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
             <TabBtn label="History" active={tab === "history"} onClick={() => setTab("history")} />
@@ -2597,17 +2599,17 @@ py-[clamp(2px,0.6vh,6px)]
                 />
 
                 <div>
-                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">Latest Signal</div>
+                  <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">Latest Signal</div>
                   <div className="font-bold text-lg">
                     {signal?.direction || "--"} {signal?.entry || ""}
                   </div>
-                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
+                  <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
                     SL {signal?.sl || "--"} Ã‚Â· TP {signal?.tp || "--"}
                   </div>
                 </div>
 
-                <div className="bg-neutral-800 rounded-lg p-2 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-300">
-                  <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-2">Active Orders</div>
+                <div className="bg-neutral-800 rounded-lg p-2 text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-300">
+                  <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 mb-2">Active Orders</div>
 
                   <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
                     {liveOrders?.length ? liveOrders.map((o, i) => {
@@ -2656,7 +2658,7 @@ py-[clamp(2px,0.6vh,6px)]
                       )
 
                     }) : (
-                      <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                      <div className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                         No open orders
                       </div>
                     )}
@@ -2669,11 +2671,11 @@ py-[clamp(2px,0.6vh,6px)]
             {tab === "updates" && (
               <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
-                <div className="shrink-0 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-2">
+                <div className="shrink-0 text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 mb-2">
                   Market Commentary
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-900 border border-neutral-800 p-[clamp(10px,1.4vw,16px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                   {notes || "Coming Soon"}
                 </div>
 
@@ -2689,7 +2691,7 @@ py-[clamp(2px,0.6vh,6px)]
                   {history?.length ? history.map((h: any, i: number) => (
                     <div
                       key={i}
-                      className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)]"
+                      className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)]"
                     >
                       <div>
                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
@@ -2704,7 +2706,7 @@ py-[clamp(2px,0.6vh,6px)]
                       </div>
                     </div>
                   )) : (
-                    <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                    <div className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                       No history yet
                     </div>
                   )}
@@ -2721,7 +2723,7 @@ py-[clamp(2px,0.6vh,6px)]
                 <div className="flex-1 min-h-0 overflow-y-auto space-y-[clamp(8px,1vh,16px)] pr-1">
 
                   {/* TOP METRICS */}
-                  <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                  <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                     <Metric
                       label="Win Rate"
                       value={
@@ -2737,7 +2739,7 @@ py-[clamp(2px,0.6vh,6px)]
                   </div>
 
                   {/* STAT LIST */}
-                  <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                  <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                     <Stat label="Total Trades" value={performance?.trades} />
                     <Stat label="Wins" value={performance?.wins} />
                     <Stat label="Losses" value={performance?.losses} />
@@ -2785,8 +2787,8 @@ function Stat({ label, value }: any) {
 function Metric({ label, value }: any) {
   return (
     <div className="bg-neutral-800 border border-neutral-700 p-[clamp(10px,1.4vw,18px)] text-center">
-      <div className="text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">{label}</div>
-      <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">{value ?? "--"}</div>
+      <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">{label}</div>
+      <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">{value ?? "--"}</div>
     </div>
   )
 }
@@ -2928,7 +2930,7 @@ function InlineTradeStrip({ signal, direction }: any) {
         </div>
       </div>
 
-      <div className="flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
+      <div className="flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
         <span>{sl}</span>
         <span>{entry}</span>
         <span>{tp}</span>
@@ -2992,7 +2994,7 @@ function TradeBar({
   return (
     <div className="mt-3 select-none">
 
-      <div className="relative h-3 text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mb-1">
+      <div className="relative h-3 text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 mb-1">
         <span className="absolute left-0">SL / HEDZ</span>
         <span
           className="absolute"
@@ -3057,7 +3059,7 @@ function TradeBar({
 
       </div>
 
-      <div className="flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 mt-1">
+      <div className="flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 mt-1">
         <span>{sl}</span>
         <span>{entry}</span>
         <span>{tp}</span>
@@ -3186,7 +3188,7 @@ if (!pair || !email) return
 
                 <button
                     onClick={onClose}
-                    className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 hover:text-white leading-none"
+                    className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 hover:text-white leading-none"
                 >
                     CLOSE
                 </button>
@@ -3206,7 +3208,7 @@ if (!pair || !email) return
             </div>
 
             {/* TABS (FIXED) */}
-            <div className="shrink-0 flex border-b border-neutral-800 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+            <div className="shrink-0 flex border-b border-neutral-800 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                 <Tab label="Market" active={tab === "market"} onClick={() => setTab("market")} />
                 <Tab label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
                 <Tab label="History" active={tab === "history"} onClick={() => setTab("history")} />
@@ -3221,16 +3223,16 @@ if (!pair || !email) return
 
 
                         <div>
-                            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">Latest Signal</div>
-                            <div className="font-semibold text-[clamp(8px,4.66px+1.0416vw,18px)] leading-tight">
+                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">Latest Signal</div>
+                            <div className="font-semibold text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-tight">
                                 {signal?.direction || "--"} {signal?.entry || ""}
                             </div>
-                            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
+                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
                                 SL {signal?.sl || "--"} Â· TP {signal?.tp || "--"}
                             </div>
                         </div>
 
-                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
 
                             <div className="shrink-0 text-neutral-400 mb-2">
                                 Active Orders
@@ -3247,7 +3249,7 @@ if (!pair || !email) return
                                             <div className={o.direction === "BUY" ? "text-green-400" : "text-red-400"}>
                                                 {o.direction}
                                             </div>
-                                            <div className="text-neutral-400 text-xs">
+                                            <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                                 {/*ENTRY*/} {o.entry}
                                             </div>
                                         </div>
@@ -3300,15 +3302,15 @@ if (!pair || !email) return
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">BULLISH</span>
+                                                    <span className="text-green-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">BEARISH</span>
+                                                    <span className="text-red-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
                                             <div
-                                                className="text-[clamp(8px,4.66px+1.0416vw,18px)] leading-4 text-neutral-200 whitespace-pre-line"
+                                                className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
@@ -3334,13 +3336,13 @@ if (!pair || !email) return
                             {data?.history?.length ? data.history.map((h: any, i: number) => (
                                 <div
                                     key={i}
-                                    className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)]"
+                                    className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)]"
                                 >
                                     <div>
                                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
                                             {h.direction}
                                         </div>
-                                        <div className="text-xs text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                                        <div className="text-xs text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                             {h.entry} â†’ {h.exit}
                                         </div>
                                     </div>
@@ -3349,7 +3351,7 @@ if (!pair || !email) return
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                                <div className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                     No history yet
                                 </div>
                             )}
@@ -3364,7 +3366,7 @@ if (!pair || !email) return
 
                         <div className="flex-1 min-h-0 overflow-y-auto space-y-[clamp(8px,1vh,16px)] pr-1">
 
-                            <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                            <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                 <Metric
                                     label="Win Rate"
                                     value={
@@ -3379,7 +3381,7 @@ if (!pair || !email) return
                                 />
                             </div>
 
-                            <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                            <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                 <Stat label="Total Trades" value={data?.performance?.trades} />
                                 <Stat label="Wins" value={data?.performance?.wins} />
                                 <Stat label="Losses" value={data?.performance?.losses} />
@@ -3434,7 +3436,7 @@ function Tab({ label, active, onClick }: any) {
             className={`
         flex-1
         py-[clamp(6px,1vh,12px)]
-        text-[clamp(8px,4.66px+1.0416vw,18px)]
+        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
         leading-none
         transition-all
         ${active
@@ -3459,8 +3461,8 @@ function Stat({ label, value }: any) {
 function Metric({ label, value }: any) {
     return (
         <div className="bg-neutral-800 border border-neutral-700 p-[clamp(10px,1.4vw,18px)] text-center">
-            <div className="text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">{label}</div>
-            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">{value ?? "--"}</div>
+            <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">{label}</div>
+            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">{value ?? "--"}</div>
         </div>
     )
 }
@@ -3540,10 +3542,10 @@ export default function VerticalSymbolButton({
       `}
     >
       <div className="flex flex-col items-center leading-[1.05]">
-        <span className="text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold tracking-wide">
+        <span className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold tracking-wide">
           {base}
         </span>
-        <span className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 tracking-wide">
+        <span className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 tracking-wide">
           {quote}
         </span>
       </div>

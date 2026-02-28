@@ -19,6 +19,31 @@ const PAIRS = [
     "BTCUSD"
 ];
 
+// ==========================================
+// COLUMN INDEX MAP (0-based)
+// ==========================================
+const COL = {
+    email: 0,
+    created_at: 1,
+    expiry: 2,
+    plan: 3,
+    plan_months: 4,
+
+    telegram_pairs: 5,
+    telegram_chat_id: 6,
+
+    android_pairs: 7,
+    android_push_token: 8,
+
+    web_pairs: 9,
+    web_push_token: 10,
+
+    platform: 11,
+    play_purchase_token: 12,
+    refresh_token_hash: 13,
+    refresh_token_expiry: 14
+};
+
 function getPairPerformanceCache() {
     const raw = PropertiesService
         .getScriptProperties()
@@ -69,11 +94,9 @@ function setLiveSignals(data) {
             buys: Number(data[pair].buys || 0),
             sells: Number(data[pair].sells || 0),
             candles: Array.isArray(data[pair].candles) ?
-                data[pair].candles.slice(-60) :
-                [],
+                data[pair].candles.slice(-60) : [],
             orders: Array.isArray(data[pair].orders) ?
-                data[pair].orders.slice(0, 20) :
-                []
+                data[pair].orders.slice(0, 20) : []
         };
     });
 
@@ -149,30 +172,35 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId, 
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][0] || "").toLowerCase() !== email) continue;
+        if (String(rows[i][COL.email] || "").toLowerCase() !== email) continue;
 
         // 🔥 FIX: Update telegram_chat_id if missing or changed
         if (telegramChatId) {
 
-            const currentChatId = String(rows[i][6] || "");
+            const currentChatId = String(rows[i][COL.telegram_chat_id] || "");
 
             if (!currentChatId || currentChatId !== telegramChatId) {
 
-                sheet.getRange(i + 1, 7).setValue(telegramChatId);
+                sheet.getRange(i + 1, COL.telegram_chat_id + 1)
+                    .setValue(telegramChatId);
             }
         }
 
         // SAVE REFRESH HASH + EXPIRY (Columns M & N)
         if (refreshHash) {
-            sheet.getRange(i + 1, 13).setValue(refreshHash); // Column M
+            sheet.getRange(i + 1, COL.refresh_token_hash + 1)
+                .setValue(refreshHash);
         }
 
         if (refreshExpires) {
-            sheet.getRange(i + 1, 14).setValue(refreshExpires); // Column N
+            sheet.getRange(i + 1, COL.refresh_token_expiry + 1)
+                .setValue(refreshExpires);
         }
 
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
-        const plan = String(rows[i][3] || "").toLowerCase();
+        const expiry = rows[i][COL.expiry] ?
+            new Date(rows[i][COL.expiry]) :
+            null;
+        const plan = String(rows[i][COL.plan] || "").toLowerCase();
 
         const isLivePlusActive =
             plan === "live+" &&
@@ -191,20 +219,25 @@ function handleAuthUser(email, deviceId, fingerprint, platform, telegramChatId, 
     // =========================
 
     sheet.appendRow([
-        email,
-        now,
-        "",
-        "live",
-        0,
-        "",
-        telegramChatId || "",
-        "",
-        "",
-        true,
-        platform || "web",
-        "", // L purchase_token
-        refreshHash || "", // M refresh_hash
-        refreshExpires || "" // N refresh_expiry
+        email, // A
+        now, // B
+        "", // C expiry
+        "live", // D plan
+        0, // E plan_months
+
+        "", // F telegram_pairs
+        telegramChatId || "", // G telegram_chat_id
+
+        "", // H android_pairs
+        "", // I android_push_token
+
+        "", // J web_pairs
+        "", // K web_push_token
+
+        platform || "web", // L platform
+        "", // M play_purchase_token
+        refreshHash || "", // N refresh_token_hash
+        refreshExpires || "" // O refresh_token_expiry
     ]);
 
     return {
@@ -227,10 +260,12 @@ function checkAuthUser(email) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][0] || "").toLowerCase() !== email) continue;
+        if (String(rows[i][COL.email] || "").toLowerCase() !== email) continue;
 
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
-        const plan = String(rows[i][3] || "").toLowerCase();
+        const expiry = rows[i][COL.expiry] ?
+            new Date(rows[i][COL.expiry]) :
+            null;
+        const plan = String(rows[i][COL.plan] || "").toLowerCase();
         const now = new Date();
 
         const isLivePlusActive =
@@ -297,7 +332,7 @@ function doPost(e) {
                         continue;
 
                     // Column H = index 7
-                    sheet.getRange(i + 1, 8).setValue(
+                    sheet.getRange(i + 1, COL.android_pairs + 1).setValue(
                         data.app_instruments.join(",")
                     );
 
@@ -322,7 +357,49 @@ function doPost(e) {
                     if (String(rows[i][0] || "").toLowerCase() !== data.email.toLowerCase())
                         continue;
 
-                    sheet.getRange(i + 1, 9).setValue(data.push_token);
+                    sheet.getRange(i + 1, COL.android_push_token + 1).setValue(data.push_token);
+
+                    return ContentService
+                        .createTextOutput(JSON.stringify({
+                            success: true
+                        }))
+                        .setMimeType(ContentService.MimeType.JSON);
+                }
+            }
+
+            if (data.web_instruments && data.email) {
+
+                const sheet = mustGetSheet();
+                const rows = sheet.getDataRange().getValues();
+
+                for (let i = 1; i < rows.length; i++) {
+
+                    if (String(rows[i][COL.email] || "").toLowerCase() !== data.email.toLowerCase())
+                        continue;
+
+                    sheet.getRange(i + 1, COL.web_pairs + 1)
+                        .setValue(data.web_instruments.join(","));
+
+                    return ContentService
+                        .createTextOutput(JSON.stringify({
+                            success: true
+                        }))
+                        .setMimeType(ContentService.MimeType.JSON);
+                }
+            }
+
+            if (data.web_push_token && data.email) {
+
+                const sheet = mustGetSheet();
+                const rows = sheet.getDataRange().getValues();
+
+                for (let i = 1; i < rows.length; i++) {
+
+                    if (String(rows[i][COL.email] || "").toLowerCase() !== data.email.toLowerCase())
+                        continue;
+
+                    sheet.getRange(i + 1, COL.web_push_token + 1)
+                        .setValue(data.web_push_token);
 
                     return ContentService
                         .createTextOutput(JSON.stringify({
@@ -457,11 +534,13 @@ function validateRefreshToken(email, deviceId, refreshHash) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
+        const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
         if (rowEmail !== email) continue;
 
-        const storedHash = String(rows[i][12] || ""); // ✅ Column M
-        const storedExpiry = rows[i][13] ? new Date(rows[i][13]) : null; // ✅ Column N
+        const storedHash = String(rows[i][COL.refresh_token_hash] || "");
+        const storedExpiry = rows[i][COL.refresh_token_expiry] ?
+            new Date(rows[i][COL.refresh_token_expiry]) :
+            null;
 
         if (!storedHash || storedHash !== refreshHash) {
             return {
@@ -558,11 +637,13 @@ function doGet(e) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
+        const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
         if (rowEmail !== email) continue;
 
-        const rawPlan = String(rows[i][3] || "").toLowerCase();
-        const expiry = rows[i][2] ? new Date(rows[i][2]) : null;
+        const rawPlan = String(rows[i][COL.plan] || "").toLowerCase();
+        const expiry = rows[i][COL.expiry] ?
+            new Date(rows[i][COL.expiry]) :
+            null;
         const now = new Date();
 
         const isLivePlusActive =
@@ -669,11 +750,11 @@ function buildSignalResponse(access, pair, email) {
 
         for (let i = 1; i < rows.length; i++) {
 
-            const rowEmail = String(rows[i][0] || "").toLowerCase().trim();
+            const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
 
             if (rowEmail === email) {
 
-                if (rows[i][7]) {
+                if (rows[i][COL.android_pairs]) {
                     appInstruments = String(rows[i][7])
                         .split(",")
                         .filter(Boolean);
@@ -902,7 +983,7 @@ function onActivate(text) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][6]) === chatId) {
+        if (String(rows[i][COL.telegram_chat_id]) === chatId) {
 
             const currentExpiry = new Date(rows[i][2]);
             const plan = String(rows[i][3]).toLowerCase();
@@ -942,7 +1023,7 @@ function onDeactivate(text) {
     const now = new Date();
 
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][6]) === chatId) {
+        if (String(rows[i][COL.telegram_chat_id]) === chatId) {
 
             // HARD RESET
             sheet.getRange(i + 1, 3).setValue(new Date());
@@ -1001,25 +1082,20 @@ function activateAndroidPurchase(email, purchaseToken, months) {
     const rows = sheet.getDataRange().getValues();
     const now = new Date();
 
-    let foundRow = -1;
+    email = String(email).toLowerCase().trim();
 
     for (let i = 1; i < rows.length; i++) {
 
-        const rowEmail = String(rows[i][0] || "").toLowerCase();
-        const rowPlatform = String(rows[i][10] || "").toLowerCase();
+        const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
+        if (rowEmail !== email) continue;
 
-        if (rowEmail === email.toLowerCase() && rowPlatform === "android") {
-            foundRow = i;
-            break;
-        }
-    }
+        const currentExpiry = rows[i][COL.expiry] ?
+            new Date(rows[i][COL.expiry]) :
+            new Date(0);
 
-    let baseDate = now;
+        const currentPlan = String(rows[i][COL.plan] || "").toLowerCase();
 
-    if (foundRow !== -1) {
-
-        const currentExpiry = rows[foundRow][2] ? new Date(rows[foundRow][2]) : new Date(0);
-        const currentPlan = String(rows[foundRow][3] || "").toLowerCase();
+        let baseDate = now;
 
         if (currentPlan === "live+" && currentExpiry > now) {
             baseDate = currentExpiry;
@@ -1028,10 +1104,11 @@ function activateAndroidPurchase(email, purchaseToken, months) {
         const newExpiry = new Date(baseDate);
         newExpiry.setMonth(newExpiry.getMonth() + months);
 
-        sheet.getRange(foundRow + 1, 3).setValue(newExpiry);
-        sheet.getRange(foundRow + 1, 4).setValue("live+");
-        sheet.getRange(foundRow + 1, 5).setValue(months);
-        sheet.getRange(foundRow + 1, 12).setValue(purchaseToken);
+        sheet.getRange(i + 1, COL.expiry + 1).setValue(newExpiry);
+        sheet.getRange(i + 1, COL.plan + 1).setValue("live+");
+        sheet.getRange(i + 1, COL.plan_months + 1).setValue(months);
+        sheet.getRange(i + 1, COL.play_purchase_token + 1).setValue(purchaseToken);
+        sheet.getRange(i + 1, COL.platform + 1).setValue("android");
 
         return {
             success: true,
@@ -1039,28 +1116,10 @@ function activateAndroidPurchase(email, purchaseToken, months) {
         };
     }
 
-    // 🚀 If no android row exists → create one
-    const newExpiry = new Date(now);
-    newExpiry.setMonth(newExpiry.getMonth() + months);
-
-    sheet.appendRow([
-        email,
-        now,
-        newExpiry,
-        "live+",
-        months,
-        "",
-        "",
-        "",
-        "",
-        true,
-        "android",
-        purchaseToken
-    ]);
-
+    // ❌ If no row exists → DO NOT create one
     return {
-        success: true,
-        expiry: newExpiry
+        success: false,
+        error: "user_not_found"
     };
 }
 
@@ -1212,7 +1271,7 @@ function getUserInstruments(chatId) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][6]) === chatId) {
+        if (String(rows[i][COL.telegram_chat_id]) === chatId) {
 
             const v = rows[i][5]; // Column F instruments
             return v ? String(v).split(",") : [];
@@ -1265,7 +1324,7 @@ function saveInstrumentsToSheet(chatId, list) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][6]) === chatId) {
+        if (String(rows[i][COL.telegram_chat_id]) === chatId) {
 
             sheet.getRange(i + 1, 6).setValue(list.join(",")); // Column F
             return;
@@ -2094,90 +2153,75 @@ function dispatchImageToUsers(blob, tx) {
     }
 
     // =========================================
-    // TELEGRAM DISTRIBUTION LOGIC
+    // MULTI-CHANNEL DISTRIBUTION (ISOLATED)
     // =========================================
+
     const rows = mustGetSheet().getDataRange().getValues();
 
     for (let i = 1; i < rows.length; i++) {
 
-        const chatId = String(rows[i][6] || "");
-        if (!chatId) continue;
-
-        const plan = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][COL.plan] || "").toLowerCase();
 
         // -------------------------------------
-        // PLAN MUST BE LIVE OR LIVE+
+        // PLAN CHECK
         // -------------------------------------
-        if (plan !== "live" && plan !== "live+") {
+        if (plan !== "live" && plan !== "live+") continue;
+
+        let allowedPairs = plan === "live" ?
+            ["ETHUSD", "USDCHF"] :
+            PAIRS;
+
+        if (!instrument || allowedPairs.indexOf(instrument) === -1)
             continue;
+
+        // =====================================
+        // TELEGRAM CHANNEL
+        // =====================================
+        const chatId = String(rows[i][COL.telegram_chat_id] || "");
+        const tgSelected = rows[i][COL.telegram_pairs] ?
+            String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) :
+            [];
+
+        if (chatId && tgSelected.indexOf(instrument) !== -1) {
+
+            UrlFetchApp.fetch(
+                "https://api.telegram.org/bot" + TOKEN + "/sendPhoto", {
+                    method: "post",
+                    payload: {
+                        chat_id: chatId,
+                        photo: blob,
+                        caption: caption,
+                        parse_mode: "HTML"
+                    },
+                    muteHttpExceptions: true
+                }
+            );
         }
 
-        // -------------------------------------
-        // USER MUST HAVE SELECTED INSTRUMENTS
-        // -------------------------------------
-        const selected = rows[i][5] ?
-            String(rows[i][5]).split(",").filter(Boolean) : [];
+        // =====================================
+        // ANDROID CHANNEL
+        // =====================================
+        const androidSelected = rows[i][COL.android_pairs] ?
+            String(rows[i][COL.android_pairs]).split(",").filter(Boolean) :
+            [];
 
-        if (!selected.length) {
-            continue; // no selection = no alerts
+        const pushToken = rows[i][COL.android_push_token] || "";
+
+        if (pushToken && androidSelected.indexOf(instrument) !== -1) {
+            sendPush(pushToken, instrument, caption);
         }
 
-        // -------------------------------------
-        // PLAN-BASED ALLOWED PAIRS
-        // -------------------------------------
-        let allowedPairs = [];
+        // =====================================
+        // WEB CHANNEL
+        // =====================================
+        const webSelected = rows[i][COL.web_pairs] ?
+            String(rows[i][COL.web_pairs]).split(",").filter(Boolean) :
+            [];
 
-        if (plan === "live") {
-            allowedPairs = ["ETHUSD", "USDCHF"];
-        } else if (plan === "live+") {
-            allowedPairs = PAIRS;
-        }
+        const webPushToken = rows[i][COL.web_push_token] || "";
 
-        // -------------------------------------
-        // FINAL INTERSECTION CHECK
-        // -------------------------------------
-        if (
-            !instrument ||
-            allowedPairs.indexOf(instrument) === -1 ||
-            selected.indexOf(instrument) === -1
-        ) {
-            continue;
-        }
-
-        // -------------------------------------
-        // SEND TELEGRAM PHOTO
-        // -------------------------------------
-        UrlFetchApp.fetch(
-            "https://api.telegram.org/bot" + TOKEN + "/sendPhoto", {
-                method: "post",
-                payload: {
-                    chat_id: chatId,
-                    photo: blob,
-                    caption: caption,
-                    parse_mode: "HTML"
-                },
-                muteHttpExceptions: true
-            }
-        );
-
-        // -------------------------------------
-        // ANDROID PUSH (Column H instruments, Column I token)
-        // -------------------------------------
-
-        // Column H = index 7 (app instruments)
-        // Column I = index 8 (push token)
-
-        const appSelected = rows[i][7] ?
-            String(rows[i][7]).split(",").filter(Boolean) : []
-
-        const pushToken = rows[i][8] || ""
-
-        if (
-            pushToken &&
-            instrument &&
-            appSelected.indexOf(instrument) !== -1
-        ) {
-            sendPush(pushToken, instrument, caption)
+        if (webPushToken && webSelected.indexOf(instrument) !== -1) {
+            sendWebPush(webPushToken, instrument, caption);
         }
     }
 
@@ -2196,6 +2240,13 @@ function dispatchImageToUsers(blob, tx) {
     if (tx) {
         cache.remove("tx_" + tx);
     }
+}
+
+function sendWebPush(token, pair, text) {
+
+    // 🔒 Placeholder until Web Push infra implemented
+    Logger.log("WEB PUSH → " + pair + " → " + token);
+
 }
 
 function setMenuButton() {
@@ -2256,7 +2307,7 @@ function getUserRow(chatId) {
 
     for (let i = 1; i < rows.length; i++) {
 
-        if (String(rows[i][6]) === chatId) {
+        if (String(rows[i][COL.telegram_chat_id]) === chatId) {
 
             return {
                 rowIndex: i + 1,
@@ -2354,7 +2405,7 @@ function nightlyExpirySweep() {
     for (let i = 1; i < rows.length; i++) {
 
         const expiry = rows[i][2] ? new Date(rows[i][2]) : new Date(0);
-        const plan = String(rows[i][3] || "").toLowerCase();
+        const plan = String(rows[i][COL.plan] || "").toLowerCase();
 
         if (plan === "live+" && expiry < now) {
 
