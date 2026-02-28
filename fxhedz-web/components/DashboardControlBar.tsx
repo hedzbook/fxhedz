@@ -26,7 +26,7 @@ export default function DashboardControlBar({
     return (
       <button
         onClick={onClick}
-        className={`px-4 py-2 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold transition-all duration-200
+        className={`px-4 py-2 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold transition-all duration-200
         ${active
             ? "text-white bg-neutral-800"
             : "text-neutral-400 hover:text-neutral-200"

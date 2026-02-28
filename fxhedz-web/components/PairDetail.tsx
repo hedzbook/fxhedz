@@ -110,7 +110,7 @@ if (!pair || !email) return
 
                 <button
                     onClick={onClose}
-                    className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 hover:text-white leading-none"
+                    className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 hover:text-white leading-none"
                 >
                     CLOSE
                 </button>
@@ -130,7 +130,7 @@ if (!pair || !email) return
             </div>
 
             {/* TABS (FIXED) */}
-            <div className="shrink-0 flex border-b border-neutral-800 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+            <div className="shrink-0 flex border-b border-neutral-800 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                 <Tab label="Market" active={tab === "market"} onClick={() => setTab("market")} />
                 <Tab label="Updates" active={tab === "updates"} onClick={() => setTab("updates")} />
                 <Tab label="History" active={tab === "history"} onClick={() => setTab("history")} />
@@ -145,16 +145,16 @@ if (!pair || !email) return
 
 
                         <div>
-                            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">Latest Signal</div>
-                            <div className="font-semibold text-[clamp(8px,4.66px+1.0416vw,18px)] leading-tight">
+                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">Latest Signal</div>
+                            <div className="font-semibold text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-tight">
                                 {signal?.direction || "--"} {signal?.entry || ""}
                             </div>
-                            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
+                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
                                 SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
                             </div>
                         </div>
 
-                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
 
                             <div className="shrink-0 text-neutral-400 mb-2">
                                 Active Orders
@@ -219,20 +219,20 @@ if (!pair || !email) return
                                         <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
-                                                <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
+                                                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
                                                     {new Date(post.time).toLocaleString()}
                                                 </div>
 
                                                 {post.text.includes("BUY") && (
-                                                    <span className="text-green-400 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">BULLISH</span>
+                                                    <span className="text-green-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">BULLISH</span>
                                                 )}
                                                 {post.text.includes("SELL") && (
-                                                    <span className="text-red-400 text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">BEARISH</span>
+                                                    <span className="text-red-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">BEARISH</span>
                                                 )}
                                             </div>
 
                                             <div
-                                                className="text-[clamp(8px,4.66px+1.0416vw,18px)] leading-4 text-neutral-200 whitespace-pre-line"
+                                                className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-4 text-neutral-200 whitespace-pre-line"
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
@@ -258,13 +258,13 @@ if (!pair || !email) return
                             {data?.history?.length ? data.history.map((h: any, i: number) => (
                                 <div
                                     key={i}
-                                    className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(8px,4.66px+1.0416vw,18px)]"
+                                    className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)]"
                                 >
                                     <div>
                                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
                                             {h.direction}
                                         </div>
-                                        <div className="text-xs text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                                        <div className="text-xs text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                             {h.entry} → {h.exit}
                                         </div>
                                     </div>
@@ -273,7 +273,7 @@ if (!pair || !email) return
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                                <div className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                     No history yet
                                 </div>
                             )}
@@ -288,7 +288,7 @@ if (!pair || !email) return
 
                         <div className="flex-1 min-h-0 overflow-y-auto space-y-[clamp(8px,1vh,16px)] pr-1">
 
-                            <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                            <div className="grid grid-cols-2 gap-[clamp(6px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                 <Metric
                                     label="Win Rate"
                                     value={
@@ -303,7 +303,7 @@ if (!pair || !email) return
                                 />
                             </div>
 
-                            <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
+                            <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                 <Stat label="Total Trades" value={data?.performance?.trades} />
                                 <Stat label="Wins" value={data?.performance?.wins} />
                                 <Stat label="Losses" value={data?.performance?.losses} />
@@ -358,7 +358,7 @@ function Tab({ label, active, onClick }: any) {
             className={`
         flex-1
         py-[clamp(6px,1vh,12px)]
-        text-[clamp(8px,4.66px+1.0416vw,18px)]
+        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
         leading-none
         transition-all
         ${active
@@ -383,8 +383,8 @@ function Stat({ label, value }: any) {
 function Metric({ label, value }: any) {
     return (
         <div className="bg-neutral-800 border border-neutral-700 p-[clamp(10px,1.4vw,18px)] text-center">
-            <div className="text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">{label}</div>
-            <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] font-semibold">{value ?? "--"}</div>
+            <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">{label}</div>
+            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">{value ?? "--"}</div>
         </div>
     )
 }

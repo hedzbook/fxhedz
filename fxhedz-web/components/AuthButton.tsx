@@ -18,7 +18,7 @@ const hasNativeToken =
     return (
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin" />
-        <span className="text-neutral-500 text-[clamp(8px,4.66px+1.0416vw,18px)] uppercase tracking-widest font-bold">Syncing...</span>
+        <span className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)] uppercase tracking-widest font-bold">Syncing...</span>
       </div>
     )
   }
@@ -43,7 +43,7 @@ const hasNativeToken =
           w-full max-w-[clamp(140px,65vw,200px)]
 py-[clamp(6px,1.8vh,10px)]
 px-[clamp(10px,3vw,18px)]
-text-[clamp(8px,4.66px+1.0416vw,18px)]
+text-[clamp(9px,5.5px+1.0937vw,19.5px)]
           bg-white hover:bg-neutral-50 
           rounded-md border border-neutral-300
           shadow-sm transition-all duration-200
@@ -62,7 +62,7 @@ if (session || (isAndroid && hasNativeToken)) {
     <div className="flex flex-col items-center gap-3 w-full">
       {!isAndroid && (
         <div className="px-3 py-1 bg-neutral-800/50 rounded-full border border-neutral-700/50">
-          <span className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400 font-mono truncate max-w-[180px] block">
+          <span className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 font-mono truncate max-w-[180px] block">
             {session?.user?.email}
           </span>
         </div>
@@ -77,7 +77,7 @@ if (session || (isAndroid && hasNativeToken)) {
           signOut()
         }}
         className="
-          text-[clamp(8px,4.66px+1.0416vw,18px)] font-black uppercase tracking-tighter
+          text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-black uppercase tracking-tighter
           text-red-500/80 hover:text-red-500
           transition-colors duration-200
         "
