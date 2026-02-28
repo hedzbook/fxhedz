@@ -78,21 +78,21 @@ if (!pair || !email) return
   <button
     onClick={toggleNotification}
     className={`
-      w-[clamp(14px,1.4vw,18px)]
-      h-[clamp(14px,1.4vw,18px)]
+      w-[1.1em]
+      h-[1.1em]
       flex items-center justify-center
       rounded-[2px]
       border
       transition-colors duration-150
       ${
         appInstruments.includes(pair)
-          ? "border-sky-500/40 text-sky-400 bg-sky-500/10"
-          : "border-neutral-700 text-neutral-600 bg-neutral-900"
+          ? "border-sky-500/40 text-sky-400"
+          : "border-neutral-700 text-neutral-600"
       }
     `}
   >
     <svg
-      className="w-[65%] h-[65%]"
+      className="w-[70%] h-[70%]"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
