@@ -143,25 +143,36 @@ useEffect(() => {
 
   if (!email || !accessMeta) return
 
-  fetch(`/api/proxy?instruments=1&email=${email}`)
-    .then(r => r.json())
-    .then(d => {
+  async function loadInstruments() {
+
+    try {
+
+      const res = await fetch("/api/signals", {
+        cache: "no-store"
+      })
+
+      const data = await res.json()
 
       const platform =
         document.cookie
           .split("; ")
-          .find(row => row.startsWith("fx_platform="))
+          .find(r => r.startsWith("fx_platform="))
           ?.split("=")[1] || "web"
 
       if (platform === "telegram") {
-        setAppInstruments(d.telegramInstruments || [])
+        setAppInstruments(data.telegramInstruments || [])
       } else if (platform === "android") {
-        setAppInstruments(d.appInstruments || [])
+        setAppInstruments(data.appInstruments || [])
       } else {
-        setAppInstruments(d.webInstruments || [])
+        setAppInstruments(data.webInstruments || [])
       }
 
-    })
+    } catch (err) {
+      console.error("Instrument load failed", err)
+    }
+  }
+
+  loadInstruments()
 
 }, [email, accessMeta])
   useEffect(() => {

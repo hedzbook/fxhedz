@@ -37,38 +37,39 @@ export default function PairDetail({
         }
     }, [preview])
 
-    const toggleNotification = async () => {
+const toggleNotification = async () => {
 
-        if (!pair || saving) return
+  if (!pair || saving) return
 
-        setSaving(true)
+  setSaving(true)
 
-        let updated: string[] = []
+  let isRemoving = false
 
-        setAppInstruments(prev => {
+  setAppInstruments(prev => {
 
-            if (prev.includes(pair)) {
-                updated = prev.filter(p => p !== pair)
-            } else {
-                updated = [...prev, pair]
-            }
-
-            return updated
-        })
-
-        try {
-await fetch("/api/toggle-notification", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    pair,
-    action: appInstruments.includes(pair) ? "remove" : "add"
-  })
-})
-        } finally {
-            setSaving(false)
-        }
+    if (prev.includes(pair)) {
+      isRemoving = true
+      return prev.filter(p => p !== pair)
     }
+
+    return [...prev, pair]
+  })
+
+  try {
+
+    await fetch("/api/toggle-notification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pair,
+        action: isRemoving ? "remove" : "add"
+      })
+    })
+
+  } finally {
+    setSaving(false)
+  }
+}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 

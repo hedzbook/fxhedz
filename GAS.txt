@@ -331,14 +331,18 @@ function doPost(e) {
                     if (String(rows[i][COL.email] || "").toLowerCase() !== data.email.toLowerCase())
                         continue;
 
-                    const platform =
-                        rows[i][COL.platform] || "web";
+// 🔥 USE INCOMING PLATFORM (NOT STORED COLUMN)
+const platform = (data.toggle_platform || "web").toLowerCase().trim();
 
-                    let colIndex;
+let colIndex;
 
-                    if (platform === "android") colIndex = COL.android_pairs;
-                    else if (platform === "telegram") colIndex = COL.telegram_pairs;
-                    else colIndex = COL.web_pairs;
+if (platform === "android") {
+    colIndex = COL.android_pairs;
+} else if (platform === "telegram") {
+    colIndex = COL.telegram_pairs;
+} else {
+    colIndex = COL.web_pairs;
+}
 
                     let current = rows[i][colIndex] ?
                         String(rows[i][colIndex]).split(",").filter(Boolean) :
