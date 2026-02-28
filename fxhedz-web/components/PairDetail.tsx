@@ -61,13 +61,10 @@ const toggleNotification = async () => {
 
     try {
 
-        let updated = [...appInstruments]
-
-        if (updated.includes(pair)) {
-            updated = updated.filter(p => p !== pair)
-        } else {
-            updated.push(pair)
-        }
+        // compute new array from CURRENT state
+        const updated = appInstruments.includes(pair)
+            ? appInstruments.filter(p => p !== pair)
+            : [...appInstruments, pair]
 
         // optimistic UI update
         setAppInstruments(updated)
@@ -82,9 +79,9 @@ const toggleNotification = async () => {
 
     } catch (err) {
         console.error("Toggle failed", err)
+    } finally {
+        setSaving(false)
     }
-
-    setSaving(false)
 }
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
