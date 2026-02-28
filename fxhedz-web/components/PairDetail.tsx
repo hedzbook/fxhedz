@@ -31,27 +31,27 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
-useEffect(() => {
+    useEffect(() => {
 
-    if (!data) return
+        if (!data) return
 
-    const platform =
-        document.cookie
-            .split("; ")
-            .find(row => row.startsWith("fx_platform="))
-            ?.split("=")[1] || "web"
+        const platform =
+            document.cookie
+                .split("; ")
+                .find(row => row.startsWith("fx_platform="))
+                ?.split("=")[1] || "web"
 
-    if (platform === "telegram") {
-        setAppInstruments(data.telegramInstruments || [])
-    } else if (platform === "android") {
-        setAppInstruments(data.appInstruments || [])
-    } else {
-        setAppInstruments(data.webInstruments || [])
-    }
+        if (platform === "telegram") {
+            setAppInstruments(data.telegramInstruments || [])
+        } else if (platform === "android") {
+            setAppInstruments(data.appInstruments || [])
+        } else {
+            setAppInstruments(data.webInstruments || [])
+        }
 
-}, [data])
+    }, [data])
     const toggleNotification = async () => {
-if (!pair || !email) return
+        if (!pair || !email || !data) return
         if (!pair) return
 
         let updated = [...appInstruments]
@@ -62,6 +62,7 @@ if (!pair || !email) return
             updated.push(pair)
         }
 
+        if (!data) return
         setAppInstruments(updated)
         console.log("TOGGLE →", {
             email,
@@ -88,37 +89,36 @@ if (!pair || !email) return
                         {pair}
                     </div>
 
-{!isGuest && (
-  <button
-    onClick={toggleNotification}
-    className={`
+                    {!isGuest && (
+                        <button
+                            onClick={toggleNotification}
+                            className={`
       w-[1.1em]
       h-[1.1em]
       flex items-center justify-center
       rounded-[2px]
       border
       transition-colors duration-150
-      ${
-        appInstruments.includes(pair)
-          ? "border-sky-500/40 text-sky-400"
-          : "border-neutral-700 text-neutral-600"
-      }
+      ${appInstruments.includes(pair)
+                                    ? "border-sky-500/40 text-sky-400"
+                                    : "border-neutral-700 text-neutral-600"
+                                }
     `}
-  >
-    <svg
-      className="w-[70%] h-[70%]"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-      <path d="M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  </button>
-)}
+                        >
+                            <svg
+                                className="w-[70%] h-[70%]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+                                <path d="M13.73 21a2 2 0 01-3.46 0" />
+                            </svg>
+                        </button>
+                    )}
 
                 </div>
 

@@ -771,24 +771,39 @@ function buildSignalResponse(access, pair, email) {
         const sheet = mustGetSheet();
         const rows = sheet.getDataRange().getValues();
 
-        // 🔔 ANDROID PUSH INSTRUMENTS (Column H index 7)
+        // =========================================
+        // PLATFORM AWARE INSTRUMENT LOAD
+        // =========================================
 
         let appInstruments = [];
+        let webInstruments = [];
+        let telegramInstruments = [];
 
         for (let i = 1; i < rows.length; i++) {
 
             const rowEmail = String(rows[i][COL.email] || "").toLowerCase().trim();
 
-            if (rowEmail === email) {
+            if (rowEmail !== email) continue;
 
-                if (rows[i][COL.android_pairs]) {
-                    appInstruments = String(rows[i][7])
-                        .split(",")
-                        .filter(Boolean);
-                }
-
-                break;
+            if (rows[i][COL.android_pairs]) {
+                appInstruments = String(rows[i][COL.android_pairs])
+                    .split(",")
+                    .filter(Boolean);
             }
+
+            if (rows[i][COL.web_pairs]) {
+                webInstruments = String(rows[i][COL.web_pairs])
+                    .split(",")
+                    .filter(Boolean);
+            }
+
+            if (rows[i][COL.telegram_pairs]) {
+                telegramInstruments = String(rows[i][COL.telegram_pairs])
+                    .split(",")
+                    .filter(Boolean);
+            }
+
+            break;
         }
 
         return ContentService
@@ -803,7 +818,9 @@ function buildSignalResponse(access, pair, email) {
                 notes: notes[pair] || "",
                 orders,
                 feed,
-                appInstruments
+                appInstruments,
+                webInstruments,
+                telegramInstruments
             }))
             .setMimeType(ContentService.MimeType.JSON);
     }

@@ -47,11 +47,21 @@ export async function GET(req: NextRequest) {
         blocked: json.blocked,
         active: json.active,
         plan: json.plan,
-        expiry: json.expiry
+        expiry: json.expiry,
+
+        // 🔥 ADD THESE:
+        appInstruments: json.appInstruments || [],
+        webInstruments: json.webInstruments || [],
+        telegramInstruments: json.telegramInstruments || []
       })
     }
 
-    return NextResponse.json(json)
+    return NextResponse.json({
+      ...json,
+      appInstruments: json.appInstruments || [],
+      webInstruments: json.webInstruments || [],
+      telegramInstruments: json.telegramInstruments || []
+    })
 
   } catch {
     return NextResponse.json(
