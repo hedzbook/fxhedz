@@ -24,6 +24,8 @@ export default function PairDetail({
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
     const [appInstruments, setAppInstruments] = useState<string[]>([])
+    const [saving, setSaving] = useState(false)
+
     useEffect(() => {
         if (preview) {
             document.body.style.overflow = "hidden"
@@ -49,10 +51,15 @@ export default function PairDetail({
             setAppInstruments(data.webInstruments || [])
         }
 
-    }, [pair])
-    const toggleNotification = async () => {
+   }, [pair, data])
+const toggleNotification = async () => {
 
-        if (!pair || !email || !data) return
+    if (!pair || !email || !data) return
+    if (saving) return
+
+    setSaving(true)
+
+    try {
 
         let updated = [...appInstruments]
 
@@ -62,6 +69,7 @@ export default function PairDetail({
             updated.push(pair)
         }
 
+        // optimistic UI update
         setAppInstruments(updated)
 
         await fetch("/api/toggle-notification", {
@@ -71,7 +79,13 @@ export default function PairDetail({
                 app_instruments: updated
             })
         })
+
+    } catch (err) {
+        console.error("Toggle failed", err)
     }
+
+    setSaving(false)
+}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
@@ -87,6 +101,7 @@ export default function PairDetail({
                     {!isGuest && (
                         <button
                             onClick={toggleNotification}
+                            disabled={saving}
                             className={`
       w-[1.1em]
       h-[1.1em]
