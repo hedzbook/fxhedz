@@ -57,13 +57,14 @@ export default function PairDetail({
         })
 
         try {
-            await fetch("/api/toggle-notification", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    app_instruments: updated
-                })
-            })
+await fetch("/api/toggle-notification", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    pair,
+    action: appInstruments.includes(pair) ? "remove" : "add"
+  })
+})
         } finally {
             setSaving(false)
         }

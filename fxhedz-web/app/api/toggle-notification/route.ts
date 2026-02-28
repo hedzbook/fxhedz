@@ -30,18 +30,26 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { app_instruments } = await req.json()
+  // ============================
+  // READ BODY (ATOMIC TOGGLE)
+  // ============================
+  const body = await req.json()
+  const pair = body?.pair
+  const action = body?.action
 
-  if (!Array.isArray(app_instruments)) {
+  if (
+    !pair ||
+    !["add", "remove"].includes(action)
+  ) {
     return NextResponse.json(
-      { error: "Invalid instruments" },
+      { error: "Invalid toggle request" },
       { status: 400 }
     )
   }
 
-  const sanitized = app_instruments
-    .map((p: string) => String(p).toUpperCase().trim())
-    .filter(Boolean)
+  const cleanPair = String(pair)
+    .toUpperCase()
+    .trim()
 
   // ============================
   // PLATFORM DETECTION
@@ -49,19 +57,24 @@ export async function POST(req: NextRequest) {
   const platform =
     req.cookies.get("fx_platform")?.value || "web"
 
-  let payload: any = { email }
-
-  if (platform === "telegram") {
-    payload.telegram_instruments = sanitized
-  } else if (platform === "android") {
-    payload.app_instruments = sanitized
-  } else {
-    payload.web_instruments = sanitized
+  // ============================
+  // BUILD GAS PAYLOAD
+  // ============================
+  const payload: any = {
+    email,
+    toggle_pair: cleanPair,
+    toggle_action: action,
+    toggle_platform: platform
   }
 
+  // ============================
+  // SEND TO GAS
+  // ============================
   const res = await fetch(process.env.GAS_AUTH_URL!, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(payload)
   })
 
