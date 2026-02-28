@@ -368,16 +368,19 @@ function doPost(e) {
             }
 
             // ===============================
-            // TELEGRAM MINI APP INSTRUMENT UPDATE
+            // TELEGRAM MINI APP INSTRUMENT UPDATE (BY EMAIL)
             // ===============================
-            if (data.telegram_instruments && data.telegram_chat_id) {
+            if (data.telegram_instruments && data.email) {
 
                 const sheet = mustGetSheet();
                 const rows = sheet.getDataRange().getValues();
 
                 for (let i = 1; i < rows.length; i++) {
 
-                    if (String(rows[i][COL.telegram_chat_id]) !== String(data.telegram_chat_id))
+                    const rowEmail =
+                        String(rows[i][COL.email] || "").toLowerCase().trim();
+
+                    if (rowEmail !== data.email.toLowerCase().trim())
                         continue;
 
                     sheet.getRange(i + 1, COL.telegram_pairs + 1)

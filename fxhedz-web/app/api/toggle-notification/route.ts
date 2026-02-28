@@ -43,27 +43,27 @@ export async function POST(req: NextRequest) {
     .map((p: string) => String(p).toUpperCase().trim())
     .filter(Boolean)
 
-// ============================
-// PLATFORM DETECTION
-// ============================
-const platform =
-  req.cookies.get("fx_platform")?.value || "web"
+  // ============================
+  // PLATFORM DETECTION
+  // ============================
+  const platform =
+    req.cookies.get("fx_platform")?.value || "web"
 
-let payload: any = { email }
+  let payload: any = { email }
 
-if (platform === "telegram") {
-  payload.telegram_instruments = sanitized
-} else if (platform === "android") {
-  payload.app_instruments = sanitized
-} else {
-  payload.web_instruments = sanitized
-}
+  if (platform === "telegram") {
+    payload.telegram_instruments = sanitized
+  } else if (platform === "android") {
+    payload.app_instruments = sanitized
+  } else {
+    payload.web_instruments = sanitized
+  }
 
-const res = await fetch(process.env.GAS_AUTH_URL!, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload)
-})
+  const res = await fetch(process.env.GAS_AUTH_URL!, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
 
   if (!res.ok) {
     return NextResponse.json(

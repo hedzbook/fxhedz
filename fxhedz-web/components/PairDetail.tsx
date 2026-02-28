@@ -31,11 +31,25 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
-    useEffect(() => {
-        if (data?.appInstruments) {
-            setAppInstruments(data.appInstruments)
-        }
-    }, [data])
+useEffect(() => {
+
+    if (!data) return
+
+    const platform =
+        document.cookie
+            .split("; ")
+            .find(row => row.startsWith("fx_platform="))
+            ?.split("=")[1] || "web"
+
+    if (platform === "telegram") {
+        setAppInstruments(data.telegramInstruments || [])
+    } else if (platform === "android") {
+        setAppInstruments(data.appInstruments || [])
+    } else {
+        setAppInstruments(data.webInstruments || [])
+    }
+
+}, [data])
     const toggleNotification = async () => {
 if (!pair || !email) return
         if (!pair) return
