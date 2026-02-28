@@ -154,7 +154,7 @@ if (!pair || !email) return
                             </div>
                         </div>
 
-                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(10px,1.4vw,15px)]">
+                        <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(8px,4.66px+1.0416vw,18px)]">
 
                             <div className="shrink-0 text-neutral-400 mb-2">
                                 Active Orders
@@ -264,7 +264,7 @@ if (!pair || !email) return
                                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
                                             {h.direction}
                                         </div>
-                                        <div className="text-xs text-neutral-400">
+                                        <div className="text-xs text-neutral-400 text-[clamp(8px,4.66px+1.0416vw,18px)]">
                                             {h.entry} → {h.exit}
                                         </div>
                                     </div>
