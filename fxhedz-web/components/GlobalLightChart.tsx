@@ -42,7 +42,7 @@ export default function GlobalLightChart({
             layout: {
                 background: { type: ColorType.Solid, color: "#1E1E1E" },
                 textColor: "#888",
-                fontSize: 8,
+                fontSize: 10,
                 fontFamily: "monospace"
             },
             grid: {
