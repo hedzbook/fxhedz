@@ -3131,6 +3131,8 @@ export default function PairDetail({
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
     const [appInstruments, setAppInstruments] = useState<string[]>([])
+    const [saving, setSaving] = useState(false)
+
     useEffect(() => {
         if (preview) {
             document.body.style.overflow = "hidden"
@@ -3138,39 +3140,20 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
-    useEffect(() => {
 
-        if (!data || !pair) return
+const toggleNotification = async () => {
 
-        const platform =
-            document.cookie
-                .split("; ")
-                .find(row => row.startsWith("fx_platform="))
-                ?.split("=")[1] || "web"
+    if (!pair || saving) return
 
-        if (platform === "telegram") {
-            setAppInstruments(data.telegramInstruments || [])
-        } else if (platform === "android") {
-            setAppInstruments(data.appInstruments || [])
-        } else {
-            setAppInstruments(data.webInstruments || [])
-        }
+    setSaving(true)
 
-    }, [pair])
-    const toggleNotification = async () => {
+    const updated = appInstruments.includes(pair)
+        ? appInstruments.filter(p => p !== pair)
+        : [...appInstruments, pair]
 
-        if (!pair || !email || !data) return
+    setAppInstruments(updated)
 
-        let updated = [...appInstruments]
-
-        if (updated.includes(pair)) {
-            updated = updated.filter(p => p !== pair)
-        } else {
-            updated.push(pair)
-        }
-
-        setAppInstruments(updated)
-
+    try {
         await fetch("/api/toggle-notification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -3178,7 +3161,10 @@ export default function PairDetail({
                 app_instruments: updated
             })
         })
+    } finally {
+        setSaving(false)
     }
+}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
@@ -3194,6 +3180,7 @@ export default function PairDetail({
                     {!isGuest && (
                         <button
                             onClick={toggleNotification}
+                            disabled={saving}
                             className={`
       w-[1.1em]
       h-[1.1em]

@@ -10,6 +10,8 @@ type Props = {
     onClose: () => void
     isGuest?: boolean
     email?: string
+    appInstruments: string[]
+    setAppInstruments: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export default function PairDetail({
@@ -18,12 +20,13 @@ export default function PairDetail({
     data,
     onClose,
     isGuest = false,
-    email
+    email,
+    appInstruments,
+    setAppInstruments
 }: Props) {
 
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
-    const [appInstruments, setAppInstruments] = useState<string[]>([])
     const [saving, setSaving] = useState(false)
 
     useEffect(() => {
@@ -33,56 +36,38 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
-    useEffect(() => {
 
-        if (!data || !pair) return
+    const toggleNotification = async () => {
 
-        const platform =
-            document.cookie
-                .split("; ")
-                .find(row => row.startsWith("fx_platform="))
-                ?.split("=")[1] || "web"
+        if (!pair || saving) return
 
-        if (platform === "telegram") {
-            setAppInstruments(data.telegramInstruments || [])
-        } else if (platform === "android") {
-            setAppInstruments(data.appInstruments || [])
-        } else {
-            setAppInstruments(data.webInstruments || [])
-        }
+        setSaving(true)
 
-   }, [pair, data])
-const toggleNotification = async () => {
+        let updated: string[] = []
 
-    if (!pair || !email || !data) return
-    if (saving) return
+        setAppInstruments(prev => {
 
-    setSaving(true)
+            if (prev.includes(pair)) {
+                updated = prev.filter(p => p !== pair)
+            } else {
+                updated = [...prev, pair]
+            }
 
-    try {
-
-        // compute new array from CURRENT state
-        const updated = appInstruments.includes(pair)
-            ? appInstruments.filter(p => p !== pair)
-            : [...appInstruments, pair]
-
-        // optimistic UI update
-        setAppInstruments(updated)
-
-        await fetch("/api/toggle-notification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                app_instruments: updated
-            })
+            return updated
         })
 
-    } catch (err) {
-        console.error("Toggle failed", err)
-    } finally {
-        setSaving(false)
+        try {
+            await fetch("/api/toggle-notification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    app_instruments: updated
+                })
+            })
+        } finally {
+            setSaving(false)
+        }
     }
-}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 

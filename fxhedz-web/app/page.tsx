@@ -13,6 +13,7 @@ import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
 import ControlPanel from "@/components/ControlPanel"
+
 import {
   DndContext,
   closestCenter,
@@ -73,6 +74,7 @@ export default function Page() {
   const [netState, setNetState] = useState("FLAT")
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [appInstruments, setAppInstruments] = useState<string[]>([])
 
   useEffect(() => {
     function check() {
@@ -85,6 +87,11 @@ export default function Page() {
   }, [])
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
+  const email =
+  session?.user?.email ||
+  (typeof window !== "undefined"
+    ? (window as any).__NATIVE_EMAIL__
+    : null)
   const isAndroid =
     typeof window !== "undefined" &&
     !!(window as any).ReactNativeWebView
@@ -132,6 +139,17 @@ export default function Page() {
       }
     })
   )
+  useEffect(() => {
+
+    if (!email) return
+
+    fetch(`/api/proxy?instruments=1&email=${email}`)
+        .then(r => r.json())
+        .then(d => {
+            setAppInstruments(d.appInstruments || [])
+        })
+
+}, [email])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -553,6 +571,8 @@ export default function Page() {
                 onClose={() => setOpenPair(null)}
                 isGuest={isGuest}
                 email={session?.user?.email || (window as any).__NATIVE_EMAIL__}
+                    appInstruments={appInstruments}
+    setAppInstruments={setAppInstruments}
               />
 
             </div>
