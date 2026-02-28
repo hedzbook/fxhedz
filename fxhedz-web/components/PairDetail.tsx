@@ -171,7 +171,7 @@ if (!pair || !email) return
                                             <div className={o.direction === "BUY" ? "text-green-400" : "text-red-400"}>
                                                 {o.direction}
                                             </div>
-                                            <div className="text-neutral-400 text-xs">
+                                            <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                                 {/*ENTRY*/} {o.entry}
                                             </div>
                                         </div>
@@ -219,7 +219,7 @@ if (!pair || !email) return
                                         <div className="flex-1 px-3 py-2 space-y-1.5">
 
                                             <div className="flex items-center justify-between">
-                                                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
+                                                <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
                                                     {new Date(post.time).toLocaleString()}
                                                 </div>
 
