@@ -46,8 +46,8 @@ export default function GlobalLightChart({
                 fontFamily: "monospace"
             },
             grid: {
-                vertLines: { color: "rgba(255,255,255,0.03)" },
-                horzLines: { color: "rgba(255,255,255,0.03)" }
+                vertLines: { visible: false },
+                horzLines: { visible: false }
             },
             rightPriceScale: {
                 borderColor: "rgba(255,255,255,0.08)"
@@ -57,7 +57,7 @@ export default function GlobalLightChart({
                 timeVisible: true,
                 secondsVisible: false,
                 rightOffset: 8,
-                barSpacing: 8
+                barSpacing: 10
             }
         })
 
