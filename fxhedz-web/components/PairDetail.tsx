@@ -33,7 +33,7 @@ export default function PairDetail({
     }, [preview])
     useEffect(() => {
 
-        if (!data) return
+        if (!data || !pair) return
 
         const platform =
             document.cookie
@@ -49,10 +49,10 @@ export default function PairDetail({
             setAppInstruments(data.webInstruments || [])
         }
 
-    }, [data])
+    }, [pair])
     const toggleNotification = async () => {
+
         if (!pair || !email || !data) return
-        if (!pair) return
 
         let updated = [...appInstruments]
 
@@ -62,17 +62,12 @@ export default function PairDetail({
             updated.push(pair)
         }
 
-        if (!data) return
         setAppInstruments(updated)
-        console.log("TOGGLE →", {
-            email,
-            updated,
-        })
+
         await fetch("/api/toggle-notification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                // email,
                 app_instruments: updated
             })
         })
