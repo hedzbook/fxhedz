@@ -74,14 +74,29 @@ if (!pair || !email) return
                         {pair}
                     </div>
 
-                    {!isGuest && (
-                        <button
-                            onClick={toggleNotification}
-                            className="text-[18px] leading-none"
-                        >
-                            {appInstruments.includes(pair) ? "🔔" : "🔕"}
-                        </button>
-                    )}
+{!isGuest && (
+  <button
+    onClick={toggleNotification}
+    className={`
+      text-[clamp(7px,calc(6px+0.27vw),12px)]
+      leading-none
+      font-semibold
+      tracking-[0.08em]
+      px-[clamp(4px,0.4vw,8px)]
+      py-[clamp(2px,0.25vw,4px)]
+      rounded-sm
+      border
+      transition-colors duration-150
+      ${
+        appInstruments.includes(pair)
+          ? "bg-sky-500/15 text-sky-400 border-sky-500/30"
+          : "bg-neutral-900 text-neutral-500 border-neutral-700"
+      }
+    `}
+  >
+    {appInstruments.includes(pair) ? "ALERT ON" : "ALERT OFF"}
+  </button>
+)}
 
                 </div>
 
