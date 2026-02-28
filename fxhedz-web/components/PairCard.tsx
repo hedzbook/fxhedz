@@ -56,7 +56,7 @@ function PairCard({
 <div
   className={`
     h-full
-    text-[clamp(10px,1.1vw,20px)]
+    text-[clamp(10px,7.33px+0.833vw,18px)]
     relative
     transition-all duration-300
     border border-neutral-800 rounded-none
@@ -87,11 +87,11 @@ py-[clamp(2px,0.6vh,6px)]
 
             {/* ROW 1 â€” PAIR + DIRECTION */}
             <div className="flex justify-between items-center">
-              <div className="font-semibold text-[clamp(10px,1.8vh,22px)] leading-none">
+              <div className="font-semibold text-[clamp(10px,5.33px+1.4583vw,24px)] leading-none">
                 {pair}
               </div>
 
-              <div className={`font-bold text-[clamp(10px,1.8vh,22px)] ${liveDir === "BUY"
+              <div className={`font-bold text-[clamp(10px,5.33px+1.4583vw,24px)] ${liveDir === "BUY"
                 ? "text-green-400"
                 : liveDir === "SELL"
                   ? "text-red-400"
