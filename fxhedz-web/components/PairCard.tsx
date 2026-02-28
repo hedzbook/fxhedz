@@ -87,11 +87,11 @@ py-[clamp(2px,0.6vh,6px)]
 
             {/* ROW 1 â€” PAIR + DIRECTION */}
             <div className="flex justify-between items-center">
-              <div className="font-semibold text-[clamp(12px,7.34px+1.458vw,26px)] leading-none">
+              <div className="font-semibold text-[clamp(11px,6.66px+1.354vw,24px)] leading-none">
                 {pair}
               </div>
 
-              <div className={`font-bold text-[clamp(12px,7.34px+1.458vw,26px)] ${liveDir === "BUY"
+              <div className={`font-bold text-[clamp(11px,6.66px+1.354vw,24px)] ${liveDir === "BUY"
                 ? "text-green-400"
                 : liveDir === "SELL"
                   ? "text-red-400"
