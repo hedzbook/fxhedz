@@ -784,7 +784,7 @@ export default function Page() {
 
           {/* RIGHT SIDE CONTENT */}
           <div className="bg-neutral-900 flex items-center px-3">
-            <div className="text-[clamp(12px,9.3px+0.833vw,20px)] font-semibold leading-none">
+            <div className="text-[clamp(11px,6.66px+1.354vw,24px)] font-semibold leading-none">
               FXHEDZ
             </div>
 

@@ -86,7 +86,7 @@ export default function ControlPanel({
     pb-4
     px-4
     space-y-6
-    text-[clamp(12px,3vw,14px)]
+    text-[clamp(8px,4.66px+1.0416vw,18px)]
   "
         >
 
@@ -227,7 +227,7 @@ function DeviceBlock({ deviceId }: { deviceId: string }) {
 
             <div
                 className="
-          font-mono text-[11px]
+          font-mono text-[clamp(8px,4.66px+1.0416vw,18px)]
           text-neutral-400
           leading-snug
           break-all

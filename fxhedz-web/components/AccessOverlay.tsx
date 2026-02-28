@@ -67,7 +67,7 @@ function Panel({ children }: any) {
 
 function Header() {
   return (
-    <div className="text-[10px] tracking-[0.3em] text-blue-500 font-black mb-4 uppercase">
+    <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] tracking-[0.3em] text-blue-500 font-black mb-4 uppercase">
       FXHEDZ <span className="text-white">LIVE</span>
     </div>
   )
@@ -75,7 +75,7 @@ function Header() {
 
 function Title({ children }: any) {
   return (
-    <h2 className="text-[clamp(14px,3vw,20px)] font-bold text-white tracking-tight mb-2">
+    <h2 className="text-[clamp(11px,6.66px+1.354vw,24px)] font-bold text-white tracking-tight mb-2">
       {children}
     </h2>
   )
@@ -83,7 +83,7 @@ function Title({ children }: any) {
 
 function Description({ children }: any) {
   return (
-    <p className="text-[clamp(10px,2.5vw,14px)] leading-[1.3] text-neutral-400 mb-4">
+    <p className="text-[clamp(8px,4.66px+1.0416vw,18px)] leading-[1.3] text-neutral-400 mb-4">
       {children}
     </p>
   )
