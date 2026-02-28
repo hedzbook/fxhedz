@@ -47,10 +47,10 @@ export default function VerticalSymbolButton({
       `}
     >
       <div className="flex flex-col items-center leading-[1.05]">
-        <span className="text-[clamp(8px,1vh,13px)] font-semibold tracking-wide">
+        <span className="text-[clamp(10px,7.33px+0.833vw,18px)] font-semibold tracking-wide">
           {base}
         </span>
-        <span className="text-[clamp(8px,1vh,13px)] text-neutral-400 tracking-wide">
+        <span className="text-[clamp(10px,7.33px+0.833vw,18px)] text-neutral-400 tracking-wide">
           {quote}
         </span>
       </div>
