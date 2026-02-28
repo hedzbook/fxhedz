@@ -367,6 +367,30 @@ function doPost(e) {
                 }
             }
 
+            // ===============================
+            // TELEGRAM MINI APP INSTRUMENT UPDATE
+            // ===============================
+            if (data.telegram_instruments && data.telegram_chat_id) {
+
+                const sheet = mustGetSheet();
+                const rows = sheet.getDataRange().getValues();
+
+                for (let i = 1; i < rows.length; i++) {
+
+                    if (String(rows[i][COL.telegram_chat_id]) !== String(data.telegram_chat_id))
+                        continue;
+
+                    sheet.getRange(i + 1, COL.telegram_pairs + 1)
+                        .setValue(data.telegram_instruments.join(","));
+
+                    return ContentService
+                        .createTextOutput(JSON.stringify({
+                            success: true
+                        }))
+                        .setMimeType(ContentService.MimeType.JSON);
+                }
+            }
+
             if (data.web_instruments && data.email) {
 
                 const sheet = mustGetSheet();
@@ -2167,8 +2191,7 @@ function dispatchImageToUsers(blob, tx) {
         // -------------------------------------
         if (plan !== "live" && plan !== "live+") continue;
 
-        let allowedPairs = plan === "live" ?
-            ["ETHUSD", "USDCHF"] :
+        let allowedPairs = plan === "live" ? ["ETHUSD", "USDCHF"] :
             PAIRS;
 
         if (!instrument || allowedPairs.indexOf(instrument) === -1)
@@ -2179,8 +2202,7 @@ function dispatchImageToUsers(blob, tx) {
         // =====================================
         const chatId = String(rows[i][COL.telegram_chat_id] || "");
         const tgSelected = rows[i][COL.telegram_pairs] ?
-            String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) :
-            [];
+            String(rows[i][COL.telegram_pairs]).split(",").filter(Boolean) : [];
 
         if (chatId && tgSelected.indexOf(instrument) !== -1) {
 
@@ -2202,8 +2224,7 @@ function dispatchImageToUsers(blob, tx) {
         // ANDROID CHANNEL
         // =====================================
         const androidSelected = rows[i][COL.android_pairs] ?
-            String(rows[i][COL.android_pairs]).split(",").filter(Boolean) :
-            [];
+            String(rows[i][COL.android_pairs]).split(",").filter(Boolean) : [];
 
         const pushToken = rows[i][COL.android_push_token] || "";
 
@@ -2215,8 +2236,7 @@ function dispatchImageToUsers(blob, tx) {
         // WEB CHANNEL
         // =====================================
         const webSelected = rows[i][COL.web_pairs] ?
-            String(rows[i][COL.web_pairs]).split(",").filter(Boolean) :
-            [];
+            String(rows[i][COL.web_pairs]).split(",").filter(Boolean) : [];
 
         const webPushToken = rows[i][COL.web_push_token] || "";
 
