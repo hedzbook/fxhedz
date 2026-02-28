@@ -78,23 +78,31 @@ if (!pair || !email) return
   <button
     onClick={toggleNotification}
     className={`
-      text-[clamp(7px,calc(6px+0.27vw),12px)]
-      leading-none
-      font-semibold
-      tracking-[0.08em]
-      px-[clamp(4px,0.4vw,8px)]
-      py-[clamp(2px,0.25vw,4px)]
-      rounded-sm
+      w-[clamp(14px,1.4vw,18px)]
+      h-[clamp(14px,1.4vw,18px)]
+      flex items-center justify-center
+      rounded-[2px]
       border
       transition-colors duration-150
       ${
         appInstruments.includes(pair)
-          ? "bg-sky-500/15 text-sky-400 border-sky-500/30"
-          : "bg-neutral-900 text-neutral-500 border-neutral-700"
+          ? "border-sky-500/40 text-sky-400 bg-sky-500/10"
+          : "border-neutral-700 text-neutral-600 bg-neutral-900"
       }
     `}
   >
-    {appInstruments.includes(pair) ? "ALERT ON" : "ALERT OFF"}
+    <svg
+      className="w-[65%] h-[65%]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+    </svg>
   </button>
 )}
 
