@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+
+# Git
+.git
+.gitignore
+
+# Next / Expo web
+.next
+dist
+build
+
+# Android native build outputs
+android/.gradle
+android/app/build
+android/build
+android/.cxx
+
+# Nested native module build artifacts
+node_modules/**/android/build
+node_modules/**/android/.cxx
+
+# Logs & archives
+coverage
+*.log
+*.zip
+*.apk
+*.aab
+
+# Raw assets
+assets/raw
