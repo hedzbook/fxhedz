@@ -293,7 +293,7 @@ export default function PairDetail({
                                     <div className="flex">
 
                                         {post.image && (
-                                            <div className="w-[120px] shrink-0 overflow-hidden">
+                                            <div className="w-[clamp(100px,28vw,240px)] shrink-0 overflow-hidden">
                                                 <img
                                                     src={`https://drive.google.com/thumbnail?id=${post.image}&sz=w800`}
                                                     className="w-full h-full object-cover"
