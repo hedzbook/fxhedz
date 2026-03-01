@@ -271,26 +271,61 @@ string UrlEncode(const string src) {
     return out;
 }
 
-string TakeChartScreenshot() {
-    string file = "CoTrader_" + _Symbol + ".jpg";
+string TakeChartScreenshot()
+{
+   string file = "CoTrader_" + _Symbol + ".jpg";
 
-    // Delete old file (Common folder)
-    FileDelete(file, FILE_COMMON);
+   FileDelete(file, FILE_COMMON);
 
-    ChartSetInteger(0, CHART_BRING_TO_TOP, true);
-    ChartRedraw();
-    Sleep(700);
-    ChartRedraw();
-    Sleep(700);
+   string panelObjects[] =
+   {
+      SYMBOL_BTN,
+      BUY_BTN,
+      SELL_BTN,
+      BAL_BTN,
+      EXIT_BTN,
+      BUYVOL_BTN,
+      SELLVOL_BTN,
+      EOB_BTN,
+      EOS_BTN,
+      LOT_EDIT,
+      PnL_BTN,
+      SIG_BG,
+      SIG_BTN
+   };
 
-    // ✅ IMPORTANT: filename ONLY, no path
-    if (!ChartScreenShot(0, file, 960, 540, ALIGN_RIGHT)) {
-        Print("❌ ChartScreenShot failed, err=", GetLastError());
-        return "";
-    }
+   int total = ArraySize(panelObjects);
 
-    Print("📸 Screenshot created:", file);
-    return file;
+   // 🔥 1️⃣ REMOVE FROM ALL TIMEFRAMES (NOT JUST HIDDEN)
+   for(int i=0;i<total;i++)
+   {
+      if(ObjectFind(0,panelObjects[i])>=0)
+         ObjectSetInteger(0,panelObjects[i],OBJPROP_TIMEFRAMES,OBJ_NO_PERIODS);
+   }
+
+   ChartRedraw();
+   Sleep(300);
+
+   // 🔥 2️⃣ Take Screenshot
+   bool ok = ChartScreenShot(0,file,960,540,ALIGN_RIGHT);
+
+   // 🔥 3️⃣ Restore to ALL TIMEFRAMES
+   for(int i=0;i<total;i++)
+   {
+      if(ObjectFind(0,panelObjects[i])>=0)
+         ObjectSetInteger(0,panelObjects[i],OBJPROP_TIMEFRAMES,OBJ_ALL_PERIODS);
+   }
+
+   ChartRedraw();
+
+   if(!ok)
+   {
+      Print("❌ Screenshot failed:",GetLastError());
+      return "";
+   }
+
+   Print("📸 CLEAN screenshot created:",file);
+   return file;
 }
 
 void AppendString(uchar & dst[],
@@ -1252,6 +1287,67 @@ void InvalidateFarStops() {
     }
 }
 
+void UpdateCustomStopLines()
+{
+    double buyStopPrice = 0;
+    double sellStopPrice = 0;
+
+    for(int i=OrdersTotal()-1; i>=0; i--)
+    {
+        ulong ticket = OrderGetTicket(i);
+        if(!OrderSelect(ticket)) continue;
+        if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
+
+        ENUM_ORDER_TYPE type = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+
+        if(type == ORDER_TYPE_BUY_STOP)
+            buyStopPrice = OrderGetDouble(ORDER_PRICE_OPEN);
+
+        if(type == ORDER_TYPE_SELL_STOP)
+            sellStopPrice = OrderGetDouble(ORDER_PRICE_OPEN);
+    }
+
+    // ----- SELL STOP LINE (SS)
+    if(sellStopPrice > 0)
+    {
+        if(ObjectFind(0,"SS_LINE") < 0)
+        {
+            ObjectCreate(0,"SS_LINE",OBJ_HLINE,0,0,sellStopPrice);
+            ObjectSetInteger(0,"SS_LINE",OBJPROP_COLOR,(color)0x1673F9);
+            ObjectSetInteger(0,"SS_LINE",OBJPROP_STYLE,STYLE_DOT);
+            ObjectSetInteger(0,"SS_LINE",OBJPROP_WIDTH,2);
+        }
+        else
+        {
+            ObjectSetDouble(0,"SS_LINE",OBJPROP_PRICE,sellStopPrice);
+        }
+    }
+    else
+    {
+        ObjectDelete(0,"SS_LINE");
+    }
+
+    // ----- BUY STOP LINE (BS)
+    if(buyStopPrice > 0)
+    {
+        if(ObjectFind(0,"BS_LINE") < 0)
+        {
+            ObjectCreate(0,"BS_LINE",OBJ_HLINE,0,0,buyStopPrice);
+            ObjectSetInteger(0,"BS_LINE",OBJPROP_COLOR,(color)0x1673F9);
+            ObjectSetInteger(0,"BS_LINE",OBJPROP_STYLE,STYLE_DOT);
+            ObjectSetInteger(0,"BS_LINE",OBJPROP_WIDTH,2);
+        }
+        else
+        {
+            ObjectSetDouble(0,"BS_LINE",OBJPROP_PRICE,buyStopPrice);
+        }
+    }
+    else
+    {
+        ObjectDelete(0,"BS_LINE");
+    }
+}
+
 //====================================================================
 //  SNAPSHOT PERSISTENCE (TICKETS & VOLUMES)
 //====================================================================
@@ -1560,39 +1656,53 @@ void closeOldSell() {
 //====================================================================
 //  CHART CONTROL MODULE (THEME & SCALE)
 //====================================================================
-void SetChartTheme() {
+void SetChartTheme()
+{
     ChartSetSymbolPeriod(0, NULL, PERIOD_CURRENT);
 
     ChartSetInteger(0, CHART_MODE, CHART_CANDLES);
-    ChartSetInteger(0, CHART_COLOR_BACKGROUND, (color) 0x1E1E1E);
-    ChartSetInteger(0, CHART_COLOR_FOREGROUND, clrGainsboro);
-    ChartSetInteger(0, CHART_COLOR_GRID, clrDarkSlateGray);
-    ChartSetInteger(0, CHART_COLOR_ASK, clrDimGray);
-    ChartSetInteger(0, CHART_COLOR_BID, clrDimGray);
 
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, clrGainsboro);
-    ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, clrGainsboro);
-    ChartSetInteger(0, CHART_COLOR_CHART_UP, clrGainsboro);
-    ChartSetInteger(0, CHART_COLOR_CHART_DOWN, clrGainsboro);
+    // Background
+    ChartSetInteger(0, CHART_COLOR_BACKGROUND, (color)0x1E1E1E);
 
+    // Text color (price scale, time)
+    ChartSetInteger(0, CHART_COLOR_FOREGROUND, (color)0x888888);
+
+    // Grid (very subtle like web)
+    ChartSetInteger(0, CHART_COLOR_GRID, (color)0x252525);
+
+    // Bid / Ask
+    ChartSetInteger(0, CHART_COLOR_ASK, (color)0x555555);
+    ChartSetInteger(0, CHART_COLOR_BID, (color)0x555555);
+
+    // Candles (MATCH WEB)
+ChartSetInteger(0, CHART_COLOR_CANDLE_BULL, (color)0x5EC522);
+ChartSetInteger(0, CHART_COLOR_CANDLE_BEAR, (color)0x4444EF);
+ChartSetInteger(0, CHART_COLOR_CHART_UP, (color)0x5EC522);
+ChartSetInteger(0, CHART_COLOR_CHART_DOWN, (color)0x4444EF);
+
+    // Chart behavior
     ChartSetInteger(0, CHART_SHIFT, true);
     ChartSetDouble(0, CHART_SHIFT_SIZE, 18);
+
     ChartSetInteger(0, CHART_SHOW_TICKER, false);
     ChartSetInteger(0, CHART_SHOW_OHLC, false);
-    ChartSetInteger(0, CHART_SHOW_GRID, false);
+    ChartSetInteger(0, CHART_SHOW_GRID, true);
     ChartSetInteger(0, CHART_SHOW_BID_LINE, true);
     ChartSetInteger(0, CHART_SHOW_ASK_LINE, true);
     ChartSetInteger(0, CHART_SHOW_LAST_LINE, false);
     ChartSetInteger(0, CHART_SHOW_VOLUMES, true);
-    ChartSetInteger(0, CHART_COLOR_VOLUME, clrYellow);
+
+    ChartSetInteger(0, CHART_COLOR_VOLUME, (color)0x5EC522);
+
     ChartSetInteger(0, CHART_SHOW_OBJECT_DESCR, true);
     ChartSetInteger(0, CHART_SHOW_TRADE_LEVELS, true);
     ChartSetInteger(0, CHART_SHOW_TRADE_HISTORY, false);
     ChartSetInteger(0, CHART_SHOW_ONE_CLICK, false);
+
     ChartSetInteger(0, CHART_SCALE, 3);
 
     ChartRedraw(0);
-    //ChartNavigate(0, CHART_END, 0);
 }
 
 bool GetTradeRectBounds(double & rectLow, double & rectHigh) {
@@ -2470,21 +2580,23 @@ void SendLivePrice() {
     double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
     // ------------------------------------------
-    // 🔥 BUILD LAST 50 M15 CANDLES STRING
+    // BUILD LAST 100 M30 CANDLES
     // format:
     // time,o,h,l,c;time,o,h,l,c;...
     // ------------------------------------------
 
-    string candles = "";
+    if (Bars(_Symbol, PERIOD_M30) < 120)
+        return;
 
-    int total = 50;
+    string candles = "";
+    int total = 100;
 
     for (int i = total - 1; i >= 0; i--) {
-        datetime t = iTime(_Symbol, PERIOD_M15, i);
-        double o = iOpen(_Symbol, PERIOD_M15, i);
-        double h = iHigh(_Symbol, PERIOD_M15, i);
-        double l = iLow(_Symbol, PERIOD_M15, i);
-        double c = iClose(_Symbol, PERIOD_M15, i);
+datetime t = iTime(_Symbol, PERIOD_M30, i);
+double o = iOpen(_Symbol, PERIOD_M30, i);
+double h = iHigh(_Symbol, PERIOD_M30, i);
+double l = iLow(_Symbol, PERIOD_M30, i);
+double c = iClose(_Symbol, PERIOD_M30, i);
 
         if (t <= 0)
             continue;
@@ -2499,6 +2611,13 @@ void SendLivePrice() {
         if (i > 0)
             candles += ";";
     }
+    
+        // ------------------------------------------
+    // POSITIONS PAYLOAD
+    // format:
+    // symbol,lot,pnl;symbol,lot,pnl;...
+    // ------------------------------------------
+    
 string positionsPayload = "";
 int count = 0;
 
@@ -2977,6 +3096,7 @@ void OnTick() {
     ManageStopsOnTick();
     InvalidateFarStops();
     UpdatePriceLabelsRight();
+    UpdateCustomStopLines();
     
     if (isFlat)
         return;
@@ -2985,8 +3105,10 @@ void OnTick() {
 
     // If snapshot changed → new position opened or closed
     if (SnapshotChanged(g_last_tickets, g_last_volumes, curTickets, curVolumes)) {
+    if (ArraySize(curTickets) == 0) {
         closeBuyStops();
         closeSellStops();
+    }
         RebuildTradesFromOpenPositions();
 
         double entry;

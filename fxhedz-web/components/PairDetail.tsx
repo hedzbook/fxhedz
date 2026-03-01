@@ -551,3 +551,17 @@ function ConfidenceBar({ value }: { value: number }) {
         </div>
     )
 }
+
+function computeConfidence(signal: any) {
+    if (!signal) return 0
+
+    const base = 0.44 // temporary placeholder
+
+    if (signal.direction === "BUY")
+        return base * 100
+
+    if (signal.direction === "SELL")
+        return -base * 100
+
+    return 0
+}
