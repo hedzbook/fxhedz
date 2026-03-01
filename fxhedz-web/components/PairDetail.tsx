@@ -402,35 +402,59 @@ export default function PairDetail({
             </div>
 
             {/* MODAL PREVIEW */}
-            {preview && (
-                <div
-                    className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
-                    onClick={() => setPreview(null)}
-                >
-                    <div
-                        className="bg-neutral-900 max-w-[700px] w-[92%] rounded-xl overflow-hidden"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {preview.image && (
-                            <img
-                                src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
-                                className="w-full object-contain"
-                            />
-                        )}
+{preview && (
+    <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+        onClick={() => setPreview(null)}
+    >
+        <div
+            className="bg-neutral-900 max-w-[700px] w-[92%] rounded-xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+        >
 
-                        <div className="p-5 space-y-3">
-                            <div className="text-sm text-neutral-400">
-                                {new Date(preview.time).toLocaleString()}
-                            </div>
-
-                            <div
-                                className="text-neutral-200 whitespace-pre-line"
-                                dangerouslySetInnerHTML={{ __html: preview.text }}
-                            />
-                        </div>
-                    </div>
+            {/* HEADER */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
+                    {new Date(preview.time).toLocaleString()}
                 </div>
+
+                <button
+                    onClick={() => setPreview(null)}
+                    className="
+                        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+                        text-neutral-400
+                        hover:text-white
+                        transition-colors
+                    "
+                >
+                    CLOSE
+                </button>
+            </div>
+
+            {/* IMAGE */}
+            {preview.image && (
+                <img
+                    src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
+                    className="w-full object-contain"
+                />
             )}
+
+            {/* BODY */}
+            <div className="p-5">
+                <div
+                    className="
+                        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+                        leading-relaxed
+                        text-neutral-200
+                        whitespace-pre-line
+                    "
+                    dangerouslySetInnerHTML={{ __html: preview.text }}
+                />
+            </div>
+
+        </div>
+    </div>
+)}
 
         </div>
     )
