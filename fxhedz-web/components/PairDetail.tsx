@@ -317,7 +317,12 @@ export default function PairDetail({
                                             </div>
 
                                             <div
-                                                className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-4 text-neutral-200 whitespace-pre-line"
+                                                                    className="
+                        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+                        leading-relaxed
+                        text-neutral-200
+                        whitespace-pre-line
+                    "
                                                 dangerouslySetInnerHTML={{ __html: post.text }}
                                             />
 
