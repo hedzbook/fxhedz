@@ -408,57 +408,77 @@ export default function PairDetail({
 
             {/* MODAL PREVIEW */}
 {preview && (
-    <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
-        onClick={() => setPreview(null)}
-    >
-        <div
-            className="bg-neutral-900 max-w-[700px] w-[92%] rounded-xl overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-        >
+  <div
+    className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+    onClick={() => setPreview(null)}
+  >
+    <div className="flex min-h-full items-center justify-center p-[clamp(12px,2vw,32px)]">
+      
+      {/* MODAL */}
+      <div
+        className="
+          w-full
+          max-w-[clamp(480px,75vw,960px)]
+          max-h-[90vh]
+          bg-neutral-900
+          border border-neutral-800
+          rounded-xl
+          shadow-2xl
+          flex flex-col
+          overflow-hidden
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
 
-            {/* HEADER */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
-                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
-                    {new Date(preview.time).toLocaleString()}
-                </div>
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-[clamp(16px,2vw,28px)] py-[clamp(12px,1.6vw,20px)] border-b border-neutral-800 shrink-0">
+          
+          <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 leading-none">
+            {new Date(preview.time).toLocaleString()}
+          </div>
 
-                <button
-                    onClick={() => setPreview(null)}
-                    className="
-                        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
-                        text-neutral-400
-                        hover:text-white
-                        transition-colors
-                    "
-                >
-                    CLOSE
-                </button>
+          <button
+            onClick={() => setPreview(null)}
+            className="
+              text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+              text-neutral-500
+              hover:text-white
+              transition-colors
+              leading-none
+            "
+          >
+            CLOSE
+          </button>
+        </div>
+
+        {/* CONTENT SCROLL AREA */}
+        <div className="flex-1 overflow-y-auto px-[clamp(16px,2vw,28px)] py-[clamp(16px,2vw,28px)] space-y-[clamp(16px,2vw,28px)]">
+
+          {preview.image && (
+            <div className="w-full overflow-hidden rounded-lg border border-neutral-800">
+              <img
+                src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
+                className="w-full max-h-[75vh] object-contain select-none"
+                draggable={false}
+              />
             </div>
+          )}
 
-            {/* IMAGE */}
-            {preview.image && (
-                <img
-                    src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
-                    className="w-full object-contain"
-                />
-            )}
-
-            {/* BODY */}
-            <div className="p-5">
-                <div
-                    className="
-                        text-[clamp(9px,5.5px+1.0937vw,19.5px)]
-                        leading-relaxed
-                        text-neutral-200
-                        whitespace-pre-line
-                    "
-                    dangerouslySetInnerHTML={{ __html: preview.text }}
-                />
-            </div>
+          <div
+            className="
+              text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+              leading-relaxed
+              text-neutral-200
+              whitespace-pre-line
+            "
+            dangerouslySetInnerHTML={{ __html: preview.text }}
+          />
 
         </div>
+
+      </div>
     </div>
+  </div>
 )}
 
         </div>
