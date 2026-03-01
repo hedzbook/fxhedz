@@ -89,10 +89,11 @@ export default function Page() {
   const [subActive, setSubActive] = useState<boolean | null>(null)
   const { data: session, status } = useSession()
   const email =
-  session?.user?.email ||
-  (typeof window !== "undefined"
-    ? (window as any).__NATIVE_EMAIL__
-    : null)
+    session?.user?.email ||
+    (typeof window !== "undefined"
+      ? (window as any).__NATIVE_EMAIL__
+      : null)
+
   const isAndroid =
     typeof window !== "undefined" &&
     !!(window as any).ReactNativeWebView
@@ -102,19 +103,10 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-const isAndroid =
-  typeof window !== "undefined" &&
-  !!(window as any).ReactNativeWebView
-
-const hasNativeToken =
-  isAndroid &&
-  typeof window !== "undefined" &&
-  (window as any).__HAS_NATIVE_TOKEN__ === true
-
-const isAuthenticated =
-  isAndroid
-    ? hasNativeToken
-    : status === "authenticated"
+  const isAuthenticated =
+    isAndroid
+      ? hasNativeToken
+      : status === "authenticated"
 
   const sessionExists =
     isAndroid
@@ -151,42 +143,42 @@ const isAuthenticated =
       }
     })
   )
-useEffect(() => {
+  useEffect(() => {
 
-  if (!email || !accessMeta) return
+    if (!email || !accessMeta) return
 
-  async function loadInstruments() {
+    async function loadInstruments() {
 
-    try {
+      try {
 
-      const res = await fetch("/api/signals", {
-        cache: "no-store"
-      })
+        const res = await fetch("/api/signals", {
+          cache: "no-store"
+        })
 
-      const data = await res.json()
+        const data = await res.json()
 
-      const platform =
-        document.cookie
-          .split("; ")
-          .find(r => r.startsWith("fx_platform="))
-          ?.split("=")[1] || "web"
+        const platform =
+          document.cookie
+            .split("; ")
+            .find(r => r.startsWith("fx_platform="))
+            ?.split("=")[1] || "web"
 
-      if (platform === "telegram") {
-        setAppInstruments(data.telegramInstruments || [])
-      } else if (platform === "android") {
-        setAppInstruments(data.appInstruments || [])
-      } else {
-        setAppInstruments(data.webInstruments || [])
+        if (platform === "telegram") {
+          setAppInstruments(data.telegramInstruments || [])
+        } else if (platform === "android") {
+          setAppInstruments(data.appInstruments || [])
+        } else {
+          setAppInstruments(data.webInstruments || [])
+        }
+
+      } catch (err) {
+        console.error("Instrument load failed", err)
       }
-
-    } catch (err) {
-      console.error("Instrument load failed", err)
     }
-  }
 
-  loadInstruments()
+    loadInstruments()
 
-}, [email, accessMeta])
+  }, [email, accessMeta])
   useEffect(() => {
     const saved = localStorage.getItem("fxhedz_order")
     if (saved) {
@@ -608,8 +600,8 @@ useEffect(() => {
                 onClose={() => setOpenPair(null)}
                 isGuest={isGuest}
                 email={session?.user?.email || (window as any).__NATIVE_EMAIL__}
-                    appInstruments={appInstruments}
-    setAppInstruments={setAppInstruments}
+                appInstruments={appInstruments}
+                setAppInstruments={setAppInstruments}
               />
 
             </div>
