@@ -188,7 +188,7 @@ export default function PairDetail({
                         {/* ===========================
     SIGNAL + REASON PANEL
 =========================== */}
-                        <div className="space-y-[clamp(6px,1vh,12px)]">
+                        <div className="space-y-[clamp(8px,1vh,16px)]">
 
                             {/* REASON ROW (4 Blocks) */}
                             <div className="grid grid-cols-4 gap-[clamp(6px,1vw,12px)]">
@@ -223,7 +223,7 @@ export default function PairDetail({
                             <div className="grid grid-cols-4 gap-[clamp(6px,1vw,12px)]">
 
                                 <MiniBlock
-                                    label="Direction"
+                                    label="Decision"
                                     value={signal?.direction || "--"}
                                     highlight={
                                         signal?.direction === "BUY"
@@ -295,7 +295,7 @@ export default function PairDetail({
                 {tab === "updates" && (
                     <div className="flex flex-col flex-1 min-h-0">
 
-                        <div className="flex-1 overflow-y-auto space-y-2.5 p-[clamp(8px,1.2vw,16px)]">
+                        <div className="flex-1 overflow-y-auto space-y-2 p-[clamp(8px,1.2vw,16px)]">
 
                             {data?.feed?.length ? data.feed.map((post: any, i: number) => (
 
@@ -315,7 +315,7 @@ export default function PairDetail({
                                             </div>
                                         )}
 
-                                        <div className="flex-1 px-3 py-2 space-y-1.5">
+                                        <div className="flex-1 px-2 py-2 space-y-2">
 
                                             <div className="flex items-center justify-between">
                                                 <div className="text-[clamp(8px,4.66px+1.0416vw,18px)] text-neutral-400">
@@ -327,6 +327,12 @@ export default function PairDetail({
                                                 )}
                                                 {post.text.includes("SELL") && (
                                                     <span className="text-red-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">BEARISH</span>
+                                                )}
+                                                {post.text.includes("HEDGED") && (
+                                                    <span className="text-green-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">HEDGED</span>
+                                                )}
+                                                {post.text.includes("EXIT") && (
+                                                    <span className="text-red-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">EXITED</span>
                                                 )}
                                             </div>
 
@@ -357,12 +363,12 @@ export default function PairDetail({
                 {tab === "history" && (
                     <div className="flex flex-col flex-1 min-h-0 p-[clamp(8px,1.2vw,16px)]">
 
-                        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
 
                             {data?.history?.length ? data.history.map((h: any, i: number) => (
                                 <div
                                     key={i}
-                                    className="bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)]"
+                                    className="bg-neutral-800 border border-neutral-800 px-2 py-2 flex justify-between text-[clamp(9px,5.5px+1.0937vw,19.5px)]"
                                 >
                                     <div>
                                         <div className={h.direction === "BUY" ? "text-green-400" : "text-red-400"}>
@@ -377,7 +383,7 @@ export default function PairDetail({
                                     </div>
                                 </div>
                             )) : (
-                               <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-500 text-center">
+                                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-500 text-center">
                                     No history yet
                                 </div>
                             )}
@@ -407,7 +413,7 @@ export default function PairDetail({
                                 />
                             </div>
 
-                            <div className="space-y-[clamp(6px,1vh,12px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
+                            <div className="space-y-[clamp(8px,1vh,16px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
                                 <Stat label="Total Trades" value={data?.performance?.trades} />
                                 <Stat label="Wins" value={data?.performance?.wins} />
                                 <Stat label="Losses" value={data?.performance?.losses} />
@@ -542,7 +548,7 @@ function MiniBlock({ label, value, highlight = "" }: any) {
         <div className="
             bg-neutral-900
             px-[clamp(8px,1vw,14px)]
-            py-[clamp(6px,0.8vh,10px)]
+            py-[clamp(8px,1vh,12px)]
             flex flex-col
             justify-center
         ">
@@ -579,21 +585,26 @@ function ConfidenceBar({ value }: { value: number }) {
                 ? "bg-red-500"
                 : "bg-neutral-600"
 
-    return (
-        <div className="space-y-2">
+    const label =
+        value === 0
+            ? "Neutral"
+            : `${percentage.toFixed(0)}% ${isBullish ? "Bullish" : "Bearish"}`
 
-            <div className="flex justify-between text-[clamp(8px,4.8px+1vw,16px)] text-neutral-400">
-                <span>Bearish</span>
-                <span>Neutral</span>
-                <span>Bullish</span>
+    return (
+        <div className="flex items-center gap-3">
+
+            {/* LABEL */}
+            <div className="whitespace-nowrap text-[clamp(8px,4.8px+1vw,16px)] text-neutral-400">
+                {label}
             </div>
 
-            <div className="relative h-[6px] bg-neutral-800 rounded overflow-hidden">
+            {/* BAR */}
+            <div className="relative flex-1 h-[6px] bg-neutral-800 rounded overflow-hidden">
 
                 {/* Center Line */}
                 <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-neutral-600" />
 
-                {/* Confidence Fill */}
+                {/* Fill */}
                 <div
                     className={`absolute top-0 bottom-0 ${barColor}`}
                     style={{
@@ -602,29 +613,8 @@ function ConfidenceBar({ value }: { value: number }) {
                         right: isBearish ? "50%" : undefined
                     }}
                 />
-
-            </div>
-
-            <div className="text-center text-[clamp(8px,4.8px+1vw,16px)] text-neutral-400">
-                {value === 0
-                    ? "Neutral Bias"
-                    : `${percentage.toFixed(0)}% ${isBullish ? "Bullish" : "Bearish"} Bias`}
             </div>
 
         </div>
     )
-}
-
-function computeConfidence(signal: any) {
-    if (!signal) return 0
-
-    const base = 0.44 // temporary placeholder
-
-    if (signal.direction === "BUY")
-        return base * 100
-
-    if (signal.direction === "SELL")
-        return -base * 100
-
-    return 0
 }
