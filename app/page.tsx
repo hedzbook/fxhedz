@@ -102,8 +102,19 @@ export default function Page() {
     typeof window !== "undefined" &&
     (window as any).__HAS_NATIVE_TOKEN__ === true
 
-  const isAuthenticated =
-    status === "authenticated"
+const isAndroid =
+  typeof window !== "undefined" &&
+  !!(window as any).ReactNativeWebView
+
+const hasNativeToken =
+  isAndroid &&
+  typeof window !== "undefined" &&
+  (window as any).__HAS_NATIVE_TOKEN__ === true
+
+const isAuthenticated =
+  isAndroid
+    ? hasNativeToken
+    : status === "authenticated"
 
   const sessionExists =
     isAndroid
