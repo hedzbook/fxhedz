@@ -17,7 +17,6 @@
     },
     "android": {
       "package": "com.fxhedz.live",
-      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

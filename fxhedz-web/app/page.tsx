@@ -13,6 +13,7 @@ import { ensureDeviceIdentity } from "@/lib/device"
 import { signOut } from "next-auth/react"
 import { generateDummyDetail } from "@/lib/dummyDetail"
 import ControlPanel from "@/components/ControlPanel"
+import pkg from "../package.json"
 
 import {
   DndContext,
@@ -749,7 +750,7 @@ useEffect(() => {
                   ? localStorage.getItem("fxhedz_device_id")
                   : null
               }
-              version="v0.1.0"
+              version={`v${pkg.version}`}
             />
           </div>
         )}
