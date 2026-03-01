@@ -36,13 +36,27 @@ export default function GlobalLightChart({
             container.removeChild(container.firstChild)
         }
 
+        const width = container.clientWidth
+
+        // 🔥 Responsive Font Clamp (9px → 14px)
+        const clampedFontSize = Math.max(
+            9,
+            Math.min(14, Math.floor(width * 0.012))
+        )
+
+        // 🔥 Responsive Bar Spacing
+        const clampedBarSpacing = Math.max(
+            6,
+            Math.min(14, Math.floor(width * 0.01))
+        )
+
         const chart = createChart(container, {
-            width: container.clientWidth,
+            width: width,
             height: container.clientHeight,
             layout: {
                 background: { type: ColorType.Solid, color: "#1E1E1E" },
-                textColor: "#888",
-                fontSize: 10,
+                textColor: "#8A8A8A",
+                fontSize: clampedFontSize,
                 fontFamily: "monospace"
             },
             grid: {
@@ -50,24 +64,24 @@ export default function GlobalLightChart({
                 horzLines: { visible: false }
             },
             rightPriceScale: {
-                borderColor: "rgba(255,255,255,0.08)"
+                borderColor: "rgba(255,255,255,0.05)"
             },
             timeScale: {
-                borderColor: "rgba(255,255,255,0.08)",
+                borderColor: "rgba(255,255,255,0.05)",
                 timeVisible: true,
                 secondsVisible: false,
                 rightOffset: 8,
-                barSpacing: 10
+                barSpacing: clampedBarSpacing
             }
         })
 
         const series = chart.addSeries(CandlestickSeries, {
-            upColor: "#22c55e",
-            downColor: "#ef4444",
-            borderUpColor: "#22c55e",
-            borderDownColor: "#ef4444",
-            wickUpColor: "#22c55e",
-            wickDownColor: "#ef4444"
+            upColor: "#22C55E",
+            downColor: "#EF4444",
+            borderUpColor: "#22C55E",
+            borderDownColor: "#EF4444",
+            wickUpColor: "#22C55E",
+            wickDownColor: "#EF4444"
         })
 
         chartRef.current = chart
@@ -75,9 +89,28 @@ export default function GlobalLightChart({
         historyLoadedRef.current = false
 
         const resizeObserver = new ResizeObserver(() => {
+
+            const width = container.clientWidth
+
+            const newFontSize = Math.max(
+                9,
+                Math.min(14, Math.floor(width * 0.012))
+            )
+
+            const newBarSpacing = Math.max(
+                6,
+                Math.min(14, Math.floor(width * 0.01))
+            )
+
             chart.applyOptions({
                 width: container.clientWidth,
-                height: container.clientHeight
+                height: container.clientHeight,
+                layout: {
+                    fontSize: newFontSize
+                },
+                timeScale: {
+                    barSpacing: newBarSpacing
+                }
             })
         })
 
@@ -91,7 +124,7 @@ export default function GlobalLightChart({
     }, [mountId])
 
     // ==========================================
-    // CANDLE STREAM (IMPORTANT — RESTORED)
+    // CANDLE STREAM
     // ==========================================
     useEffect(() => {
 
@@ -159,10 +192,9 @@ export default function GlobalLightChart({
 
             const activeColor =
                 o.direction === "BUY"
-                    ? "#22c55e"
-                    : "#ef4444"
+                    ? "#22C55E"
+                    : "#EF4444"
 
-            // Better muted colors (visible but secondary)
             const mutedColor =
                 o.direction === "BUY"
                     ? "rgba(34,197,94,0.45)"
@@ -176,19 +208,14 @@ export default function GlobalLightChart({
             const entryLine = candleSeries.createPriceLine({
                 price: entry,
                 color,
-                lineWidth: isLatest && !isHedged ? 2 : 2, // keep thickness consistent
+                lineWidth: 2,
                 axisLabelVisible: isLatest && !isHedged,
                 title: isLatest && !isHedged ? (o.label || "") : ""
             })
 
             dynamicLinesRef.current.push(entryLine)
 
-            // -------------------------------
-            // STOP IF HEDGED
-            // -------------------------------
             if (isHedged) return
-
-            // Only latest non-hedged gets SL/TP
             if (!isLatest) return
 
             const sl = Number(signal?.sl)
@@ -196,14 +223,13 @@ export default function GlobalLightChart({
 
             if (sl) {
                 const hedgeLabel =
-                    o.direction === "BUY"
-                        ? "SS"
-                        : "BS"
+                    o.direction === "BUY" ? "SS" : "BS"
 
                 const slLine = candleSeries.createPriceLine({
                     price: sl,
-                    color: "#ef4444",
+                    color: "#F97316", // 🔥 Orange for hedge clarity
                     lineWidth: 1,
+                    lineStyle: 2,
                     title: hedgeLabel
                 })
 
@@ -213,8 +239,9 @@ export default function GlobalLightChart({
             if (tp) {
                 const tpLine = candleSeries.createPriceLine({
                     price: tp,
-                    color: "#22c55e",
+                    color: "#22C55E",
                     lineWidth: 1,
+                    lineStyle: 2,
                     title: "TP"
                 })
 

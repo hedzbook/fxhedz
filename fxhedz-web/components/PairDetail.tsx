@@ -28,6 +28,7 @@ export default function PairDetail({
     const [tab, setTab] = useState<"market" | "updates" | "history" | "performance">("market")
     const [preview, setPreview] = useState<any>(null)
     const [saving, setSaving] = useState(false)
+    const showConfidence = true
 
     useEffect(() => {
         if (preview) {
@@ -64,6 +65,28 @@ export default function PairDetail({
             setSaving(false)
         }
     }
+    function computeConfidence(signal: any) {
+    if (!signal) return 0
+
+    // Placeholder institutional weighting
+    // You can replace these later with MT5-derived values
+
+    const technical = signal?.technicalScore ?? 0.4   // 0 → 1
+    const macro = signal?.macroScore ?? 0.2
+    const sentiment = signal?.sentimentScore ?? 0.3
+    const volatility = signal?.volatilityScore ?? 0.1
+
+    const weighted =
+        technical * 0.4 +
+        macro * 0.2 +
+        sentiment * 0.2 +
+        volatility * 0.2
+
+    // Convert 0 → 1 scale to -100 → +100
+    const normalized = (weighted - 0.5) * 200
+
+    return Math.max(-100, Math.min(100, normalized))
+}
     return (
         <div className="flex flex-col h-full bg-black min-h-0">
 
@@ -145,16 +168,76 @@ export default function PairDetail({
                 {tab === "market" && (
                     <div className="flex flex-col flex-1 min-h-0 gap-[clamp(8px,1vh,16px)] p-[clamp(8px,1.2vw,16px)]">
 
+{showConfidence && (
+    <ConfidenceBar value={computeConfidence(signal)} />
+)}
+{/* ===========================
+    SIGNAL + REASON PANEL
+=========================== */}
+<div className="space-y-[clamp(6px,1vh,12px)]">
 
-                        <div>
-                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">Latest Signal</div>
-                            <div className="font-semibold text-[clamp(9px,5.5px+1.0937vw,19.5px)] leading-tight">
-                                {signal?.direction || "--"} {signal?.entry || ""}
-                            </div>
-                            <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400">
-                                SL {signal?.sl || "--"} · TP {signal?.tp || "--"}
-                            </div>
-                        </div>
+    {/* SIGNAL ROW (4 Blocks) */}
+    <div className="grid grid-cols-4 gap-[clamp(6px,1vw,12px)]">
+
+        <MiniBlock
+            label="Direction"
+            value={signal?.direction || "--"}
+            highlight={
+                signal?.direction === "BUY"
+                    ? "text-green-400"
+                    : signal?.direction === "SELL"
+                        ? "text-red-400"
+                        : ""
+            }
+        />
+
+        <MiniBlock
+            label="Entry"
+            value={signal?.entry || "--"}
+        />
+
+        <MiniBlock
+            label="Stop Loss"
+            value={signal?.sl || "--"}
+        />
+
+        <MiniBlock
+            label="Take Profit"
+            value={signal?.tp || "--"}
+        />
+
+    </div>
+
+    {/* REASON ROW (4 Blocks) */}
+    <div className="grid grid-cols-4 gap-[clamp(6px,1vw,12px)]">
+
+        <MiniBlock
+            label="Technical"
+            value="Bullish"
+            highlight="text-green-400"
+        />
+
+        <MiniBlock
+            label="Macro"
+            value="Neutral"
+            highlight="text-neutral-400"
+        />
+
+        <MiniBlock
+            label="Sentiment"
+            value="Bearish"
+            highlight="text-red-400"
+        />
+
+        <MiniBlock
+            label="Volatility"
+            value="Expanding"
+            highlight="text-yellow-400"
+        />
+
+    </div>
+
+</div>
 
                         <div className="flex flex-col flex-1 min-h-0 bg-neutral-900 border border-neutral-800 p-[clamp(8px,1vw,14px)] text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
 
@@ -387,6 +470,84 @@ function Metric({ label, value }: any) {
         <div className="bg-neutral-800 border border-neutral-700 p-[clamp(10px,1.4vw,18px)] text-center">
             <div className="text-neutral-400 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">{label}</div>
             <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] font-semibold">{value ?? "--"}</div>
+        </div>
+    )
+}
+
+function MiniBlock({ label, value, highlight = "" }: any) {
+    return (
+        <div className="
+            bg-neutral-900
+            px-[clamp(8px,1vw,14px)]
+            py-[clamp(6px,0.8vh,10px)]
+            flex flex-col
+            justify-center
+        ">
+            <div className="
+                text-neutral-500
+                text-[clamp(8px,4.8px+1vw,16px)]
+                leading-none
+            ">
+                {label}
+            </div>
+
+            <div className={`
+                font-semibold
+                text-[clamp(9px,5.5px+1.0937vw,19.5px)]
+                leading-tight
+                ${highlight}
+            `}>
+                {value}
+            </div>
+        </div>
+    )
+}
+
+function ConfidenceBar({ value }: { value: number }) {
+
+    const percentage = Math.abs(value)
+    const isBullish = value > 0
+    const isBearish = value < 0
+
+    const barColor =
+        isBullish
+            ? "bg-green-500"
+            : isBearish
+                ? "bg-red-500"
+                : "bg-neutral-600"
+
+    return (
+        <div className="space-y-2">
+
+            <div className="flex justify-between text-[clamp(8px,4.8px+1vw,16px)] text-neutral-400">
+                <span>Bearish</span>
+                <span>Neutral</span>
+                <span>Bullish</span>
+            </div>
+
+            <div className="relative h-[6px] bg-neutral-800 rounded overflow-hidden">
+
+                {/* Center Line */}
+                <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-neutral-600" />
+
+                {/* Confidence Fill */}
+                <div
+                    className={`absolute top-0 bottom-0 ${barColor}`}
+                    style={{
+                        width: `${percentage}%`,
+                        left: isBullish ? "50%" : undefined,
+                        right: isBearish ? "50%" : undefined
+                    }}
+                />
+
+            </div>
+
+            <div className="text-center text-[clamp(8px,4.8px+1vw,16px)] text-neutral-400">
+                {value === 0
+                    ? "Neutral Bias"
+                    : `${percentage.toFixed(0)}% ${isBullish ? "Bullish" : "Bearish"} Bias`}
+            </div>
+
         </div>
     )
 }
