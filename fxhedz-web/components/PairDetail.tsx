@@ -37,7 +37,21 @@ export default function PairDetail({
             document.body.style.overflow = "auto"
         }
     }, [preview])
+    useEffect(() => {
+        if (!preview) return
 
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setPreview(null)
+            }
+        }
+
+        window.addEventListener("keydown", handleEsc)
+
+        return () => {
+            window.removeEventListener("keydown", handleEsc)
+        }
+    }, [preview])
     const toggleNotification = async () => {
 
         if (!pair || saving) return
@@ -317,7 +331,7 @@ export default function PairDetail({
                                             </div>
 
                                             <div
-                                                                    className="
+                                                className="
                         text-[clamp(9px,5.5px+1.0937vw,19.5px)]
                         leading-relaxed
                         text-neutral-200
@@ -407,16 +421,16 @@ export default function PairDetail({
             </div>
 
             {/* MODAL PREVIEW */}
-{preview && (
-  <div
-    className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
-    onClick={() => setPreview(null)}
-  >
-    <div className="flex min-h-full items-center justify-center p-[clamp(12px,2vw,32px)]">
-      
-      {/* MODAL */}
-      <div
-        className="
+            {preview && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+                    onClick={() => setPreview(null)}
+                >
+                    <div className="flex min-h-full items-center justify-center p-[clamp(12px,2vw,32px)]">
+
+                        {/* MODAL */}
+                        <div
+                            className="
           w-full
           max-w-[clamp(480px,75vw,960px)]
           max-h-[90vh]
@@ -427,59 +441,59 @@ export default function PairDetail({
           flex flex-col
           overflow-hidden
         "
-        onClick={(e) => e.stopPropagation()}
-      >
+                            onClick={(e) => e.stopPropagation()}
+                        >
 
-        {/* HEADER */}
-        <div className="flex items-center justify-between px-[clamp(16px,2vw,28px)] py-[clamp(12px,1.6vw,20px)] border-b border-neutral-800 shrink-0">
-          
-          <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 leading-none">
-            {new Date(preview.time).toLocaleString()}
-          </div>
+                            {/* HEADER */}
+                            <div className="flex items-center justify-between px-[clamp(16px,2vw,28px)] py-[clamp(12px,1.6vw,20px)] border-b border-neutral-800 shrink-0">
 
-          <button
-            onClick={() => setPreview(null)}
-            className="
+                                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-400 leading-none">
+                                    {new Date(preview.time).toLocaleString()}
+                                </div>
+
+                                <button
+                                    onClick={() => setPreview(null)}
+                                    className="
               text-[clamp(9px,5.5px+1.0937vw,19.5px)]
               text-neutral-500
               hover:text-white
               transition-colors
               leading-none
             "
-          >
-            CLOSE
-          </button>
-        </div>
+                                >
+                                    CLOSE
+                                </button>
+                            </div>
 
-        {/* CONTENT SCROLL AREA */}
-        <div className="flex-1 overflow-y-auto px-[clamp(16px,2vw,28px)] py-[clamp(16px,2vw,28px)] space-y-[clamp(16px,2vw,28px)]">
+                            {/* CONTENT SCROLL AREA */}
+                            <div className="flex-1 overflow-y-auto px-[clamp(16px,2vw,28px)] py-[clamp(16px,2vw,28px)] space-y-[clamp(16px,2vw,28px)]">
 
-          {preview.image && (
-            <div className="w-full overflow-hidden rounded-lg border border-neutral-800">
-              <img
-                src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
-                className="w-full max-h-[75vh] object-contain select-none"
-                draggable={false}
-              />
-            </div>
-          )}
+                                {preview.image && (
+                                    <div className="w-full overflow-hidden rounded-lg border border-neutral-800">
+                                        <img
+                                            src={`https://drive.google.com/thumbnail?id=${preview.image}&sz=w2000`}
+                                            className="w-full max-h-[75vh] object-contain select-none"
+                                            draggable={false}
+                                        />
+                                    </div>
+                                )}
 
-          <div
-            className="
+                                <div
+                                    className="
               text-[clamp(9px,5.5px+1.0937vw,19.5px)]
               leading-relaxed
               text-neutral-200
               whitespace-pre-line
             "
-            dangerouslySetInnerHTML={{ __html: preview.text }}
-          />
+                                    dangerouslySetInnerHTML={{ __html: preview.text }}
+                                />
 
-        </div>
+                            </div>
 
-      </div>
-    </div>
-  </div>
-)}
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     )
