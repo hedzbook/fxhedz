@@ -232,7 +232,6 @@ export default function HomeScreen() {
       await registerForPushNotifications()
 
       setAccessToken(data.accessToken)
-      webViewRef.current?.reload()
 
     } catch (error) {
       console.log("Exchange Error:", error)
@@ -314,7 +313,7 @@ export default function HomeScreen() {
   return (
     <WebView
       ref={webViewRef}
-      key={accessToken ?? "guest"}
+      key={accessToken ? "auth" : "guest"}
       source={{
         uri: API_BASE,
         headers: accessToken
