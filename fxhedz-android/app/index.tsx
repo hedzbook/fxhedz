@@ -21,7 +21,6 @@ Notifications.setNotificationHandler({
 WebBrowser.maybeCompleteAuthSession()
 
 const API_BASE = "https://fxhedz.vercel.app"
-const [nativeEmail, setNativeEmail] = useState<string | null>(null)
 
 export default function HomeScreen() {
 
@@ -278,9 +277,9 @@ export default function HomeScreen() {
       }}
       injectedJavaScript={`
   window.__HAS_NATIVE_TOKEN__ = ${accessToken ? "true" : "false"};
-  window.__NATIVE_DEVICE_ID__ = "${deviceIdState ?? ""}";
-  window.__NATIVE_ACCESS_TOKEN__ = "${accessToken ?? ""}";
-  window.__NATIVE_EMAIL__ = "${nativeEmail ?? ""}";
+window.__NATIVE_EMAIL__ = ${JSON.stringify(nativeEmail ?? "")};
+window.__NATIVE_DEVICE_ID__ = ${JSON.stringify(deviceIdState ?? "")};
+window.__NATIVE_ACCESS_TOKEN__ = ${JSON.stringify(accessToken ?? "")};
 
   if (window.__NATIVE_ACCESS_TOKEN__) {
     const originalFetch = window.fetch;
