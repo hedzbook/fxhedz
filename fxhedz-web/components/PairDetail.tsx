@@ -345,7 +345,7 @@ export default function PairDetail({
                                 </div>
 
                             )) : (
-                                <div className="text-neutral-500 text-center">
+                                <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-500 text-center">
                                     No updates yet
                                 </div>
                             )}
@@ -377,7 +377,7 @@ export default function PairDetail({
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-neutral-500 text-[clamp(9px,5.5px+1.0937vw,19.5px)]">
+                               <div className="text-[clamp(9px,5.5px+1.0937vw,19.5px)] text-neutral-500 text-center">
                                     No history yet
                                 </div>
                             )}
